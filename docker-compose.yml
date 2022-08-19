@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  auctiondb:
+    image: 'postgres:14.5'
+    command: postgres -p ${DB_PORT} -c log_statement=all
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - '${DB_PORT}:${DB_PORT}'
+    networks:
+      default:
+        aliases:
+          - postgres_db_host 
+  
+  redis_db:
+    image: "redis:7.0.4"
+
+    # command: redis-server --requirepass sOmE_sEcUrE_pAsS
+
+    ports:
+     - "6379:6379"
+
+    volumes:
+      - $PWD/redis-data:/var/lib/redis
+      - $PWD/redis.conf:/usr/local/etc/redis/redis.conf
+
+    environment:
+     - REDIS_REPLICATION_MODE=master
+
+    networks:
+      default:
+        aliases:
+          - test_redis_db
