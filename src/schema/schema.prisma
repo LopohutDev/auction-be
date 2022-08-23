@@ -6,3 +6,43 @@ datasource db {
 generator client {
   provider = "prisma-client-js"
 }
+
+enum AccountEnum {
+  REVIEWED
+  ACCEPTED
+  REJECTED
+}
+
+model Warehouses {
+  id              Int           @id @default(autoincrement())
+  areaname        String      
+  assletter       String
+  locations       Location      @relation(fields: [locid], references: [id])
+  locid           String
+  createdAt       DateTime      @deafult(now())
+  updatedAt       DateTime      @deafult(now())
+}
+
+model Location {
+  id              Int           @id @default(autoincrement())
+  locid           String        @unique @default(uuid())
+  city            String      
+  address         String
+  assigneduser    User[]        @relation(references: [id])
+  Warehouses      Warehouses[]  @relation(references: [id])
+  createdAt       DateTime      @deafult(now())
+  updatedAt       DateTime      @deafult(now())
+}
+
+model User {
+  id              String        @id @default(uuid())
+  firstname       String   
+  lastname        String
+  email           String        @unique
+  password        String
+  account         AccountEnum   @default(REVIEWED)
+  rejectedreason  String?
+  location        Location      @relation(references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now()) 
+}
