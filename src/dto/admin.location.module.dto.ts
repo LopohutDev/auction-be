@@ -8,3 +8,7 @@ export type locationBodyDto = {
 export interface locationReturnValidateDto extends errorDto {
   data?: locationBodyDto;
 }
+
+export interface locationQueryDataDto {
+  location: string;
+}

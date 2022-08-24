@@ -1,11 +1,16 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpException,
   Post,
+  Query,
 } from '@nestjs/common';
-import { locationBodyDto } from 'src/dto/admin.location.module.dto';
+import {
+  locationBodyDto,
+  locationQueryDataDto,
+} from 'src/dto/admin.location.module.dto';
 import { AdminLocationRoute } from '../routes/admin.routes';
 import { LocationService } from './location.service';
 
@@ -23,6 +28,21 @@ export class LocationController {
       return {
         success: true,
         message: 'Successfully created location.',
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
+  }
+
+  @Get()
+  async getLocation(@Query() locationquery: locationQueryDataDto) {
+    const { data, error } = await this.locationservice.getLocationDetails(
+      locationquery,
+    );
+    if (data) {
+      return {
+        success: true,
+        data,
       };
     } else {
       throw new HttpException(error.message, error.status);
