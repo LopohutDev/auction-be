@@ -17,10 +17,10 @@ model Warehouses {
   id              Int           @id @default(autoincrement())
   areaname        String      
   assletter       String
-  locations       Location      @relation(fields: [locid], references: [id])
-  locid           String
-  createdAt       DateTime      @deafult(now())
-  updatedAt       DateTime      @deafult(now())
+  locations       Location      @relation(fields: [locid], references: [locid])
+  locid           String        @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now())
 }
 
 model Location {
@@ -28,10 +28,10 @@ model Location {
   locid           String        @unique @default(uuid())
   city            String      
   address         String
-  assigneduser    User[]        @relation(references: [id])
-  Warehouses      Warehouses[]  @relation(references: [id])
-  createdAt       DateTime      @deafult(now())
-  updatedAt       DateTime      @deafult(now())
+  assigneduser    User[]        
+  Warehouses      Warehouses[]  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now())
 }
 
 model User {
@@ -42,7 +42,8 @@ model User {
   password        String
   account         AccountEnum   @default(REVIEWED)
   rejectedreason  String?
-  location        Location      @relation(references: [id])
+  location        Location      @relation(fields:[locid], references: [locid])
+  locid           String        @unique
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @default(now()) 
 }
