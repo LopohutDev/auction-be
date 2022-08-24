@@ -4,7 +4,9 @@ import {
   Get,
   HttpCode,
   HttpException,
+  Param,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import {
@@ -43,6 +45,25 @@ export class LocationController {
       return {
         success: true,
         data,
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
+  }
+
+  @Put(':location')
+  async updateLocationController(
+    @Param() param: locationQueryDataDto,
+    @Body() locinfo: locationBodyDto,
+  ) {
+    const { error, success } = await this.locationservice.updateLocationDetails(
+      locinfo,
+      param.location,
+    );
+    if (success) {
+      return {
+        success: true,
+        message: 'Successfully updated location.',
       };
     } else {
       throw new HttpException(error.message, error.status);
