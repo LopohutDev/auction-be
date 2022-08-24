@@ -23,7 +23,7 @@ model Warehouses {
   areaname        String      
   assletter       String
   locations       Location      @relation(fields: [locid], references: [locid])
-  locid           String        @unique
+  locid           String        
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @default(now())
 }

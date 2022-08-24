@@ -19,7 +19,11 @@ export class LocationService {
     }
     try {
       await this.prismaService.location.create({
-        data: { city: data.city, address: data.address },
+        data: {
+          city: data.city,
+          address: data.address,
+          Warehouses: { create: data.Warehouses },
+        },
       });
       return {
         success: true,
@@ -50,6 +54,37 @@ export class LocationService {
       return { data };
     } catch (error) {
       return { error: { status: 422, message: 'Location not found' } };
+    }
+  }
+
+  async updateLocationDetails(
+    locinfo: locationBodyDto,
+    param: string,
+  ): Promise<successErrorDto> {
+    if (!param) {
+      return { error: { status: 422, message: 'Location param is required' } };
+    }
+    const { data, error } = validateLocationBody(locinfo);
+    if (error) {
+      return { error };
+    }
+    try {
+      await this.prismaService.location.update({
+        where: { locid: param },
+        data: {
+          city: data.city,
+          address: data.address,
+          Warehouses: {
+            deleteMany: {},
+            create: data.Warehouses,
+          },
+        },
+      });
+      return {
+        success: true,
+      };
+    } catch (error) {
+      return { error: { status: 422, message: 'Location is not valid' } };
     }
   }
 }
