@@ -13,6 +13,11 @@ enum AccountEnum {
   REJECTED
 }
 
+enum Roles {
+  ADMIN
+  NORMAL
+}
+
 model Warehouses {
   id              Int           @id @default(autoincrement())
   areaname        String      
@@ -43,7 +48,8 @@ model User {
   account         AccountEnum   @default(REVIEWED)
   rejectedreason  String?
   location        Location      @relation(fields:[locid], references: [locid])
-  locid           String        @unique
+  locid           String        
+  role            Roles         @default(NORMAL)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @default(now()) 
 }

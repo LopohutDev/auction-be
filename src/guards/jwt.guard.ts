@@ -15,7 +15,7 @@ export class AuthGuard implements CanActivate {
     if (data) {
       request.email = data.email;
       request.reId = data.reId;
-      request.roles = data.roles;
+      request.role = data.role;
       return true;
     } else {
       throw new HttpException(error.message, error.status);
