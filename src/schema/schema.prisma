@@ -19,37 +19,52 @@ enum Roles {
 }
 
 model Warehouses {
-  id              Int           @id @default(autoincrement())
-  areaname        String      
-  assletter       String
-  locations       Location      @relation(fields: [locid], references: [locid])
-  locid           String        
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @default(now())
+  id        Int      @id @default(autoincrement())
+  areaname  String
+  assletter String
+  locations Location @relation(fields: [locid], references: [locid])
+  locid     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 }
 
 model Location {
-  id              Int           @id @default(autoincrement())
-  locid           String        @unique @default(uuid())
-  city            String      
-  address         String
-  assigneduser    User[]        
-  Warehouses      Warehouses[]  
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @default(now())
+  id           Int          @id @default(autoincrement())
+  locid        String       @unique @default(uuid())
+  city         String
+  address      String
+  assigneduser User[]
+  Warehouses   Warehouses[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @default(now())
 }
 
 model User {
-  id              String        @id @default(uuid())
-  firstname       String   
-  lastname        String
-  email           String        @unique
-  password        String
-  account         AccountEnum   @default(REVIEWED)
-  rejectedreason  String?
-  location        Location      @relation(fields:[locid], references: [locid])
-  locid           String        
-  role            Roles         @default(NORMAL)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @default(now()) 
+  id             String      @id @default(uuid())
+  firstname      String
+  lastname       String
+  email          String      @unique
+  password       String
+  account        AccountEnum @default(REVIEWED)
+  rejectedreason String?
+  location       Location    @relation(fields: [locid], references: [locid])
+  locid          String
+  role           Roles       @default(NORMAL)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @default(now())
+}
+
+model Auction {
+  id          String      @id @default(uuid())
+  auctionType AuctionType @default(Auction1)
+  startDate   DateTime
+  startTime   DateTime
+  endDate     DateTime
+  endTime     DateTime
+  startNumber Int
+}
+
+enum AuctionType {
+  Auction1
+  Auction2
 }
