@@ -53,3 +53,18 @@ model User {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @default(now()) 
 }
+
+model Auction {
+  id          String      @id @default(uuid())
+  auctionType AuctionType @default(Auction1)
+  startDate   DateTime
+  startTime   DateTime
+  endDate     DateTime
+  endTime     DateTime
+  startNumber Int
+}
+
+enum AuctionType {
+  Auction1
+  Auction2
+}
