@@ -45,7 +45,7 @@ export class LocationService {
         select: {
           city: true,
           address: true,
-          Warehouses: true,
+          Warehouses: { select: { areaname: true, assletter: true } },
           assigneduser: {
             select: { firstname: true, lastname: true, createdAt: true },
           },
