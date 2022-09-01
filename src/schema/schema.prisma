@@ -18,6 +18,17 @@ enum Roles {
   NORMAL
 }
 
+enum ScannedStatus {
+  SUCCESSFULL
+  FAILED
+  UNDERREVIEW
+}
+
+enum ScannedFailedStatus {
+  DONE
+  UNDERREVIEW
+}
+
 model Warehouses {
   id              Int           @id @default(autoincrement())
   areaname        String      
@@ -50,13 +61,47 @@ model User {
   location        Location      @relation(fields:[locid], references: [locid])
   locid           String        
   role            Roles         @default(NORMAL)
+  scanProducts    Scans[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @default(now()) 
+}
+
+model Products {
+  id              Int         @id @default(autoincrement())
+  productId       String      @unique @default(uuid())
+  barcode         String
+  lotNo           String
+  quantity        Int         @default(1)
+  startingBid     Float
+  title           String
+  description     String
+  category        String
+  manufacturer    String
+  consignor       Int?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @default(now())
+}
+
+model Scans {
+  id              Int                  @id @default(autoincrement())
+  ScanId          String
+  tag             String
+  barcode         String
+  auction         Auction              @relation(fields:[auctionId], references: [id])
+  auctionId       String               @unique
+  status          ScannedStatus        @default(UNDERREVIEW)
+  failedStatus    ScannedFailedStatus?
+  rejectedreason  String?
+  scannedUser     User                 @relation(fields:[scannedBy], references: [id])
+  scannedBy       String
+  tagexpireAt     DateTime             
+  createdAt       DateTime             @default(now())
 }
 
 model Auction {
   id          String      @id @default(uuid())
   auctionType AuctionType @default(Auction1)
+  scannedItem Scans[]
   startDate   DateTime
   startTime   DateTime
   endDate     DateTime
