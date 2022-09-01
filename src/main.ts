@@ -1,8 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { ClusterService } from './Services/cluster.service';
 
-(async () => {
+ClusterService.clusterize(async () => {
   const app = await NestFactory.create(AppModule, {
     cors: true,
   });
@@ -20,4 +21,4 @@ import { AppModule } from './app.module';
   const Host = process.env['DEFAULT_HOST'];
   await app.listen(Port, Host);
   console.log('Server is running');
-})();
+});
