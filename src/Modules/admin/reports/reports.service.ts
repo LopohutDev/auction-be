@@ -15,7 +15,7 @@ export class ReportsService {
         rejectOnNotFound: false,
       });
       if (!isLocationExists) {
-        return { error: { status: 422, message: 'Invalid location' } };
+        return { error: { status: 404, message: 'Invalid location' } };
       }
       const data = await this.prismaService.location.findFirst({
         where: {
@@ -45,6 +45,9 @@ export class ReportsService {
           },
         },
       });
+      if (!data) {
+        return { error: { status: 404, message: 'No Scans Exists' } };
+      }
       return { data };
     } catch (error) {
       this.logger.error(error);
