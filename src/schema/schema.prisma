@@ -11,6 +11,7 @@ enum AccountEnum {
   REVIEWED
   ACCEPTED
   REJECTED
+  DELETED
 }
 
 enum Roles {
@@ -40,14 +41,15 @@ model Warehouses {
 }
 
 model Location {
-  id              Int           @id @default(autoincrement())
-  locid           String        @unique @default(uuid())
+  id              Int             @id @default(autoincrement())
+  locid           String          @unique @default(uuid())
   city            String      
   address         String
   assigneduser    User[]        
-  Warehouses      Warehouses[]  
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @default(now())
+  Warehouses      Warehouses[]
+  Scanned         Scans[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @default(now())
 }
 
 model User {
@@ -89,6 +91,8 @@ model Scans {
   barcode         String
   auction         Auction              @relation(fields:[auctionId], references: [id])
   auctionId       String               @unique
+  locations       Location             @relation(fields:[locid], references: [locid])
+  locid           String
   status          ScannedStatus        @default(UNDERREVIEW)
   failedStatus    ScannedFailedStatus?
   rejectedreason  String?
