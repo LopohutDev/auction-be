@@ -37,12 +37,12 @@
     "rxjs": "^7.2.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^7.5.0",
     "@nestjs/cli": "^9.0.0",
     "@nestjs/schematics": "^9.0.0",
     "@nestjs/testing": "^9.0.0",
     "@types/axios": "^0.14.0",
     "@types/express": "^4.17.13",
-    "@types/faker": "^6.6.9",
     "@types/helmet": "^4.0.0",
     "@types/jest": "28.1.4",
     "@types/multer": "^1.4.7",
@@ -53,7 +53,6 @@
     "eslint": "^8.0.1",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "faker": "^6.6.6",
     "jest": "28.1.2",
     "prettier": "^2.3.2",
     "prisma": "^4.2.1",
@@ -81,6 +80,16 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "verbose": true,
+    "roots": [
+      "<rootDir>","."
+    ],
+    "moduleDirectories": [
+      "node_modules"
+    ],
+    "modulePaths": [
+      "<rootDir>", "."
+    ]
   }
 }
