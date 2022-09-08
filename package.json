@@ -39,6 +39,7 @@
   "devDependencies": {
     "@faker-js/faker": "^7.5.0",
     "@nestjs/cli": "^9.0.0",
+    "@nestjs/schedule": "^2.1.0",
     "@nestjs/schematics": "^9.0.0",
     "@nestjs/testing": "^9.0.0",
     "@types/axios": "^0.14.0",
