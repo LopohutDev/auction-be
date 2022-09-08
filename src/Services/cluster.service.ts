@@ -1,10 +1,11 @@
-import cluster from 'cluster';
-import os from 'os';
+import * as clusters from 'node:cluster';
+import * as os from 'os';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class ClusterService {
   static clusterize(callback: () => void): void {
+    const cluster = clusters as any;
     if (
       (cluster?.isPrimary || cluster?.isMaster) &&
       process.env.NODE_ENV === 'production'
