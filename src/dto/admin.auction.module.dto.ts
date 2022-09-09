@@ -1,6 +1,9 @@
+import { AuctionType } from '@prisma/client';
 import { errorDto } from './common.dto';
 
 export type auctionBodyDto = {
+  id: string;
+  auctionType: AuctionType;
   startDate: Date;
   startTime: Date;
   endDate: Date;
