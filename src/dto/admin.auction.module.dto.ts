@@ -8,7 +8,7 @@ export type auctionBodyDto = {
   startTime: Date;
   endDate: Date;
   endTime: Date;
-  startNumber: number;
+  startNumber?: number;
 };
 
 export interface auctionReturnValidateDto extends errorDto {

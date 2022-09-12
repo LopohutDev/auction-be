@@ -15,7 +15,7 @@ export class AuctionController {
     if (success) {
       return {
         success: true,
-        message: 'Successfully created warehouse area.',
+        message: 'Successfully auction created.',
       };
     } else {
       throw new HttpException(error.message, error.status);

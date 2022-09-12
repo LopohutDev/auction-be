@@ -3,6 +3,7 @@ import { auctionBodyDto } from 'src/dto/admin.auction.module.dto';
 import { successErrorDto } from 'src/dto/common.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { validationAuctionBody } from 'src/validations/admin.auction.validation';
+import futureAuction from './auction.utils';
 
 @Injectable()
 export class AuctionService {
@@ -11,20 +12,8 @@ export class AuctionService {
 
   async createAuction(auctionInfo: auctionBodyDto): Promise<successErrorDto> {
     this.logger.log(auctionInfo);
-    const { data, error } = validationAuctionBody(auctionInfo);
-    if (error) return { error };
 
     try {
-      const {
-        id,
-        auctionType,
-        startDate,
-        startTime,
-        endDate,
-        endTime,
-        startNumber,
-      } = data;
-
       const arr = [];
       const currDate = new Date();
       const lastDayOfCurrMonth = new Date(
@@ -35,69 +24,37 @@ export class AuctionService {
       const date = currDate.toLocaleString().split(',')[0];
       const lastDay = lastDayOfCurrMonth.toLocaleString().split(',')[0];
 
-      await this.prismaService.auction.update({
-        where: {
+      if (lastDay === date) {
+        futureAuction(currDate, arr);
+        await this.prismaService.auction.createMany({
+          data: arr,
+        });
+      } else {
+        const { data, error } = validationAuctionBody(auctionInfo);
+        if (error) return { error };
+
+        const {
           id,
-        },
-        data: {
           auctionType,
           startDate,
           startTime,
           endDate,
           endTime,
           startNumber,
-        },
-      });
+        } = data;
 
-      if (lastDay === date) {
-        const futureMonthLastDay = new Date(
-          currDate.getFullYear(),
-          currDate.getMonth() + 2,
-          0,
-        );
-
-        for (let i = 1; i <= futureMonthLastDay.getDate(); i++) {
-          const futureDate = new Date(
-            new Date().getTime() + i * 24 * 60 * 60 * 1000,
-          );
-          const futureDateDay = futureDate.getDay();
-
-          if (
-            futureDateDay === 2 ||
-            futureDateDay === 3 ||
-            futureDateDay === 4
-          ) {
-            i = i + 2;
-            arr.push({
-              AuctionType: 'Auction 1',
-              startDate: futureDate,
-              startTime: '8am',
-              endDate: new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000),
-              endTime: '7pm',
-              startNumber: null,
-            });
-          }
-
-          if (
-            futureDateDay === 5 ||
-            futureDateDay === 6 ||
-            futureDateDay === 0 ||
-            futureDateDay === 1
-          ) {
-            i = i + 3;
-            arr.push({
-              AuctionType: 'Auction 2',
-              startDate: futureDate,
-              startTime: '8am',
-              endDate: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000),
-              endTime: '7pm',
-              startNumber: null,
-            });
-          }
-        }
-
-        await this.prismaService.auction.createMany({
-          data: arr,
+        await this.prismaService.auction.update({
+          where: {
+            id,
+          },
+          data: {
+            auctionType,
+            startDate,
+            startTime,
+            endDate,
+            endTime,
+            startNumber,
+          },
         });
       }
       return {
