@@ -15,3 +15,19 @@ export interface ScanDataReturnDto extends successErrorDto {
 export interface scanValidateDto extends errorDto {
   item?: ScanQueryDto;
 }
+
+interface scrapperImagesDataDto {
+  link: string;
+  id: string;
+  zoomable: boolean;
+}
+export interface scrapperDataDto {
+  productId: string;
+  images: Array<scrapperImagesDataDto> | [];
+  description: string;
+  title: string;
+}
+
+export interface scrapperReturnDataDto extends errorDto {
+  data?: scrapperDataDto;
+}

@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SCANENV, WALLENV } from 'src/constants/common.constants';
+import { BarcodeData } from 'src/Cache/BarCodes';
 import { ScanQueryDto } from 'src/dto/user.scan.module.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { validateUserScan } from 'src/validations/user.scans.validations';
+import { getScrapperData } from './scrapper.utils';
 
 @Injectable()
 export class ScanService {
@@ -26,53 +27,19 @@ export class ScanService {
     if (!isItemExists) {
       return { error: { status: 404, message: 'No item Type exists' } };
     }
-    const params = {
-      barcode: item.barcode,
-      key: process.env[SCANENV],
-    };
-    const {
-      default: { get },
-    } = await import('axios');
-    try {
-      const { data } = await get('https://api.barcodelookup.com/v3/products', {
-        params,
-      });
-      const storedata = data?.products?.length
-        ? (data.products[0].stores as [])
-        : [];
-      const wallmartProduct = storedata.find((l) => l.name === 'Walmart');
-      const AmazonProduct = storedata.find((l) => l.name === 'Amazon');
-      if (!storedata.length || (!wallmartProduct && AmazonProduct)) {
-        return { error: { status: 422, message: 'No store found' } };
-      }
-      if (wallmartProduct) {
-        const params = {
-          api_key: process.env[WALLENV],
-          type: 'product',
-          url: wallmartProduct?.link,
-        };
-        const { data } = await get('https://api.bluecartapi.com/request', {
-          params,
-        });
-        if (data.request_info.success) {
-          return {
-            data: {
-              productId: data.product.product_id,
-              images: data.product.images,
-              description: data.product.description,
-              title: data.product.title,
-            },
-          };
-        }
-      } else {
-        return { data };
-      }
-    } catch (error) {
-      this.logger.error(error);
-      if (error?.response?.status === 404) {
-        return { error: { status: 404, message: 'No product found' } };
-      }
-      return { error: { status: 500, message: 'Something Went Wrong' } };
+    const { data } = BarcodeData.get(item.barcode);
+    if (data) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { exp, ...sendedData } = data;
+      return { data: sendedData };
     }
+    const { data: scrapperdata, error: scrappererror } = await getScrapperData(
+      item.barcode,
+    );
+    if (scrappererror) {
+      return { error: scrappererror };
+    }
+    BarcodeData.set(item.barcode, scrapperdata);
+    return { data: scrapperdata };
   }
 }
