@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { auctionBodyDto } from 'src/dto/admin.auction.module.dto';
+import {
+  auctionBodyDto,
+  getAuctionQueryDto,
+} from 'src/dto/admin.auction.module.dto';
 import { successErrorDto } from 'src/dto/common.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { validationAuctionBody } from 'src/validations/admin.auction.validation';
@@ -67,47 +70,44 @@ export class AuctionService {
       };
     }
   }
+
+  async getAllAuction(locquery: getAuctionQueryDto) {
+    const { location } = locquery;
+
+    try {
+      const isLocationExists = await this.prismaService.location.findUnique({
+        where: { locid: location },
+        rejectOnNotFound: false,
+      });
+
+      if (!isLocationExists) {
+        return { error: { status: 404, message: 'Invalid location' } };
+      }
+
+      const data = await this.prismaService.location.findMany({
+        where: {
+          locid: { equals: location },
+        },
+        select: {
+          Auction: {
+            select: {
+              auctionType: true,
+              scannedItem: true,
+              startDate: true,
+              startTime: true,
+              endDate: true,
+              endTime: true,
+              startNumber: true,
+            },
+          },
+        },
+      });
+      this.logger.log('data>>>', data);
+
+      return { data };
+    } catch (error) {
+      this.logger.error(error);
+      return { error: { status: 500, message: 'Server error' } };
+    }
+  }
 }
-
-//  const arr = [];
-//  const currDate = moment().format();
-//  var daysInMonth = moment(currDate, 'YYYY-MM').daysInMonth();
-
-//  if (daysInMonth) {
-//    for (let i = 1; i <= daysInMonth; i++) {
-//      const futureDate = moment(currDate).add(i, 'days').format('YYYY-MM-DD');
-//      const futureMonthDay = moment(futureDate).day();
-//      console.log(futureDate, futureMonthDay);
-
-//      if (futureMonthDay === 2 || futureMonthDay === 3 || futureMonthDay === 4) {
-//        i = i + 2;
-//        arr.push({
-//          AuctionType: 'Auction 1',
-//          startDate: futureDate,
-//          startTime: '8am',
-//          endDate: moment(futureDate).add(2, 'days').format('YYYY-MM-DD'),
-//          endTime: '7pm',
-//          startNumber: null,
-//        });
-//      }
-
-//      if (
-//        futureMonthDay === 5 ||
-//        futureMonthDay === 6 ||
-//        futureMonthDay === 0 ||
-//        futureMonthDay === 1
-//      ) {
-//        i = i + 3;
-//        arr.push({
-//          AuctionType: 'Auction 2',
-//          startDate: futureDate,
-//          startTime: '8am',
-//          endDate: moment(futureDate).add(3, 'days').format('YYYY-MM-DD'),
-//          endTime: '7pm',
-//          startNumber: null,
-//        });
-//      }
-//    }
-//  }
-
-//  console.log(arr);

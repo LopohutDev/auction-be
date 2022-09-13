@@ -11,6 +11,10 @@ export type auctionBodyDto = {
   startNumber?: number;
 };
 
+export type getAuctionQueryDto = {
+  location: string;
+};
+
 export interface auctionReturnValidateDto extends errorDto {
   data?: auctionBodyDto;
 }

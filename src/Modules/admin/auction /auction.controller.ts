@@ -1,5 +1,15 @@
-import { Body, Controller, HttpException, Post } from '@nestjs/common';
-import { auctionBodyDto } from 'src/dto/admin.auction.module.dto';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  Post,
+  Query,
+} from '@nestjs/common';
+import {
+  auctionBodyDto,
+  getAuctionQueryDto,
+} from 'src/dto/admin.auction.module.dto';
 import { AdminAuction } from '../routes/admin.routes';
 import { AuctionService } from './auction.service';
 
@@ -16,6 +26,19 @@ export class AuctionController {
       return {
         success: true,
         message: 'Successfully auction created.',
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
+  }
+
+  @Get()
+  async getAuctionData(@Query() locinfo: getAuctionQueryDto) {
+    const { data, error } = await this.auctionservice.getAllAuction(locinfo);
+    if (data) {
+      return {
+        data,
+        success: true,
       };
     } else {
       throw new HttpException(error.message, error.status);

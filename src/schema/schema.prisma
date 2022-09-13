@@ -47,6 +47,7 @@ model Location {
   address         String
   assigneduser    User[]        
   Warehouses      Warehouses[]
+  Auction         Auction[]
   Scanned         Scans[]
   scapper         ScraperZip[]
   createdAt       DateTime        @default(now())
@@ -124,6 +125,8 @@ model Auction {
   id          String      @id @default(uuid())
   auctionType AuctionType @default(Auction1)
   scannedItem Scans[]
+  locations   Location    @relation(fields:[locid], references: [locid])
+  locid       String
   startDate   DateTime
   startTime   DateTime
   endDate     DateTime
