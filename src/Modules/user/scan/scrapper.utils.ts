@@ -1,4 +1,4 @@
-import { SCANENV, WALLENV } from 'src/constants/common.constants';
+import { AMZENV, SCANENV, WALLENV } from 'src/constants/common.constants';
 import { scrapperReturnDataDto } from 'src/dto/user.scan.module.dto';
 
 export const getScrapperData = async (
@@ -36,7 +36,21 @@ export const getScrapperData = async (
         };
         return { data: sendedData };
       }
+    } else if (AmazonProduct) {
+      const { data: amazondata } = await get(
+        `https://api.rainforestapi.com/request?api_key=${process.env[AMZENV]}&type=product&url=${AmazonProduct.link}`,
+      );
+      if (amazondata.request_info.success) {
+        const sendedData = {
+          productId: amazondata.product?.product_id,
+          images: amazondata.product?.images,
+          description: amazondata.product?.description,
+          title: amazondata.product?.title,
+        };
+        return { data: sendedData };
+      }
     }
+    return { error: { status: 404, message: 'No Products found' } };
   } catch (err) {
     if (err?.response?.status === 404) {
       return { error: { status: 404, message: 'No product found' } };

@@ -16,7 +16,7 @@ export const BarcodeData = {
     } else if (BarcodeData.data[key]) {
       return { error: 'Data is already present' };
     }
-    const date = new Date().setSeconds(new Date().getSeconds() + ttl || 1200);
+    const date = new Date().setSeconds(new Date().getSeconds() + ttl || 600);
     BarcodeData.data[key] = {
       ...value,
       exp: date.valueOf(),
@@ -27,10 +27,7 @@ export const BarcodeData = {
   removeExpiredData(id: string) {
     if (!id) {
       return { error: 'Not valid data' };
-    } else if (
-      BarcodeData.data[id] &&
-      BarcodeData.data[id]?.exp < Date.now() / 1000
-    ) {
+    } else if (BarcodeData.data[id] && BarcodeData.data[id]?.exp < Date.now()) {
       delete BarcodeData.data[id];
       return { success: true };
     }
