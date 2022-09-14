@@ -131,8 +131,9 @@ model Auction {
   startTime   DateTime
   endDate     DateTime
   endTime     DateTime
-  startNumber Int
+  startNumber Int?
   srappers    ScraperZip[]
+
 }
 
 enum AuctionType {

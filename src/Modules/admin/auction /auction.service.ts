@@ -17,49 +17,49 @@ export class AuctionService {
     this.logger.log(auctionInfo);
 
     try {
-      const arr = [];
-      const currDate = new Date();
-      const lastDayOfCurrMonth = new Date(
-        currDate.getFullYear(),
-        currDate.getMonth() + 1,
-        0,
-      );
-      const date = currDate.toLocaleString().split(',')[0];
-      const lastDay = lastDayOfCurrMonth.toLocaleString().split(',')[0];
+      // const arr = [];
+      // const currDate = new Date();
+      // const lastDayOfCurrMonth = new Date(
+      //   currDate.getFullYear(),
+      //   currDate.getMonth() + 1,
+      //   0,
+      // );
+      // const date = currDate.toLocaleString().split(',')[0];
+      // const lastDay = lastDayOfCurrMonth.toLocaleString().split(',')[0];
 
-      if (lastDay === date) {
-        futureAuction(currDate, arr);
-        await this.prismaService.auction.createMany({
-          data: arr,
-        });
-      } else {
-        const { data, error } = validationAuctionBody(auctionInfo);
-        if (error) return { error };
+      // if (lastDay === date) {
+      //   futureAuction(currDate, arr);
+      //   await this.prismaService.auction.createMany({
+      //     data: arr,
+      //   });
+      // } else {
+      const { data, error } = validationAuctionBody(auctionInfo);
+      if (error) return { error };
 
-        const {
+      const {
+        id,
+        // auctionType,
+        // startDate,
+        // startTime,
+        endDate,
+        endTime,
+        startNumber,
+      } = data;
+
+      await this.prismaService.auction.update({
+        where: {
           id,
-          auctionType,
-          startDate,
-          startTime,
+        },
+        data: {
+          // auctionType,
+          // startDate,
+          // startTime,
           endDate,
           endTime,
           startNumber,
-        } = data;
-
-        await this.prismaService.auction.update({
-          where: {
-            id,
-          },
-          data: {
-            auctionType,
-            startDate,
-            startTime,
-            endDate,
-            endTime,
-            startNumber,
-          },
-        });
-      }
+        },
+      });
+      // }
       return {
         success: true,
       };
@@ -91,6 +91,7 @@ export class AuctionService {
         select: {
           Auction: {
             select: {
+              id: true,
               auctionType: true,
               scannedItem: true,
               startDate: true,

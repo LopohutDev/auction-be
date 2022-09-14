@@ -8,9 +8,9 @@ export const validationAuctionBody = (
 ): auctionReturnValidateDto => {
   const {
     id,
-    auctionType,
-    startDate,
-    startTime,
+    // auctionType,
+    // startDate,
+    // startTime,
     endDate,
     endTime,
     startNumber,
@@ -18,13 +18,15 @@ export const validationAuctionBody = (
 
   if (!id) {
     return { error: { status: 422, message: 'id is required' } };
-  } else if (!auctionType) {
-    return { error: { status: 422, message: 'auctionType is required' } };
-  } else if (!startDate) {
-    return { error: { status: 422, message: 'startDate is required' } };
-  } else if (!startTime) {
-    return { error: { status: 422, message: 'startTime is required' } };
-  } else if (!endDate) {
+  }
+  // else if (!auctionType) {
+  //   return { error: { status: 422, message: 'auctionType is required' } };
+  // } else if (!startDate) {
+  //   return { error: { status: 422, message: 'startDate is required' } };
+  // } else if (!startTime) {
+  //   return { error: { status: 422, message: 'startTime is required' } };
+  // }
+  else if (!endDate) {
     return { error: { status: 422, message: 'endDate is required' } };
   } else if (!endTime) {
     return { error: { status: 422, message: 'endTime is required' } };
