@@ -102,6 +102,19 @@ model Scans {
   createdAt       DateTime             @default(now())
 }
 
+model ItemType {
+  id              Int                   @id @default(autoincrement())
+  name            String                @unique
+}
+
+model ScraperZip {
+  id                  Int                   @id @default(autoincrement())
+  filePath            String
+  lastcsvgenerated    DateTime              @default(now())
+  isNewUploaded       Boolean               @default(false)
+  createdAt           DateTime              @default(now())
+}
+
 model Auction {
   id          String      @id @default(uuid())
   auctionType AuctionType @default(Auction1)
