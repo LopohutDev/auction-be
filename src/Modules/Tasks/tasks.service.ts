@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { BarcodeData } from 'src/Cache/BarCodes';
 
+
 import { Jobs } from 'src/Cache/Jobs';
 
 import { PrismaService } from 'src/Services/prisma.service';
@@ -108,7 +109,7 @@ export class TasksService {
           startDate: futureDate.toISOString(),
           startTime: new Date(futureDate.setHours(8, 0, 0)).toISOString(),
           endDate: new Date(
-            new Date().getTime() + 2 * 24 * 60 * 60 * 1000,
+            new Date(futureDate).getTime() + 2 * 24 * 60 * 60 * 1000,
           ).toISOString(),
           endTime: new Date(futureDate.setHours(19, 0, 0)).toISOString(),
         });
@@ -126,7 +127,7 @@ export class TasksService {
           startDate: futureDate.toISOString(),
           startTime: new Date(futureDate.setHours(8, 0, 0)).toISOString(),
           endDate: new Date(
-            new Date().getTime() + 3 * 24 * 60 * 60 * 1000,
+            new Date(futureDate).getTime() + 3 * 24 * 60 * 60 * 1000,
           ).toISOString(),
           endTime: new Date(futureDate.setHours(19, 0, 0)).toISOString(),
         });
