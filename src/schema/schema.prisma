@@ -60,8 +60,8 @@ model User {
   password        String
   account         AccountEnum   @default(REVIEWED)
   rejectedreason  String?
-  location        Location      @relation(fields:[locid], references: [locid])
-  locid           String        
+  location        Location?      @relation(fields:[locid], references: [locid])
+  locid           String?        
   role            Roles         @default(NORMAL)
   scanProducts    Scans[]
   createdAt       DateTime      @default(now())

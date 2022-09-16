@@ -5,7 +5,8 @@ export type registerBodyDto = {
   lastname: string;
   email: string;
   password: string;
-  location: string;
+  location?: string;
+  isAdmin?: boolean;
 };
 
 export interface returnRegisterUserDto extends errorDto {
@@ -27,3 +28,15 @@ export interface userTokenDto {
 }
 
 export interface loginUserDto extends successErrorDto, userTokenDto {}
+
+export enum AccountEnum {
+  REVIEWED = 'REVIEWED',
+  ACCEPTED = 'ACCEPTED',
+  REJECTED = 'REJECTED',
+  DELETED = 'DELETED',
+}
+
+export enum Roles {
+  ADMIN = 'ADMIN',
+  NORMAL = 'NORMAL',
+}

@@ -9,7 +9,7 @@ import {
 export const validateregisterUser = (
   userinfo: registerBodyDto,
 ): returnRegisterUserDto => {
-  const { firstname, lastname, email, password, location } = userinfo;
+  const { firstname, lastname, email, password, isAdmin, location } = userinfo;
   if (!firstname || !firstname.trim().length) {
     return { error: { status: 422, message: 'First name is required' } };
   } else if (!lastname || !lastname.trim().length) {
@@ -22,7 +22,7 @@ export const validateregisterUser = (
     return { error: { status: 422, message: 'Password is required' } };
   } else if (!PasswordRegex.test(password)) {
     return { error: { status: 422, message: 'Password is not valid' } };
-  } else if (!location || !location.trim().length) {
+  } else if (!isAdmin && (!location || !location.trim().length)) {
     return { error: { status: 422, message: 'Location is required' } };
   }
   return { user: userinfo };

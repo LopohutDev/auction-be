@@ -8,11 +8,13 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   locationBodyDto,
   locationQueryDataDto,
 } from 'src/dto/admin.location.module.dto';
+import { AuthGuard } from 'src/guards/jwt.guard';
 import { AdminLocationRoute } from '../routes/admin.routes';
 import { LocationService } from './location.service';
 
@@ -20,6 +22,7 @@ import { LocationService } from './location.service';
 export class LocationController {
   constructor(private readonly locationservice: LocationService) {}
 
+  @UseGuards(AuthGuard)
   @Post()
   @HttpCode(200)
   async createLocationController(@Body() locinfo: locationBodyDto) {
@@ -36,6 +39,7 @@ export class LocationController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Get()
   async getLocation(@Query() locationquery: locationQueryDataDto) {
     const { data, error } = await this.locationservice.getLocationDetails(
@@ -51,6 +55,7 @@ export class LocationController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Put(':location')
   async updateLocationController(
     @Param() param: locationQueryDataDto,
