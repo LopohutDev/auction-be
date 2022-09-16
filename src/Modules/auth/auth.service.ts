@@ -10,6 +10,8 @@ import {
   AccountEnum,
   loginBodyDto,
   loginUserDto,
+  logoutParamsDto,
+  refreshTokenParamsDto,
   registerBodyDto,
   Roles,
 } from 'src/dto/auth.module.dto';
@@ -21,6 +23,7 @@ import { Jwt } from 'src/tokens/Jwt';
 import { decrypt, encrypt, encryptRefreshToken } from 'src/utils/crypt.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import {
+  refreshTokenValidate,
   validateLoginUser,
   validateregisterUser,
 } from 'src/validations/auth.validation';
@@ -139,5 +142,39 @@ export class AuthService {
       this.logger.warn(error);
       return { error: { status: 500, message: 'Server error' } };
     }
+  }
+
+  async getLogout(user: logoutParamsDto): Promise<successErrorDto> {
+    const { email, reId } = user;
+    if (!email || !email.trim().length) {
+      return { error: { status: 422, message: 'email is required' } };
+    }
+
+    const { error } = Jwt.removeToken(reId);
+    if (error) {
+      return { error: { status: 403, message: 'Invalid Token' } };
+    }
+
+    return { success: true };
+  }
+
+  async getRefeshToken(token: refreshTokenParamsDto): Promise<loginUserDto> {
+    const { token: refreshToken, error } = refreshTokenValidate(token);
+    if (error) {
+      return { error };
+    }
+
+    const payload = {
+      reId: refreshToken.id,
+      email: refreshToken.email,
+      role: refreshToken.role,
+    };
+    return {
+      access_token: sign(
+        payload,
+        process.env['SECRET'],
+        accessTokenConfig,
+      ) as string,
+    };
   }
 }
