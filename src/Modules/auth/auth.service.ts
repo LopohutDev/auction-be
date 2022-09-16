@@ -7,9 +7,11 @@ import {
   RefreshTokenSecret,
 } from 'src/config/jwt.config';
 import {
+  AccountEnum,
   loginBodyDto,
   loginUserDto,
   registerBodyDto,
+  Roles,
 } from 'src/dto/auth.module.dto';
 import { successErrorDto } from 'src/dto/common.dto';
 import { authTokenDto } from 'src/dto/tokens.dto';
@@ -70,14 +72,17 @@ export class AuthService {
         where: { email: user.email },
         rejectOnNotFound: false,
       });
-      const isLocationExists = await this.prismaService.location.findUnique({
-        where: { locid: user.location },
-        rejectOnNotFound: false,
-      });
       if (isUserExists) {
         return { error: { status: 422, message: 'User already exists' } };
-      } else if (!isLocationExists) {
-        return { error: { status: 422, message: 'Invalid Location' } };
+      }
+      if (!user.isAdmin) {
+        const isLocationExists = await this.prismaService.location.findUnique({
+          where: { locid: user.location },
+          rejectOnNotFound: false,
+        });
+        if (!isLocationExists) {
+          return { error: { status: 422, message: 'Invalid Location' } };
+        }
       }
       await this.prismaService.user.create({
         data: {
@@ -85,7 +90,9 @@ export class AuthService {
           lastname: user.lastname,
           email: user.email,
           password: encrypt(user.password),
-          locid: user.location,
+          role: user.isAdmin ? Roles.ADMIN : Roles.NORMAL,
+          account: user.isAdmin ? AccountEnum.ACCEPTED : AccountEnum.REVIEWED,
+          locid: !user.isAdmin ? user.location : null,
         },
       });
       return {
@@ -113,6 +120,13 @@ export class AuthService {
         return { error: { status: 422, message: 'User not found' } };
       } else if (user.password !== decrypt(isUserExists.password)) {
         return { error: { status: 422, message: 'email password not valid' } };
+      } else if (isUserExists.account !== AccountEnum.ACCEPTED) {
+        return {
+          error: {
+            status: 401,
+            message: "You can's access . please ask your admin",
+          },
+        };
       }
       const { access_token, refresh_token } = await this.getUserToken(
         isUserExists,
