@@ -15,6 +15,10 @@ export type getAuctionQueryDto = {
   location: string;
 };
 
+export type getRecoverQueryDto = {
+  id: string;
+};
+
 export interface auctionReturnValidateDto extends errorDto {
   data?: auctionBodyDto;
 }

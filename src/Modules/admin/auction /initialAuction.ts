@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/Services/prisma.service';
 
 @Injectable()
-export class TasksService {
+export class InitialAuctionCreation {
   constructor(private readonly prismaService: PrismaService) {}
-  private readonly logger = new Logger(TasksService.name);
+  private readonly logger = new Logger(InitialAuctionCreation.name);
 
   async createInitial() {
     const arr = [];

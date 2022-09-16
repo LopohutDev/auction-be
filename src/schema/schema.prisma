@@ -132,8 +132,8 @@ model Auction {
   endDate     DateTime
   endTime     DateTime
   startNumber Int?
+  isRecover   Boolean     @default(false)
   srappers    ScraperZip[]
-
 }
 
 enum AuctionType {

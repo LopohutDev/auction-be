@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   auctionBodyDto,
   getAuctionQueryDto,
+  getRecoverQueryDto,
 } from 'src/dto/admin.auction.module.dto';
 import { successErrorDto } from 'src/dto/common.dto';
 import { PrismaService } from 'src/Services/prisma.service';
@@ -106,6 +107,34 @@ export class AuctionService {
       this.logger.log('data>>>', data);
 
       return { data };
+    } catch (error) {
+      this.logger.error(error);
+      return { error: { status: 500, message: 'Server error' } };
+    }
+  }
+
+  async setRecoverData(auctionId: getRecoverQueryDto) {
+    const { id } = auctionId;
+
+    const isAuction = await this.prismaService.auction.findUnique({
+      where: {
+        id,
+      },
+    });
+    try {
+      if (isAuction) {
+        await this.prismaService.auction.update({
+          where: {
+            id,
+          },
+          data: {
+            isRecover: true,
+          },
+        });
+        return {
+          success: true,
+        };
+      }
     } catch (error) {
       this.logger.error(error);
       return { error: { status: 500, message: 'Server error' } };

@@ -9,6 +9,7 @@ import {
 import {
   auctionBodyDto,
   getAuctionQueryDto,
+  getRecoverQueryDto,
 } from 'src/dto/admin.auction.module.dto';
 import { AdminAuction } from '../routes/admin.routes';
 import { AuctionService } from './auction.service';
@@ -39,6 +40,21 @@ export class AuctionController {
       return {
         data,
         success: true,
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
+  }
+
+  @Get('recover')
+  async recoverData(@Query() auctionId: getRecoverQueryDto) {
+    const { success, error } = await this.auctionservice.setRecoverData(
+      auctionId,
+    );
+    if (success) {
+      return {
+        success: true,
+        message: 'Successfully recover auction data.',
       };
     } else {
       throw new HttpException(error.message, error.status);
