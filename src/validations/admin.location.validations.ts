@@ -1,6 +1,8 @@
 import {
   locationBodyDto,
   locationReturnValidateDto,
+  usersQueryDataDto,
+  usersReturnValidateDto,
   WarehousesDataDto,
 } from 'src/dto/admin.location.module.dto';
 
@@ -38,3 +40,14 @@ export const validateLocationBody = (
   }
   return { data: body };
 };
+export const validateUsersBody = (
+  body: usersQueryDataDto,
+): usersReturnValidateDto => {
+  const { id, type} = body;
+  if (! id || ! id.trim().length) {
+    return { error: { status: 422, message: ' id is required' } };
+  } else if (!type || !type.trim().length) {
+    return { error: { status: 422, message: 'type is required' } };
+  } 
+  return { data: body };
+  };

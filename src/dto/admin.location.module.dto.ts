@@ -18,3 +18,10 @@ export interface locationReturnValidateDto extends errorDto {
 export interface locationQueryDataDto {
   location: string;
 }
+export type usersQueryDataDto={
+  id:string;
+  type:string;
+}
+export interface usersReturnValidateDto extends errorDto {
+  data?: usersQueryDataDto;
+}

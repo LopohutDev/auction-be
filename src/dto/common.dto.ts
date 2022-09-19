@@ -7,7 +7,7 @@ export interface errorDto {
   error?: errorMsgDto;
 }
 
-export interface successReturnDto {
+export interface successReturnDto extends errorDto {
   success?: boolean;
   message?: string;
 }
