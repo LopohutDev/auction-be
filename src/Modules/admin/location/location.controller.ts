@@ -15,7 +15,7 @@ import {
   locationBodyDto,
   locationQueryDataDto,
 } from 'src/dto/admin.location.module.dto';
-import { AuthGuard } from 'src/guards/jwt.guard';
+import { AdminGuard } from 'src/guards/admin.guard';
 import { AdminLocationRoute } from '../routes/admin.routes';
 import { LocationService } from './location.service';
 
@@ -23,7 +23,7 @@ import { LocationService } from './location.service';
 export class LocationController {
   constructor(private readonly locationservice: LocationService) {}
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminGuard)
   @Post()
   @HttpCode(200)
   async createLocationController(@Body() locinfo: locationBodyDto) {
@@ -40,7 +40,7 @@ export class LocationController {
     }
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminGuard)
   @Get()
   async getLocation(@Query() locationquery: locationQueryDataDto) {
     const { data, error } = await this.locationservice.getLocationDetails(
@@ -56,7 +56,7 @@ export class LocationController {
     }
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminGuard)
   @Put(':location')
   async updateLocationController(
     @Param() param: locationQueryDataDto,

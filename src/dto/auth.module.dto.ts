@@ -29,6 +29,15 @@ export interface userTokenDto {
 
 export interface loginUserDto extends successErrorDto, userTokenDto {}
 
+export interface logoutParamsDto {
+  email: string;
+  reId: string;
+}
+
+export type refreshTokenParamsDto = {
+  refresh_token: string;
+};
+
 export enum AccountEnum {
   REVIEWED = 'REVIEWED',
   ACCEPTED = 'ACCEPTED',
