@@ -75,7 +75,7 @@ export class LocationController {
       throw new HttpException(error.message, error.status);
     }
   }
-  @UseGuards(AuthGuard)
+  @UseGuards(AdminGuard)
   @Delete(':location')
   async deleteLocationController(
     @Param() param: locationQueryDataDto,
