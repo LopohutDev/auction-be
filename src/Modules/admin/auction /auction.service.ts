@@ -47,6 +47,26 @@ export class AuctionService {
         startNumber,
       } = data;
 
+      const isRecoverAuction = await this.prismaService.auction.findMany({
+        where: {
+          isRecover: true,
+        },
+        orderBy: {
+          isRecover: 'asc',
+        },
+      });
+
+      if (isRecoverAuction.length > 3) {
+        this.prismaService.auction.update({
+          where: {
+            id: isRecoverAuction[0]?.id,
+          },
+          data: {
+            isRecover: false,
+          },
+        });
+      }
+
       await this.prismaService.auction.update({
         where: {
           id,
@@ -58,6 +78,7 @@ export class AuctionService {
           endDate,
           endTime,
           startNumber,
+          isRecover: startNumber ? true : false,
         },
       });
       // }
@@ -85,7 +106,7 @@ export class AuctionService {
         return { error: { status: 404, message: 'Invalid location' } };
       }
 
-      const data = await this.prismaService.location.findMany({
+      const locationAuctionData = await this.prismaService.location.findMany({
         where: {
           locid: { equals: location },
         },
@@ -104,7 +125,25 @@ export class AuctionService {
           },
         },
       });
-      this.logger.log('data>>>', data);
+
+      const data = locationAuctionData[0]?.Auction.map((row) => {
+        if (row.scannedItem.length > 0) {
+          return {
+            ...row,
+            status: 'Past',
+          };
+        } else if (!row.startNumber) {
+          return {
+            ...row,
+            status: 'Future',
+          };
+        } else {
+          return {
+            ...row,
+            status: 'Current',
+          };
+        }
+      });
 
       return { data };
     } catch (error) {
