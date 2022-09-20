@@ -44,7 +44,9 @@ export const getScrapperData = async (
         const sendedData = {
           productId: amazondata.product?.product_id,
           images: amazondata.product?.images,
-          description: amazondata.product?.description,
+          description:
+            amazondata.product?.description ||
+            amazondata.product?.feature_bullets?.join(' '),
           title: amazondata.product?.title,
         };
         return { data: sendedData };

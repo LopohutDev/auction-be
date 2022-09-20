@@ -16,6 +16,7 @@ export interface returnRegisterUserDto extends errorDto {
 export interface loginBodyDto {
   email: string;
   password: string;
+  isAdmin?: string;
 }
 
 export interface returnLoginUserDto extends errorDto {
