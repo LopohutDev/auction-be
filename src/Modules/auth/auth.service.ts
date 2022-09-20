@@ -130,6 +130,8 @@ export class AuthService {
             message: "You can's access . please ask your admin",
           },
         };
+      } else if (user.isAdmin && isUserExists.role !== Roles.ADMIN) {
+        return { error: { status: 422, message: 'You are not admin' } };
       }
       const { access_token, refresh_token } = await this.getUserToken(
         isUserExists,
