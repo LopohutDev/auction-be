@@ -28,12 +28,13 @@ export class InitialAuctionCreation {
       const remainingDays = currMonthLastDay.getDate() - currDate.getDate();
       // this.logger.log('isAuction>>>>', remainingDays);
       noAuction.map((row) => {
-        for (let i = 1; i <= remainingDays; i++) {
+        for (let i = 1, j = 0; i <= remainingDays; i++) {
           // const futureDate = new Date(
           //   new Date().getTime() + i * 24 * 60 * 60 * 1000,
           // );
           const currDateDay = currDate.getDay();
-          if (i === 1) {
+          if (i === 1 && j === 0) {
+            j++;
             if (currDateDay === 1 || currDateDay === 4) {
               i = 1;
             }

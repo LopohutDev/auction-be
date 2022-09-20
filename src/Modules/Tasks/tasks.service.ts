@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { BarcodeData } from 'src/Cache/BarCodes';
 
-
 import { Jobs } from 'src/Cache/Jobs';
 
 import { PrismaService } from 'src/Services/prisma.service';
@@ -60,7 +59,6 @@ export class TasksService {
     });
   }
 
-
   @Cron(CronExpression.EVERY_5_MINUTES)
   async handlePriorityQueue() {
     const jobs = Jobs.queue;
@@ -84,7 +82,7 @@ export class TasksService {
         });
       }
     }
-}
+  }
   @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
   async addFutureAuction() {
     const arr = [];
@@ -137,6 +135,5 @@ export class TasksService {
     await this.prismaService.auction.createMany({
       data: arr,
     });
-
   }
 }

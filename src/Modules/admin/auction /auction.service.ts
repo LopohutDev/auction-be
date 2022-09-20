@@ -121,6 +121,7 @@ export class AuctionService {
               endDate: true,
               endTime: true,
               startNumber: true,
+              isRecover: true,
             },
           },
         },
