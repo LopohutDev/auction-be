@@ -1,5 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
+import moment from 'moment';
+import * as argon from 'argon2';
 import {
   accessTokenConfig,
   AccessTokenSecret,
@@ -8,6 +15,8 @@ import {
 } from 'src/config/jwt.config';
 import {
   AccountEnum,
+  forgotPasswordDto,
+  forgotPasswordInitDto,
   loginBodyDto,
   loginUserDto,
   logoutParamsDto,
@@ -21,12 +30,14 @@ import { decodeRefreshToken } from 'src/guards/strategies/jwt.strategy';
 import { PrismaService } from 'src/Services/prisma.service';
 import { Jwt } from 'src/tokens/Jwt';
 import { decrypt, encrypt, encryptRefreshToken } from 'src/utils/crypt.utils';
+import { sendForgotPasswordOtp } from 'src/utils/sendForgotPassword.Otp';
 import { uuid } from 'src/utils/uuid.utils';
 import {
   refreshTokenValidate,
   validateLoginUser,
   validateregisterUser,
 } from 'src/validations/auth.validation';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -177,6 +188,83 @@ export class AuthService {
         process.env['SECRET'],
         accessTokenConfig,
       ) as string,
+    };
+  }
+
+  checkExpiration(emailOtpExpiration: Date) {
+    const oldOtpExpiration = moment(emailOtpExpiration);
+    const currentDateTime = moment();
+    const diff = oldOtpExpiration.diff(currentDateTime);
+
+    if (diff > 0) {
+      throw new UnprocessableEntityException(
+        `You can request again later ${diff / 60000} minute(s)`,
+      );
+    }
+  }
+
+  generateCode() {
+    const min = 100000;
+    const max = 900000;
+    const random = Math.random() * min;
+
+    const minutesToAdd = 2;
+    const futureDate = moment().add(minutesToAdd, 'minutes').format();
+    return {
+      code: (Math.floor(random) + max).toString(),
+      expiration: futureDate,
+    };
+  }
+
+  async forgotPasswordInit(dto: forgotPasswordInitDto) {
+    let user = await this.prismaService.user.findUnique({
+      where: {
+        email: dto.email,
+      },
+    });
+    if (!user) throw new ForbiddenException('Credentials incorrect');
+    this.checkExpiration(user.emailOtpExpiration);
+    const newCode = this.generateCode();
+    user = await this.prismaService.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        emailOtp: newCode.code,
+        emailOtpExpiration: newCode.expiration,
+      },
+    });
+    sendForgotPasswordOtp({
+      name: `${user.firstname} ${user.lastname}`,
+      email: user.email,
+      code: newCode.code,
+    });
+
+    return { message: 'Forgot password OTP has been sent to your email.' };
+  }
+
+  async forgotPassword(dto: forgotPasswordDto) {
+    let user = await this.prismaService.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (!user) throw new ForbiddenException('Credentials incorrect');
+    if (user.emailOtp !== dto.otp) {
+      throw new ForbiddenException('Invalid Otp');
+    }
+
+    user = await this.prismaService.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        password: encrypt(dto.password),
+        emailOtpExpiration: moment().format(),
+      },
+    });
+    const tokens = await this.getUserToken(user);
+    return {
+      ...tokens,
+      message: 'Password has successfully updated.',
     };
   }
 }
