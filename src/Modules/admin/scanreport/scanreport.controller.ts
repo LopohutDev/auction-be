@@ -13,10 +13,26 @@ import { ScanReportsService } from './scanreport.service';
 export class ScanReportsController {
   constructor(private readonly reportsService: ScanReportsService) {}
 
-  @Post()
+  @Post('failed')
   @HttpCode(200)
   async getAuctionScan(@Body() reportinfo: getScanReportBodyDto) {
-    const { data, error } = await this.reportsService.getScanByAuction(
+    const { data, error } = await this.reportsService.getFailedScanByAuction(
+      reportinfo,
+    );
+    if (data) {
+      return {
+        data,
+        success: true,
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
+  }
+
+  @Post('success')
+  @HttpCode(200)
+  async getSuccessAuctionScan(@Body() reportinfo: getScanReportBodyDto) {
+    const { data, error } = await this.reportsService.getScrapperScans(
       reportinfo,
     );
     if (data) {

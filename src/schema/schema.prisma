@@ -48,6 +48,7 @@ model Location {
   assigneduser    User[]        
   Warehouses      Warehouses[]
   Scanned         Scans[]
+  scapper         ScraperZip[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @default(now())
 }
@@ -90,7 +91,7 @@ model Scans {
   tag             String
   barcode         String
   auction         Auction              @relation(fields:[auctionId], references: [id])
-  auctionId       String               @unique
+  auctionId       String               
   locations       Location             @relation(fields:[locid], references: [locid])
   locid           String
   status          ScannedStatus        @default(UNDERREVIEW)
@@ -109,6 +110,10 @@ model ItemType {
 
 model ScraperZip {
   id                  Int                   @id @default(autoincrement())
+  auction             Auction               @relation(fields:[auctionId], references: [id])
+  auctionId           String
+  locations           Location              @relation(fields:[locid], references: [locid])
+  locid               String                
   filePath            String
   lastcsvgenerated    DateTime              @default(now())
   isNewUploaded       Boolean               @default(false)
@@ -124,6 +129,7 @@ model Auction {
   endDate     DateTime
   endTime     DateTime
   startNumber Int
+  srappers    ScraperZip[]
 }
 
 enum AuctionType {
