@@ -64,8 +64,6 @@ model User {
   locid           String?        
   role            Roles         @default(NORMAL)
   scanProducts    Scans[]
-  emailOtp                String          @default("000000")
-  emailOtpExpiration      DateTime        @default(now())
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @default(now()) 
 }
