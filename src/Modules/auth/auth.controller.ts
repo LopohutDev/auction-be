@@ -3,11 +3,15 @@ import {
   Controller,
   HttpCode,
   HttpException,
+  HttpStatus,
+  Patch,
   Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Public } from 'src/decorator/public.decorator';
 import {
+  forgotPasswordInitDto,
   loginBodyDto,
   loginUserDto,
   logoutParamsDto,
@@ -85,5 +89,12 @@ export class AuthController {
     } else {
       throw new HttpException(error.message, error.status);
     }
+  }
+
+  @Public()
+  @Patch('forgot-init')
+  @HttpCode(HttpStatus.OK)
+  forgotPasswordInit(@Body() dto: forgotPasswordInitDto) {
+    return this.authService.forgotPasswordInit(dto);
   }
 }
