@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpException,
@@ -71,6 +72,24 @@ export class LocationController {
         message: 'Successfully updated location.',
       };
     } else {
+      throw new HttpException(error.message, error.status);
+    }
+  }
+  @UseGuards(AdminGuard)
+  @Delete(':location')
+  async deleteLocationController(
+    @Param() param: locationQueryDataDto,
+  ) {
+    const {success,error } = await this.locationservice.deleteLocation(
+      param.location,
+    );
+    if (success) {
+      return {
+        success: true,
+        message: 'Successfully Delete location.',
+      };
+    } 
+    else {
       throw new HttpException(error.message, error.status);
     }
   }
