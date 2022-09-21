@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/Services/prisma.service';
+import setAuction from './auction.utils';
 
 @Injectable()
 export class InitialAuctionCreation {
@@ -26,12 +27,9 @@ export class InitialAuctionCreation {
 
     if (noAuction) {
       const remainingDays = currMonthLastDay.getDate() - currDate.getDate();
-      // this.logger.log('isAuction>>>>', remainingDays);
+
       noAuction.map((row) => {
         for (let i = 1, j = 0; i <= remainingDays; i++) {
-          // const futureDate = new Date(
-          //   new Date().getTime() + i * 24 * 60 * 60 * 1000,
-          // );
           const currDateDay = currDate.getDay();
           if (i === 1 && j === 0) {
             j++;
@@ -48,7 +46,6 @@ export class InitialAuctionCreation {
               i = 2;
             }
           }
-          // this.logger.debug('futureDate>>>', currDateDay);
 
           const futureDate = new Date(
             new Date().getTime() + i * 24 * 60 * 60 * 1000,

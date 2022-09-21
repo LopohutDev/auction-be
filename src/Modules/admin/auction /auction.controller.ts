@@ -5,12 +5,14 @@ import {
   HttpException,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   auctionBodyDto,
   getAuctionQueryDto,
   getRecoverQueryDto,
 } from 'src/dto/admin.auction.module.dto';
+import { AdminGuard } from 'src/guards/admin.guard';
 import { AdminAuction } from '../routes/admin.routes';
 import { AuctionService } from './auction.service';
 
@@ -18,6 +20,7 @@ import { AuctionService } from './auction.service';
 export class AuctionController {
   constructor(private readonly auctionservice: AuctionService) {}
 
+  @UseGuards(AdminGuard)
   @Post()
   async createAuctionController(@Body() auctioninfo: auctionBodyDto) {
     const { error, success } = await this.auctionservice.createAuction(
@@ -33,6 +36,7 @@ export class AuctionController {
     }
   }
 
+  @UseGuards(AdminGuard)
   @Get()
   async getAuctionData(@Query() locinfo: getAuctionQueryDto) {
     const { data, error } = await this.auctionservice.getAllAuction(locinfo);
@@ -46,6 +50,7 @@ export class AuctionController {
     }
   }
 
+  @UseGuards(AdminGuard)
   @Get('recover')
   async recoverData(@Query() auctionId: getRecoverQueryDto) {
     const { success, error } = await this.auctionservice.setRecoverData(

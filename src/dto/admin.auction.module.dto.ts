@@ -3,9 +3,7 @@ import { errorDto } from './common.dto';
 
 export type auctionBodyDto = {
   id: string;
-  // auctionType: AuctionType;
-  // startDate: Date;
-  // startTime: Date;
+
   endDate: Date;
   endTime: Date;
   startNumber: number;
@@ -18,6 +16,12 @@ export type getAuctionQueryDto = {
 export type getRecoverQueryDto = {
   id: string;
 };
+
+export enum auctionStatusDto {
+  Past,
+  Current,
+  Future,
+}
 
 export interface auctionReturnValidateDto extends errorDto {
   data?: auctionBodyDto;

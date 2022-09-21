@@ -132,7 +132,7 @@ model Auction {
   endDate     DateTime
   endTime     DateTime
   startNumber Int?
-  isRecover   Boolean     @default(false)
+  isRecover   DateTime? 
   srappers    ScraperZip[]
 }
 

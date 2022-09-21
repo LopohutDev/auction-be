@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   auctionBodyDto,
+  auctionStatusDto,
   getAuctionQueryDto,
   getRecoverQueryDto,
 } from 'src/dto/admin.auction.module.dto';
@@ -18,67 +19,26 @@ export class AuctionService {
     this.logger.log(auctionInfo);
 
     try {
-      // const arr = [];
-      // const currDate = new Date();
-      // const lastDayOfCurrMonth = new Date(
-      //   currDate.getFullYear(),
-      //   currDate.getMonth() + 1,
-      //   0,
-      // );
-      // const date = currDate.toLocaleString().split(',')[0];
-      // const lastDay = lastDayOfCurrMonth.toLocaleString().split(',')[0];
-
-      // if (lastDay === date) {
-      //   futureAuction(currDate, arr);
-      //   await this.prismaService.auction.createMany({
-      //     data: arr,
-      //   });
-      // } else {
       const { data, error } = validationAuctionBody(auctionInfo);
       if (error) return { error };
 
       const {
         id,
-        // auctionType,
-        // startDate,
-        // startTime,
+
         endDate,
         endTime,
         startNumber,
       } = data;
-
-      const isRecoverAuction = await this.prismaService.auction.findMany({
-        where: {
-          isRecover: true,
-        },
-        orderBy: {
-          isRecover: 'asc',
-        },
-      });
-
-      if (isRecoverAuction.length > 3) {
-        this.prismaService.auction.update({
-          where: {
-            id: isRecoverAuction[0]?.id,
-          },
-          data: {
-            isRecover: false,
-          },
-        });
-      }
 
       await this.prismaService.auction.update({
         where: {
           id,
         },
         data: {
-          // auctionType,
-          // startDate,
-          // startTime,
           endDate,
           endTime,
           startNumber,
-          isRecover: startNumber ? true : false,
+          isRecover: startNumber && new Date().toISOString(),
         },
       });
       // }
@@ -115,33 +75,41 @@ export class AuctionService {
             select: {
               id: true,
               auctionType: true,
-              scannedItem: true,
               startDate: true,
               startTime: true,
               endDate: true,
               endTime: true,
               startNumber: true,
               isRecover: true,
+              _count: {
+                select: {
+                  scannedItem: true,
+                },
+              },
             },
           },
         },
       });
 
+      const currDate = new Date().toISOString().slice(0, 10);
+
       const data = locationAuctionData[0]?.Auction.map((row) => {
-        if (row.scannedItem.length > 0) {
+        const endDate = new Date(row.endDate).toISOString().slice(0, 10);
+
+        if (row._count.scannedItem > 0 && currDate > endDate) {
           return {
             ...row,
-            status: 'Past',
+            status: auctionStatusDto.Past,
           };
         } else if (!row.startNumber) {
           return {
             ...row,
-            status: 'Future',
+            status: auctionStatusDto.Future,
           };
-        } else {
+        } else if (row.startNumber && currDate < endDate) {
           return {
             ...row,
-            status: 'Current',
+            status: auctionStatusDto.Current,
           };
         }
       });
@@ -168,7 +136,7 @@ export class AuctionService {
             id,
           },
           data: {
-            isRecover: true,
+            isRecover: new Date().toISOString(),
           },
         });
         return {
