@@ -1,8 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from 'src/Services/prisma.service';
-import { successErrorDto, successReturnDto } from 'src/dto/common.dto';
+import { successErrorDto, successErrorReturnDto } from 'src/dto/common.dto';
 import { usersQueryDataDto } from "src/dto/admin.location.module.dto";
 import { validateUsersBody } from "src/validations/admin.location.validations";
+import { AccountEnum } from "@prisma/client";
 
 @Injectable()
 export class AdminUsersService {
@@ -11,18 +12,18 @@ export class AdminUsersService {
 
     async acceptAdminUser(
         userinfo: usersQueryDataDto,
-    ): Promise<successReturnDto> {
+    ): Promise<successErrorReturnDto> {
         const { data, error } = validateUsersBody(userinfo);
         if (error) {
             return { error };
         }
-        try {
-            if(data.type=="accept"){
-
-                await this.prismaService.user.update({
+        try{
+            switch (data.type){
+                case AccountEnum.ACCEPTED:
+                   await this.prismaService.user.update({
                     where: { id: data.id },
                     data: {
-                        account: 'ACCEPTED',
+                        account: AccountEnum.ACCEPTED,
                     },
                 });
                 return {
@@ -30,11 +31,12 @@ export class AdminUsersService {
                     message: 'Successfully Verified Account.'
             
                 };
-            } else if (data.type == "reject"){
-                await this.prismaService.user.update({
+                    break;
+                case AccountEnum.REJECTED:
+                    await this.prismaService.user.update({
                     where: { id: data.id },
                     data: {
-                        account: 'REJECTED',
+                        account: AccountEnum.REJECTED,
                         rejectedreason:'wrong user'
                         
                     },
@@ -43,21 +45,26 @@ export class AdminUsersService {
                     success: true,
                     message: 'Successfully rejected Account.'
                 };
-            } else if (data.type == "delete") {
-                await this.prismaService.user.update({
+                    break;
+                case AccountEnum.DELETED:
+                    await this.prismaService.user.update({
                     where: { id: data.id },
                     data: {
-                        account: 'DELETED',
+                        account: AccountEnum.DELETED,
                     },
                 });
                 return {
                     success: true,
                     message: 'Successfully Deleted Account.'
                 };
-            }else{
-                return { error: { status: 422, message: 'type is not valid' } };
+                default:
+                    return {
+                        success: true,
+                        message: 'Invalid Type'
+                    }; 
             }
-        } catch (error) {
+        }
+        catch (error) {
             return { error: { status: 422, message: 'User id is not valid' } };
         }
     }
