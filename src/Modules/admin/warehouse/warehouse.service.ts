@@ -24,7 +24,6 @@ export class WarehouseService {
         await this.prismaService.warehouses.create({
           data: {
             areaname: data.areaname,
-            assletter: data.assletter,
             locid: data.location,
           },
         });

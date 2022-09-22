@@ -1,14 +1,19 @@
 import { errorDto } from './common.dto';
 
 export interface WarehousesDataDto {
-  assletter: string;
   areaname: string;
+}
+
+export interface locationItemTypeDto {
+  itemtype: string;
+  tagname: string;
 }
 
 export type locationBodyDto = {
   city: string;
   address: string;
-  Warehouses?: WarehousesDataDto[];
+  warehouses: WarehousesDataDto[];
+  itemtype: locationItemTypeDto[];
 };
 
 export interface locationReturnValidateDto extends errorDto {
@@ -18,10 +23,10 @@ export interface locationReturnValidateDto extends errorDto {
 export interface locationQueryDataDto {
   location: string;
 }
-export type usersQueryDataDto={
-  id:string;
-  type:string;
-}
+export type usersQueryDataDto = {
+  id: string;
+  type: string;
+};
 export interface usersReturnValidateDto extends errorDto {
   data?: usersQueryDataDto;
 }

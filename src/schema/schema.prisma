@@ -32,8 +32,7 @@ enum ScannedFailedStatus {
 
 model Warehouses {
   id              Int           @id @default(autoincrement())
-  areaname        String      
-  assletter       String
+  areaname        String
   locations       Location      @relation(fields: [locid], references: [locid])
   locid           String        
   createdAt       DateTime      @default(now())
@@ -49,6 +48,7 @@ model Location {
   Warehouses      Warehouses[]
   Scanned         Scans[]
   scapper         ScraperZip[]
+  locationItem    locationItemType[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @default(now())
 }
@@ -103,9 +103,22 @@ model Scans {
   createdAt       DateTime             @default(now())
 }
 
+model locationItemType {
+  id              String               @id @default(uuid())
+  tagname         String
+  locations       Location             @relation(fields:[locid], references: [locid])
+  locid           String
+  itemtype        String
+  ItemType        ItemType             @relation(fields:[itemtype], references: [uuid])        
+  createdAt       DateTime             @default(now())
+}
+
 model ItemType {
   id              Int                   @id @default(autoincrement())
+  uuid            String                @unique @default(uuid())
   name            String                @unique
+  locationItem    locationItemType[]
+  createdAt       DateTime              @default(now())
 }
 
 model ScraperZip {
