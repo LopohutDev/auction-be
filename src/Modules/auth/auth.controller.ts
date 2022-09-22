@@ -92,17 +92,22 @@ export class AuthController {
     }
   }
 
-  @Public()
-  @Patch('forgot-init')
-  @HttpCode(HttpStatus.OK)
-  forgotPasswordInit(@Body() dto: forgotPasswordInitDto) {
-    return this.authService.forgotPasswordInit(dto);
+  @Post('forgot-password')
+  @HttpCode(200)
+  forgotPassword(@Body() dto: forgotPasswordInitDto) {
+    return this.authService.forgotPassword(dto);
   }
 
-  @Public()
-  @Patch('forgot')
-  @HttpCode(HttpStatus.OK)
-  forgotPassword(@Body() dto: forgotPasswordDto) {
-    return this.authService.forgotPassword(dto);
+  @Post('reset-password')
+  @HttpCode(200)
+  async resetPassword(@Body() dto: forgotPasswordDto) {
+    const { error, success } = await this.authService.resetPassword(dto);
+    if (success) {
+      return {
+        success: true,
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
   }
 }

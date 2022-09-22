@@ -4,8 +4,8 @@ import {
   Logger,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { sign } from 'jsonwebtoken';
-import * as argon from 'argon2';
+import { sign, verify } from 'jsonwebtoken';
+// import * as argon from 'argon2';
 import {
   accessTokenConfig,
   AccessTokenSecret,
@@ -36,18 +36,19 @@ import {
   validateregisterUser,
 } from 'src/validations/auth.validation';
 import { User } from '@prisma/client';
+import * as nodemailer from 'nodemailer';
 
-interface IUserOTP {
-  otp: string;
-  timeStamp: string;
-  userId: string;
-}
+// interface IUserOTP {
+//   otp: string;
+//   timeStamp: string;
+//   userId: string;
+// }
 
-let userOtp: IUserOTP[] = [];
+// let userOtp: IUserOTP[] = [];
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) { }
 
   private readonly logger = new Logger(AuthService.name);
 
@@ -227,60 +228,94 @@ export class AuthService {
     };
   }
 
-  async forgotPasswordInit(dto: forgotPasswordInitDto) {
-    let user = await this.prismaService.user.findUnique({
+  async forgotPassword(dto: forgotPasswordInitDto) {
+    const user = await this.prismaService.user.findUnique({
       where: {
         email: dto.email,
       },
     });
+    const payload = {
+      email: dto.email,
+    };
+    const tokan = sign(
+      payload,
+      process.env[AccessTokenSecret],
+      accessTokenConfig,
+    );
+    const message =
+      'Click on this link for reset password : <a href="http://0.0.0.0:5000/' +
+      user.id +
+      '/token=' +
+      tokan +
+      '">click</a>';
     if (!user) throw new ForbiddenException('Credentials incorrect');
-    this.checkExpiration(user.emailOtpExpiration);
-    const newCode = this.generateCode();
-
-    userOtp.push({
-      userId: user.id,
-      otp: newCode.code,
-      timeStamp: new Date().toISOString(),
+    this.logger.log('user>>', tokan);
+    const yourEmail = 'dc0b617e7f77ea';
+    const yourPass = '32c237a5760a4f';
+    const mailHost = 'smtp.mailtrap.io';
+    const mailPort = 2525;
+    const senderEmail = 'richa.d@aveosoft.com';
+    const transporter = nodemailer.createTransport({
+      host: mailHost,
+      port: mailPort,
+      secure: false,
+      auth: {
+        user: yourEmail,
+        pass: yourPass,
+      },
     });
 
-    // Insert Forgot Password Otp Email function
-
+    const mailOptions = {
+      from: senderEmail,
+      to: dto.email,
+      subject: senderEmail,
+      html: message,
+    };
+    // this.logger.log(mailOptions);
+    await transporter.sendMail(mailOptions);
     return {
       message: 'Forgot password OTP has been sent to your email.',
-      otpCode: newCode.code,
     };
   }
 
-  async forgotPassword(dto: forgotPasswordDto) {
-    let user = await this.prismaService.user.findUnique({
-      where: { email: dto.email },
-    });
-
-    let otpUser = userOtp
-      .filter((u) => u.userId === user.id)
-      .sort((a, b) => {
-        return (
-          new Date(a.timeStamp).valueOf() - new Date(b.timeStamp).valueOf()
-        );
+  async resetPassword(dto: forgotPasswordDto) {
+    try {
+      const data = verify(
+        dto.token,
+        process.env[AccessTokenSecret],
+        accessTokenConfig,
+      );
+      let user = await this.prismaService.user.findUnique({
+        where: { email: data.email },
       });
-
-    if (!user) throw new ForbiddenException('Credentials incorrect');
-    if (otpUser[0].otp !== dto.otp) {
-      throw new ForbiddenException('Invalid Otp');
+      if (!user) throw new ForbiddenException('Credentials incorrect');
+      user = await this.prismaService.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          password: encrypt(dto.password),
+        },
+      });
+      // const tokens = await this.getUserToken(user);
+      if (user) {
+        return {
+          success: true,
+          message: 'Password has successfully changed.',
+        };
+      } else {
+        return {
+          success: false,
+          message: 'Password has not changed.',
+        };
+      }
+    } catch (error) {
+      return {
+        error: {
+          status: 422,
+          message: ' The token has expired. Please try again.',
+        },
+      };
     }
-
-    user = await this.prismaService.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        password: encrypt(dto.password),
-      },
-    });
-    const tokens = await this.getUserToken(user);
-    return {
-      ...tokens,
-      message: 'Password has successfully updated.',
-    };
   }
 }

@@ -4,6 +4,7 @@ import { successErrorDto, successErrorReturnDto } from 'src/dto/common.dto';
 import { usersQueryDataDto } from 'src/dto/admin.location.module.dto';
 import { validateUsersBody } from 'src/validations/admin.location.validations';
 import { AccountEnum } from '@prisma/client';
+import { Roles } from 'src/dto/auth.module.dto';
 
 @Injectable()
 export class AdminUsersService {
@@ -69,7 +70,10 @@ export class AdminUsersService {
       const data = await this.prismaService.user.findMany({
         where: {
           account: {
-            not: 'DELETED',
+            not: AccountEnum.DELETED,
+          },
+          role: {
+            not: Roles.ADMIN,
           },
         },
         select: {
