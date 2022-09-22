@@ -77,10 +77,8 @@ export class LocationController {
   }
   @UseGuards(AdminGuard)
   @Delete(':location')
-  async deleteLocationController(
-    @Param() param: locationQueryDataDto,
-  ) {
-    const {success,error } = await this.locationservice.deleteLocation(
+  async deleteLocationController(@Param() param: locationQueryDataDto) {
+    const { success, error } = await this.locationservice.deleteLocation(
       param.location,
     );
     if (success) {
@@ -88,8 +86,7 @@ export class LocationController {
         success: true,
         message: 'Successfully Delete location.',
       };
-    } 
-    else {
+    } else {
       throw new HttpException(error.message, error.status);
     }
   }

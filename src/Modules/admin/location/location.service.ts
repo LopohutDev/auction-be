@@ -88,34 +88,34 @@ export class LocationService {
     }
   }
 
-
-  async deleteLocation(
-    param: string,
-  ) {
-  
+  async deleteLocation(param: string) {
     if (!param) {
       return { error: { status: 422, message: 'Location param is required' } };
     }
     try {
-    const warehouse = await this.prismaService.warehouses.findFirst({
+      const warehouse = await this.prismaService.warehouses.findFirst({
         where: { locid: param },
       });
-      
+
       const users = await this.prismaService.user.findFirst({
         where: { locid: param },
       });
       //this.logger.log("user>>",users,warehouse)
-      if(!warehouse && !users){
+      if (!warehouse && !users) {
         const deleted = await this.prismaService.location.delete({
           where: { locid: param },
-        })
-        
+        });
+
         return {
-            success: true,
-          };
-      
-      }else{
-        return { error: { status: 422, message: 'You cannot delete the location that has data' } };
+          success: true,
+        };
+      } else {
+        return {
+          error: {
+            status: 422,
+            message: 'You cannot delete the location that has data',
+          },
+        };
       }
     } catch (error) {
       return { error: { status: 422, message: 'Internal server error' } };
