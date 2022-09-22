@@ -8,7 +8,7 @@ export class InitialAuctionCreation {
   private readonly logger = new Logger(InitialAuctionCreation.name);
 
   async createInitial() {
-    const arr = [];
+    let arr = [];
     const currDate = new Date();
 
     const currMonthLastDay = new Date(
@@ -33,68 +33,38 @@ export class InitialAuctionCreation {
           const currDateDay = currDate.getDay();
           if (i === 1 && j === 0) {
             j++;
-            if (currDateDay === 1 || currDateDay === 4) {
-              i = 1;
-            }
-            if (currDateDay === 2 || currDateDay === 5) {
-              i = 0;
-            }
-            if (currDateDay === 3 || currDateDay === 6) {
-              i = -1;
-            }
-            if (currDateDay === 0) {
-              i = 2;
+            switch (currDateDay) {
+              case 1 || 4:
+                i = 1;
+                break;
+
+              case 2 || 5:
+                i = 0;
+                break;
+
+              case 3 || 6:
+                i = 1;
+                break;
+
+              case 0:
+                i = 2;
+                break;
+
+              default:
+                null;
+                break;
             }
           }
 
-          const futureDate = new Date(
-            new Date().getTime() + i * 24 * 60 * 60 * 1000,
-          );
-          const futureDateDay = futureDate.getDay();
+          const { newArr, n } = setAuction(i, row);
 
-          if (
-            futureDateDay === 2 ||
-            futureDateDay === 3 ||
-            futureDateDay === 4
-          ) {
-            i = i + 2;
-            arr.push({
-              auctionType: 'Auction1',
-              startDate: futureDate.toISOString(),
-              startTime: new Date(futureDate.setHours(8, 0, 0)).toISOString(),
-              endDate: new Date(
-                new Date(futureDate).getTime() + 2 * 24 * 60 * 60 * 1000,
-              ).toISOString(),
-              endTime: new Date(futureDate.setHours(19, 0, 0)).toISOString(),
-              locid: row.locid,
-            });
-          }
-
-          if (
-            futureDateDay === 5 ||
-            futureDateDay === 6 ||
-            futureDateDay === 0 ||
-            futureDateDay === 1
-          ) {
-            i = i + 3;
-            arr.push({
-              auctionType: 'Auction2',
-              startDate: futureDate.toISOString(),
-              startTime: new Date(futureDate.setHours(8, 0, 0)).toISOString(),
-              endDate: new Date(
-                new Date(futureDate).getTime() + 3 * 24 * 60 * 60 * 1000,
-              ).toISOString(),
-              endTime: new Date(futureDate.setHours(19, 0, 0)).toISOString(),
-              locid: row.locid,
-            });
-          }
+          i = n;
+          arr = [...arr, newArr];
         }
       });
       await this.prismaService.auction.createMany({
         data: arr,
       });
     }
-
-    this.logger.debug('futureDate>>>', JSON.stringify(arr));
   }
 }

@@ -1,9 +1,7 @@
-import { AuctionType } from '@prisma/client';
 import { errorDto } from './common.dto';
 
 export type auctionBodyDto = {
   id: string;
-
   endDate: Date;
   endTime: Date;
   startNumber: number;
@@ -18,9 +16,9 @@ export type getRecoverQueryDto = {
 };
 
 export enum auctionStatusDto {
-  Past,
-  Current,
-  Future,
+  Past = 'Past',
+  Current = 'Current',
+  Future = 'Future',
 }
 
 export interface auctionReturnValidateDto extends errorDto {

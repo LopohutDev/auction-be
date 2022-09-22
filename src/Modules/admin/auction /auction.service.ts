@@ -8,7 +8,6 @@ import {
 import { successErrorDto } from 'src/dto/common.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { validationAuctionBody } from 'src/validations/admin.auction.validation';
-import futureAuction from './auction.utils';
 
 @Injectable()
 export class AuctionService {
@@ -16,19 +15,11 @@ export class AuctionService {
   private readonly logger = new Logger(AuctionService.name);
 
   async createAuction(auctionInfo: auctionBodyDto): Promise<successErrorDto> {
-    this.logger.log(auctionInfo);
-
     try {
       const { data, error } = validationAuctionBody(auctionInfo);
       if (error) return { error };
 
-      const {
-        id,
-
-        endDate,
-        endTime,
-        startNumber,
-      } = data;
+      const { id, endDate, endTime, startNumber } = data;
 
       await this.prismaService.auction.update({
         where: {
@@ -41,7 +32,7 @@ export class AuctionService {
           isRecover: startNumber && new Date().toISOString(),
         },
       });
-      // }
+
       return {
         success: true,
       };
@@ -142,6 +133,8 @@ export class AuctionService {
         return {
           success: true,
         };
+      } else {
+        return { error: { status: 422, message: 'Invalid auction' } };
       }
     } catch (error) {
       this.logger.error(error);
