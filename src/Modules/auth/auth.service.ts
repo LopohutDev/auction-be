@@ -36,7 +36,8 @@ export class AuthService {
   async getUserToken(user: authTokenDto) {
     const payload = {
       email: user.email,
-      role: user?.role || 'NORMAL',
+      role: user?.role || Roles.NORMAL,
+      name: user?.firstname || '' + user?.lastname || '',
     };
     const id = uuid();
     const refresh_token = sign(
@@ -170,11 +171,12 @@ export class AuthService {
       reId: refreshToken.id,
       email: refreshToken.email,
       role: refreshToken.role,
+      name: refreshToken.name,
     };
     return {
       access_token: sign(
         payload,
-        process.env['SECRET'],
+        process.env[AccessTokenSecret],
         accessTokenConfig,
       ) as string,
     };
