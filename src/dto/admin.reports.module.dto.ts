@@ -12,3 +12,8 @@ export type getScanReportBodyDto = {
 export interface scanReportValidateDto extends errorDto {
   value?: getScanReportBodyDto;
 }
+
+export enum ScannedFailedStatus {
+  DONE = 'DONE',
+  UNDERREVIEW = 'UNDERREVIEW',
+}
