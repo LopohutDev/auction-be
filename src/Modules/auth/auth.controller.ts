@@ -105,6 +105,7 @@ export class AuthController {
     if (success) {
       return {
         success: true,
+        message: 'Password has successfully changed.',
       };
     } else {
       throw new HttpException(error.message, error.status);

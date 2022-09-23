@@ -25,7 +25,10 @@ import {
 } from 'src/dto/auth.module.dto';
 import { successErrorDto } from 'src/dto/common.dto';
 import { authTokenDto } from 'src/dto/tokens.dto';
-import { decodeRefreshToken } from 'src/guards/strategies/jwt.strategy';
+import {
+  decodeRefreshToken,
+  validateToken,
+} from 'src/guards/strategies/jwt.strategy';
 import { PrismaService } from 'src/Services/prisma.service';
 import { Jwt } from 'src/tokens/Jwt';
 import { decrypt, encrypt, encryptRefreshToken } from 'src/utils/crypt.utils';
@@ -171,7 +174,6 @@ export class AuthService {
     if (!email || !email.trim().length) {
       return { error: { status: 422, message: 'email is required' } };
     }
-
     const { error } = Jwt.removeToken(reId);
     if (error) {
       return { error: { status: 403, message: 'Invalid Token' } };
@@ -201,112 +203,74 @@ export class AuthService {
     };
   }
 
-  checkExpiration(emailOtpExpiration: Date) {
-    const oldOtpExpiration = new Date(emailOtpExpiration).getTime();
-    const currentDateTime = new Date().getTime();
-    const diff = oldOtpExpiration - currentDateTime;
-
-    if (diff > 0) {
-      throw new UnprocessableEntityException(
-        `You can request again later ${diff / 60000} minute(s)`,
-      );
-    }
-  }
-
-  generateCode() {
-    const min = 100000;
-    const max = 900000;
-    const random = Math.random() * min;
-
-    const minutesToAdd = 2;
-    const futureDate = new Date();
-    futureDate.setMinutes(futureDate.getMinutes() + minutesToAdd);
-
-    return {
-      code: (Math.floor(random) + max).toString(),
-      expiration: futureDate,
-    };
-  }
-
   async forgotPassword(dto: forgotPasswordInitDto) {
     const user = await this.prismaService.user.findUnique({
       where: {
         email: dto.email,
       },
     });
-    const payload = {
-      email: dto.email,
-    };
-    const tokan = sign(
-      payload,
-      process.env[AccessTokenSecret],
-      accessTokenConfig,
-    );
+    const { access_token } = await this.getUserToken(user);
+    const subject = 'Reset Password Email';
     const message =
       'Click on this link for reset password : <a href="http://0.0.0.0:5000/' +
       user.id +
       '/token=' +
-      tokan +
+      access_token +
       '">click</a>';
     if (!user) throw new ForbiddenException('Credentials incorrect');
-    this.logger.log('user>>', tokan);
-    const yourEmail = 'dc0b617e7f77ea';
-    const yourPass = '32c237a5760a4f';
-    const mailHost = 'smtp.mailtrap.io';
-    const mailPort = 2525;
-    const senderEmail = 'richa.d@aveosoft.com';
     const transporter = nodemailer.createTransport({
-      host: mailHost,
-      port: mailPort,
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
       secure: false,
       auth: {
-        user: yourEmail,
-        pass: yourPass,
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
     const mailOptions = {
-      from: senderEmail,
+      from: process.env.SENDER_EMAIL,
       to: dto.email,
-      subject: senderEmail,
+      subject: subject,
       html: message,
     };
-    // this.logger.log(mailOptions);
-    await transporter.sendMail(mailOptions);
-    return {
-      message: 'Forgot password OTP has been sent to your email.',
-    };
+    const mailSent = await transporter.sendMail(mailOptions);
+    if (mailSent) {
+      return {
+        message: 'Forgot password OTP has been sent to your email.',
+      };
+    } else {
+      return {
+        message: 'something went wrong',
+      };
+    }
   }
 
   async resetPassword(dto: forgotPasswordDto) {
     try {
-      const data = verify(
-        dto.token,
-        process.env[AccessTokenSecret],
-        accessTokenConfig,
-      );
-      let user = await this.prismaService.user.findUnique({
-        where: { email: data.email },
-      });
-      if (!user) throw new ForbiddenException('Credentials incorrect');
-      user = await this.prismaService.user.update({
+      const { data, error } = validateToken('Bearer ' + dto.token);
+      if (error) {
+        return { error: { status: 403, message: 'Invalid Token' } };
+      }
+      const upadteUser = await this.prismaService.user.update({
         where: {
-          id: user.id,
+          email: data.email,
         },
         data: {
           password: encrypt(dto.password),
         },
       });
-      // const tokens = await this.getUserToken(user);
-      if (user) {
+      if (upadteUser) {
+        const { error } = Jwt.removeToken(data.reId);
+        if (error) {
+          return { error: { status: 403, message: 'Invalid Token' } };
+        }
         return {
           success: true,
-          message: 'Password has successfully changed.',
         };
       } else {
         return {
           success: false,
-          message: 'Password has not changed.',
         };
       }
     } catch (error) {
