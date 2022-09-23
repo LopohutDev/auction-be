@@ -27,6 +27,7 @@ export class LocationService {
           city: data.city,
           address: data.address,
           Warehouses: { create: data.warehouses },
+          locationItem: { createMany: { data: data.itemtype } },
         },
       });
 
@@ -134,6 +135,29 @@ export class LocationService {
       }
     } catch (error) {
       return { error: { status: 422, message: 'Internal server error' } };
+    }
+  }
+
+  async getAllAdminLocation() {
+    try {
+      const data = await this.prismaService.location.findMany({
+        select: {
+          createdAt: true,
+          city: true,
+          address: true,
+          _count: { select: { Warehouses: true } },
+        },
+      });
+      const resultadata = data.map((l) => ({
+        createdAt: l.createdAt,
+        name: l.city,
+        address: l.address,
+        areas: l._count.Warehouses,
+      }));
+      return { data: resultadata };
+    } catch (error) {
+      this.logger.error(error?.message || error);
+      return { error: { status: 500, message: 'Server error' } };
     }
   }
 }

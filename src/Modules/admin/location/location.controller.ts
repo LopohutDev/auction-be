@@ -57,6 +57,20 @@ export class LocationController {
   }
 
   @UseGuards(AdminGuard)
+  @Get('/all')
+  async getAdminLocation() {
+    const { data, error } = await this.locationservice.getAllAdminLocation();
+    if (data) {
+      return {
+        success: true,
+        data,
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
+  }
+
+  @UseGuards(AdminGuard)
   @Put(':location')
   async updateLocationController(
     @Param() param: locationQueryDataDto,

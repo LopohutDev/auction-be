@@ -1,4 +1,13 @@
-import { Controller, Get, HttpException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { itemTypeBodyDto } from 'src/dto/admin.warehouse.module.dto';
+import { AdminGuard } from 'src/guards/admin.guard';
 import { AdminItemType } from '../routes/admin.routes';
 import { ItemTypeService } from './itemtype.service';
 
@@ -6,6 +15,7 @@ import { ItemTypeService } from './itemtype.service';
 export class ItemTypeController {
   constructor(private readonly itemtypeservice: ItemTypeService) {}
 
+  @UseGuards(AdminGuard)
   @Get()
   async getAllItemType() {
     const { data, error } = await this.itemtypeservice.getItemType();
@@ -13,6 +23,22 @@ export class ItemTypeController {
       return {
         success: true,
         data,
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
+  }
+
+  @UseGuards(AdminGuard)
+  @Post()
+  async createtype(@Body() itemtype: itemTypeBodyDto) {
+    const { success, error } = await this.itemtypeservice.createNewItemType(
+      itemtype,
+    );
+    if (success) {
+      return {
+        success,
+        message: 'Item type successfully created',
       };
     } else {
       throw new HttpException(error.message, error.status);
