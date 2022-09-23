@@ -209,6 +209,7 @@ export class AuthService {
         email: dto.email,
       },
     });
+    if (!user) throw new ForbiddenException('Credentials incorrect');
     const { access_token } = await this.getUserToken(user);
     const subject = 'Reset Password Email';
     const message =
@@ -217,11 +218,13 @@ export class AuthService {
       '/token=' +
       access_token +
       '">click</a>';
-    if (!user) throw new ForbiddenException('Credentials incorrect');
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT,
       secure: false,
+      tls: {
+        rejectUnauthorized: false,
+      },
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -237,7 +240,7 @@ export class AuthService {
     const mailSent = await transporter.sendMail(mailOptions);
     if (mailSent) {
       return {
-        message: 'Forgot password OTP has been sent to your email.',
+        message: 'Forgot password Link has been sent to your email.',
       };
     } else {
       return {
