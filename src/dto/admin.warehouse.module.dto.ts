@@ -8,3 +8,7 @@ export interface warehouseBodyDto extends WarehousesDataDto {
 export interface warehouseReturnValidateDto extends errorDto {
   data?: warehouseBodyDto;
 }
+
+export interface itemTypeBodyDto {
+  name: string;
+}
