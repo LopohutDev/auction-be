@@ -46,6 +46,7 @@ model Location {
   address         String
   assigneduser    User[]        
   Warehouses      Warehouses[]
+  Auction         Auction[]
   Scanned         Scans[]
   scapper         ScraperZip[]
   locationItem    locationItemType[]
@@ -134,15 +135,20 @@ model ScraperZip {
 }
 
 model Auction {
-  id          String      @id @default(uuid())
-  auctionType AuctionType @default(Auction1)
-  scannedItem Scans[]
-  startDate   DateTime
-  startTime   DateTime
-  endDate     DateTime
-  endTime     DateTime
-  startNumber Int
-  srappers    ScraperZip[]
+  id            String      @id @default(uuid())
+  auctionType   AuctionType @default(Auction1)
+  scannedItem   Scans[]
+  locations     Location    @relation(fields:[locid], references: [locid])
+  locid         String
+  startDate     DateTime
+  startTime     DateTime
+  endDate       DateTime
+  endTime       DateTime
+  startNumber   Int?
+  isRecover     DateTime? 
+  srappers      ScraperZip[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @default(now()) 
 }
 
 enum AuctionType {

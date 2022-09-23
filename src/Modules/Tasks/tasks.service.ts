@@ -1,11 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { BarcodeData } from 'src/Cache/BarCodes';
+
 import { Jobs } from 'src/Cache/Jobs';
+
+import { PrismaService } from 'src/Services/prisma.service';
+
 import { Jwt } from 'src/tokens/Jwt';
+import setAuction from '../admin/auction /auction.utils';
 
 @Injectable()
 export class TasksService {
+  constructor(private readonly prismaService: PrismaService) {}
   private readonly logger = new Logger(TasksService.name);
 
   @Cron(CronExpression.EVERY_2_HOURS)
@@ -77,5 +83,31 @@ export class TasksService {
         });
       }
     }
+  }
+  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
+  async addFutureAuction() {
+    let arr = [];
+    const currDate = new Date();
+
+    const futureMonthLastDay = new Date(
+      currDate.getFullYear(),
+      currDate.getMonth() + 2,
+      0,
+    );
+
+    const allLocations = await this.prismaService.location.findMany({});
+
+    if (allLocations) {
+      allLocations.map((row) => {
+        for (let i = 1; i <= futureMonthLastDay.getDate(); i++) {
+          const { newArr, n } = setAuction(i, row);
+          i = n;
+          arr = [...arr, newArr];
+        }
+      });
+    }
+    await this.prismaService.auction.createMany({
+      data: arr,
+    });
   }
 }
