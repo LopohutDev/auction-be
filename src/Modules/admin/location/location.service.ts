@@ -6,10 +6,14 @@ import {
 import { successErrorDto } from 'src/dto/common.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { validateLocationBody } from 'src/validations/admin.location.validations';
+import { InitialAuctionCreation } from '../auction /initialAuction';
 
 @Injectable()
 export class LocationService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly initialAuctionCreation: InitialAuctionCreation,
+  ) {}
   private readonly logger = new Logger(LocationService.name);
 
   async createLocation(locinfo: locationBodyDto): Promise<successErrorDto> {
@@ -25,6 +29,8 @@ export class LocationService {
           Warehouses: { create: data.Warehouses },
         },
       });
+
+      await this.initialAuctionCreation.createInitial();
       return {
         success: true,
       };
