@@ -6,10 +6,14 @@ import {
 import { successErrorDto } from 'src/dto/common.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { validateLocationBody } from 'src/validations/admin.location.validations';
+import { InitialAuctionCreation } from '../auction /initialAuction';
 
 @Injectable()
 export class LocationService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly initialAuctionCreation: InitialAuctionCreation,
+  ) {}
   private readonly logger = new Logger(LocationService.name);
 
   async createLocation(locinfo: locationBodyDto): Promise<successErrorDto> {
@@ -22,9 +26,12 @@ export class LocationService {
         data: {
           city: data.city,
           address: data.address,
-          Warehouses: { create: data.Warehouses },
+          Warehouses: { create: data.warehouses },
+          locationItem: { createMany: { data: data.itemtype } },
         },
       });
+
+      await this.initialAuctionCreation.createInitial();
       return {
         success: true,
       };
@@ -45,7 +52,13 @@ export class LocationService {
         select: {
           city: true,
           address: true,
-          Warehouses: { select: { areaname: true, assletter: true } },
+          Warehouses: { select: { areaname: true } },
+          locationItem: {
+            select: {
+              tagname: true,
+              ItemType: { select: { uuid: true, name: true } },
+            },
+          },
           assigneduser: {
             select: { firstname: true, lastname: true, createdAt: true },
           },
@@ -76,7 +89,11 @@ export class LocationService {
           address: data.address,
           Warehouses: {
             deleteMany: {},
-            create: data.Warehouses,
+            create: data.warehouses,
+          },
+          locationItem: {
+            deleteMany: {},
+            create: data.itemtype,
           },
         },
       });
@@ -100,9 +117,8 @@ export class LocationService {
       const users = await this.prismaService.user.findFirst({
         where: { locid: param },
       });
-      //this.logger.log("user>>",users,warehouse)
       if (!warehouse && !users) {
-        const deleted = await this.prismaService.location.delete({
+        await this.prismaService.location.delete({
           where: { locid: param },
         });
 
@@ -119,6 +135,29 @@ export class LocationService {
       }
     } catch (error) {
       return { error: { status: 422, message: 'Internal server error' } };
+    }
+  }
+
+  async getAllAdminLocation() {
+    try {
+      const data = await this.prismaService.location.findMany({
+        select: {
+          createdAt: true,
+          city: true,
+          address: true,
+          _count: { select: { Warehouses: true } },
+        },
+      });
+      const resultadata = data.map((l) => ({
+        createdAt: l.createdAt,
+        name: l.city,
+        address: l.address,
+        areas: l._count.Warehouses,
+      }));
+      return { data: resultadata };
+    } catch (error) {
+      this.logger.error(error?.message || error);
+      return { error: { status: 500, message: 'Server error' } };
     }
   }
 }
