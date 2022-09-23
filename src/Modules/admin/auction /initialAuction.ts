@@ -31,19 +31,32 @@ export class InitialAuctionCreation {
       noAuction.map((row) => {
         for (let i = 1, j = 0; i <= remainingDays; i++) {
           const currDateDay = currDate.getDay();
+
           if (i === 1 && j === 0) {
             j++;
             switch (currDateDay) {
-              case 1 || 4:
+              case 1:
                 i = 1;
                 break;
 
-              case 2 || 5:
+              case 2:
                 i = 0;
                 break;
 
-              case 3 || 6:
+              case 3:
+                i = -1;
+                break;
+
+              case 4:
                 i = 1;
+                break;
+
+              case 5:
+                i = 0;
+                break;
+
+              case 6:
+                i = -1;
                 break;
 
               case 0:
