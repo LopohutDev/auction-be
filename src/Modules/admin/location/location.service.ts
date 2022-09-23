@@ -46,7 +46,12 @@ export class LocationService {
           city: true,
           address: true,
           Warehouses: { select: { areaname: true } },
-          locationItem: { select: { tagname: true, itemtype: true } },
+          locationItem: {
+            select: {
+              tagname: true,
+              ItemType: { select: { uuid: true, name: true } },
+            },
+          },
           assigneduser: {
             select: { firstname: true, lastname: true, createdAt: true },
           },
