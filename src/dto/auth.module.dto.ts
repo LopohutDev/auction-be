@@ -28,6 +28,15 @@ export interface userTokenDto {
   refresh_token?: string;
 }
 
+export interface forgotPasswordInitDto {
+  email: string;
+}
+
+export interface forgotPasswordDto {
+  token: string;
+  password: string;
+}
+
 export interface loginUserDto extends successErrorDto, userTokenDto {}
 
 export interface logoutParamsDto {
