@@ -110,27 +110,22 @@ export class LocationService {
       return { error: { status: 422, message: 'Location param is required' } };
     }
     try {
-      const warehouse = await this.prismaService.warehouses.findFirst({
+      const scanItems = await this.prismaService.scans.findFirst({
         where: { locid: param },
       });
-
-      const users = await this.prismaService.user.findFirst({
-        where: { locid: param },
-      });
-      if (!warehouse && !users) {
-        await this.prismaService.location.delete({
-          where: { locid: param },
-        });
-
-        return {
-          success: true,
-        };
-      } else {
+      if (scanItems) {
         return {
           error: {
             status: 422,
             message: 'You cannot delete the location that has data',
           },
+        };
+      } else {
+        const res = await this.prismaService.location.delete({
+          where: { locid: param },
+        });
+        return {
+          success: true,
         };
       }
     } catch (error) {
