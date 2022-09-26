@@ -110,14 +110,19 @@ export class LocationService {
       return { error: { status: 422, message: 'Location param is required' } };
     }
     try {
-      const warehouse = await this.prismaService.warehouses.findFirst({
+      const scan = await this.prismaService.scans.findFirst({
         where: { locid: param },
       });
-
-      const users = await this.prismaService.user.findFirst({
-        where: { locid: param },
-      });
-      if (!warehouse && !users) {
+      if (!scan) {
+        await this.prismaService.warehouses.deleteMany({
+          where: { locid: param },
+        });
+        await this.prismaService.auction.deleteMany({
+          where: { locid: param },
+        });
+        await this.prismaService.locationItemType.deleteMany({
+          where: { locid: param },
+        });
         await this.prismaService.location.delete({
           where: { locid: param },
         });
@@ -134,6 +139,7 @@ export class LocationService {
         };
       }
     } catch (error) {
+      this.logger.log(error);
       return { error: { status: 422, message: 'Internal server error' } };
     }
   }
