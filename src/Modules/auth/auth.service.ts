@@ -213,7 +213,8 @@ export class AuthService {
     const { access_token } = await this.getUserToken(user);
     const subject = 'Reset Password Email';
     const message =
-      'Click on this link for reset password : <a href="http://0.0.0.0:5000/' +
+      'Click on this link for reset password : <a href="' +
+      process.env.LINK_URL +
       user.id +
       '/token=' +
       access_token +
