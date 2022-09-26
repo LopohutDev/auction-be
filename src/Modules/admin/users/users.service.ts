@@ -77,6 +77,7 @@ export class AdminUsersService {
           },
         },
         select: {
+          id: true,
           createdAt: true,
           firstname: true,
           lastname: true,
