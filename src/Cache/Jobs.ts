@@ -1,6 +1,9 @@
-export const Jobs = {
+import { JobQueueDto } from 'src/dto/cache.dto';
+import { scrapperReturnDataDto } from 'src/dto/user.scan.module.dto';
+
+export const Jobs: JobQueueDto = {
   queue: [],
-  set(func: () => void, priority?: number): void {
+  set(func: () => Promise<scrapperReturnDataDto>, priority?: number): void {
     if (!Jobs.queue.length) {
       const valuesToPush = {
         func,

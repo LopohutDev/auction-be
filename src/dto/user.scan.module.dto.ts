@@ -26,8 +26,17 @@ export interface scrapperDataDto {
   images: Array<scrapperImagesDataDto> | [];
   description: string;
   title: string;
+  price: string;
+}
+
+export interface scanItemParamsDto {
+  barcode: string;
+  areaname: string;
+  locationItemId: string;
+  auctionId: string;
 }
 
 export interface scrapperReturnDataDto extends errorDto {
   data?: scrapperDataDto;
+  scanParams?: scanItemParamsDto;
 }
