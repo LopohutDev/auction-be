@@ -24,13 +24,13 @@ const isNotValidWarehouse = (warehouses: WarehousesDataDto[]) => {
 
 const isNotValidlocationItemType = (itemType: locationItemTypeDto[]) => {
   for (let i = 0; i < itemType.length; i += 1) {
-    if (!itemType[i].itemtype || !itemType[i]?.itemtype?.trim().length) {
+    if (!itemType[i].itemtag || !itemType[i]?.itemtag?.trim().length) {
       return 'Invalid Item Name';
-    } else if (!itemType[i].tagname || !itemType[i]?.itemtype?.trim().length) {
+    } else if (!itemType[i].itemname || !itemType[i]?.itemtag?.trim().length) {
       return 'Invalid Tag Name';
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { itemtype, tagname, ...others } = itemType[i];
+    const { itemtag, itemname, ...others } = itemType[i];
     if (Object.keys(others).length) {
       const data = Object.keys(others);
       return `${data[0]} is not required`;
@@ -87,4 +87,22 @@ export const validateUsersBody = (
     return { error: { status: 422, message: 'type is required' } };
   }
   return { data: body };
+};
+
+export const toFindDuplicates = (arry) => {
+  const itemTagArr = arry.map(function (item) {
+    return item.itemtag;
+  });
+  const isDuplicateTag = itemTagArr.some(function (item, idx) {
+    return itemTagArr.indexOf(item) != idx;
+  });
+
+  const itemNameArr = arry.map(function (item) {
+    return item.itemname;
+  });
+  const isDuplicateName = itemNameArr.some(function (item, idx) {
+    return itemNameArr.indexOf(item) != idx;
+  });
+
+  return { isDuplicateTag, isDuplicateName };
 };
