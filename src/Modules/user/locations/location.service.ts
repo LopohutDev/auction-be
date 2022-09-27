@@ -32,7 +32,8 @@ export class UserLocationService {
           locationItem: {
             select: {
               id: true,
-              tagname: true,
+              itemname: true,
+              itemtag: true,
             },
           },
         },
