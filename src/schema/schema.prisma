@@ -106,11 +106,10 @@ model Scans {
 
 model locationItemType {
   id              String               @id @default(uuid())
-  tagname         String
+  itemtag         String
   locations       Location             @relation(fields:[locid], references: [locid])
   locid           String
-  itemtype        String
-  ItemType        ItemType             @relation(fields:[itemtype], references: [uuid])        
+  itemname         String        
   createdAt       DateTime             @default(now())
 }
 
@@ -118,7 +117,6 @@ model ItemType {
   id              Int                   @id @default(autoincrement())
   uuid            String                @unique @default(uuid())
   name            String                @unique
-  locationItem    locationItemType[]
   createdAt       DateTime              @default(now())
 }
 
