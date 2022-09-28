@@ -3,11 +3,16 @@ import {
   Controller,
   HttpCode,
   HttpException,
+  HttpStatus,
+  Patch,
   Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Public } from 'src/decorator/public.decorator';
 import {
+  forgotPasswordDto,
+  forgotPasswordInitDto,
   loginBodyDto,
   loginUserDto,
   logoutParamsDto,
@@ -81,6 +86,26 @@ export class AuthController {
       return {
         access_token,
         success: true,
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
+  }
+
+  @Post('forgot-password')
+  @HttpCode(200)
+  forgotPassword(@Body() dto: forgotPasswordInitDto) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  async resetPassword(@Body() dto: forgotPasswordDto) {
+    const { error, success } = await this.authService.resetPassword(dto);
+    if (success) {
+      return {
+        success: true,
+        message: 'Password has successfully changed.',
       };
     } else {
       throw new HttpException(error.message, error.status);

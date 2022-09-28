@@ -5,8 +5,8 @@ export interface WarehousesDataDto {
 }
 
 export interface locationItemTypeDto {
-  itemtype: string;
-  tagname: string;
+  itemtag: string;
+  itemname: string;
 }
 
 export type locationBodyDto = {

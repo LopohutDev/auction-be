@@ -1,5 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { sign } from 'jsonwebtoken';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { sign, verify } from 'jsonwebtoken';
+// import * as argon from 'argon2';
 import {
   accessTokenConfig,
   AccessTokenSecret,
@@ -8,6 +14,8 @@ import {
 } from 'src/config/jwt.config';
 import {
   AccountEnum,
+  forgotPasswordDto,
+  forgotPasswordInitDto,
   loginBodyDto,
   loginUserDto,
   logoutParamsDto,
@@ -17,7 +25,10 @@ import {
 } from 'src/dto/auth.module.dto';
 import { successErrorDto } from 'src/dto/common.dto';
 import { authTokenDto } from 'src/dto/tokens.dto';
-import { decodeRefreshToken } from 'src/guards/strategies/jwt.strategy';
+import {
+  decodeRefreshToken,
+  validateToken,
+} from 'src/guards/strategies/jwt.strategy';
 import { PrismaService } from 'src/Services/prisma.service';
 import { Jwt } from 'src/tokens/Jwt';
 import { decrypt, encrypt, encryptRefreshToken } from 'src/utils/crypt.utils';
@@ -27,10 +38,21 @@ import {
   validateLoginUser,
   validateregisterUser,
 } from 'src/validations/auth.validation';
+import { User } from '@prisma/client';
+import * as nodemailer from 'nodemailer';
+
+// interface IUserOTP {
+//   otp: string;
+//   timeStamp: string;
+//   userId: string;
+// }
+
+// let userOtp: IUserOTP[] = [];
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) { }
+
   private readonly logger = new Logger(AuthService.name);
 
   async getUserToken(user: authTokenDto) {
@@ -152,7 +174,6 @@ export class AuthService {
     if (!email || !email.trim().length) {
       return { error: { status: 422, message: 'email is required' } };
     }
-
     const { error } = Jwt.removeToken(reId);
     if (error) {
       return { error: { status: 403, message: 'Invalid Token' } };
@@ -180,5 +201,88 @@ export class AuthService {
         accessTokenConfig,
       ) as string,
     };
+  }
+
+  async forgotPassword(dto: forgotPasswordInitDto) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        email: dto.email,
+      },
+    });
+    if (!user) throw new ForbiddenException('Credentials incorrect');
+    const { access_token } = await this.getUserToken(user);
+    const subject = 'Reset Password Email';
+    const message =
+      'Click on this link for reset password : <a href="http://localhost:5000/' +
+      user.id +
+      '/token=' +
+      access_token +
+      '">click</a>';
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      secure: false,
+      tls: {
+        rejectUnauthorized: false,
+      },
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.SENDER_EMAIL,
+      to: dto.email,
+      subject: subject,
+      html: message,
+    };
+    const mailSent = await transporter.sendMail(mailOptions);
+    if (mailSent) {
+      return {
+        message: 'Forgot password Link has been sent to your email.',
+      };
+    } else {
+      return {
+        message: 'something went wrong',
+      };
+    }
+  }
+
+  async resetPassword(dto: forgotPasswordDto) {
+    try {
+      const { data, error } = validateToken('Bearer ' + dto.token);
+      if (error) {
+        return { error: { status: 403, message: 'Invalid Token' } };
+      }
+      const upadteUser = await this.prismaService.user.update({
+        where: {
+          email: data.email,
+        },
+        data: {
+          password: encrypt(dto.password),
+        },
+      });
+      if (upadteUser) {
+        const { error } = Jwt.removeToken(data.reId);
+        if (error) {
+          return { error: { status: 403, message: 'Invalid Token' } };
+        }
+        return {
+          success: true,
+        };
+      } else {
+        return {
+          success: false,
+        };
+      }
+    } catch (error) {
+      return {
+        error: {
+          status: 422,
+          message: ' The token has expired. Please try again.',
+        },
+      };
+    }
   }
 }

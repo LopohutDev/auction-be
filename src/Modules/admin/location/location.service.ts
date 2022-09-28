@@ -5,7 +5,10 @@ import {
 } from 'src/dto/admin.location.module.dto';
 import { successErrorDto } from 'src/dto/common.dto';
 import { PrismaService } from 'src/Services/prisma.service';
-import { validateLocationBody } from 'src/validations/admin.location.validations';
+import {
+  toFindDuplicates,
+  validateLocationBody,
+} from 'src/validations/admin.location.validations';
 import { InitialAuctionCreation } from '../auction /initialAuction';
 
 @Injectable()
@@ -22,6 +25,17 @@ export class LocationService {
       return { error };
     }
     try {
+      const { isDuplicateTag, isDuplicateName } = toFindDuplicates(
+        data.itemtype,
+      );
+
+      if (isDuplicateTag) {
+        return { error: { status: 422, message: 'itemTag must be unique' } };
+      }
+      if (isDuplicateName) {
+        return { error: { status: 422, message: 'itemName must be unique' } };
+      }
+
       await this.prismaService.location.create({
         data: {
           city: data.city,
@@ -55,8 +69,8 @@ export class LocationService {
           Warehouses: { select: { areaname: true } },
           locationItem: {
             select: {
-              tagname: true,
-              ItemType: { select: { uuid: true, name: true } },
+              itemname: true,
+              itemtag: true,
             },
           },
           assigneduser: {
