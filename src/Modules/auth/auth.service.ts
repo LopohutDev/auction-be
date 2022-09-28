@@ -38,7 +38,7 @@ import {
   validateLoginUser,
   validateregisterUser,
 } from 'src/validations/auth.validation';
-import { User } from '@prisma/client';
+// import { User } from '@prisma/client';
 import * as nodemailer from 'nodemailer';
 
 // interface IUserOTP {
@@ -51,7 +51,7 @@ import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prismaService: PrismaService) { }
+  constructor(private readonly prismaService: PrismaService) {}
 
   private readonly logger = new Logger(AuthService.name);
 
