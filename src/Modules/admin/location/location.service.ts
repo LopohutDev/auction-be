@@ -128,15 +128,6 @@ export class LocationService {
         where: { locid: param },
       });
       if (!scan) {
-        await this.prismaService.warehouses.deleteMany({
-          where: { locid: param },
-        });
-        await this.prismaService.auction.deleteMany({
-          where: { locid: param },
-        });
-        await this.prismaService.locationItemType.deleteMany({
-          where: { locid: param },
-        });
         await this.prismaService.location.delete({
           where: { locid: param },
         });

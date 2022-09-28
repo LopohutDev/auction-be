@@ -31,122 +31,122 @@ enum ScannedFailedStatus {
 }
 
 model Warehouses {
-  id              Int           @id @default(autoincrement())
-  areaname        String
-  locations       Location      @relation(fields: [locid], references: [locid])
-  locid           String        
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @default(now())
+  id        Int      @id @default(autoincrement())
+  areaname  String
+  locations Location @relation(fields: [locid], references: [locid], onDelete: Cascade)
+  locid     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 }
 
 model Location {
-  id              Int             @id @default(autoincrement())
-  locid           String          @unique @default(uuid())
-  city            String      
-  address         String
-  assigneduser    User[]        
-  Warehouses      Warehouses[]
-  Auction         Auction[]
-  Scanned         Scans[]
-  scapper         ScraperZip[]
-  locationItem    locationItemType[]
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @default(now())
+  id           Int                @id @default(autoincrement())
+  locid        String             @unique @default(uuid())
+  city         String
+  address      String
+  assigneduser User[]
+  Warehouses   Warehouses[]
+  Auction      Auction[]
+  Scanned      Scans[]
+  scapper      ScraperZip[]
+  locationItem locationItemType[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @default(now())
 }
 
 model User {
-  id              String        @id @default(uuid())
-  firstname       String   
-  lastname        String
-  email           String        @unique
-  password        String
-  account         AccountEnum   @default(REVIEWED)
-  rejectedreason  String?
-  location        Location?      @relation(fields:[locid], references: [locid])
-  locid           String?        
-  role            Roles         @default(NORMAL)
-  scanProducts    Scans[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @default(now()) 
+  id             String      @id @default(uuid())
+  firstname      String
+  lastname       String
+  email          String      @unique
+  password       String
+  account        AccountEnum @default(REVIEWED)
+  rejectedreason String?
+  location       Location?   @relation(fields: [locid], references: [locid])
+  locid          String?
+  role           Roles       @default(NORMAL)
+  scanProducts   Scans[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @default(now())
 }
 
 model Products {
-  id              Int         @id @default(autoincrement())
-  productId       String      @unique @default(uuid())
-  barcode         String
-  lotNo           String
-  quantity        Int         @default(1)
-  startingBid     Float
-  title           String
-  description     String
-  category        String
-  manufacturer    String
-  consignor       Int?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @default(now())
+  id           Int      @id @default(autoincrement())
+  productId    String   @unique @default(uuid())
+  barcode      String
+  lotNo        String
+  quantity     Int      @default(1)
+  startingBid  Float
+  title        String
+  description  String
+  category     String
+  manufacturer String
+  consignor    Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
 }
 
 model Scans {
-  id              Int                  @id @default(autoincrement())
-  ScanId          String
-  tag             String
-  barcode         String
-  auction         Auction              @relation(fields:[auctionId], references: [id])
-  auctionId       String               
-  locations       Location             @relation(fields:[locid], references: [locid])
-  locid           String
-  status          ScannedStatus        @default(UNDERREVIEW)
-  failedStatus    ScannedFailedStatus?
-  rejectedreason  String?
-  scannedUser     User                 @relation(fields:[scannedBy], references: [id])
-  scannedBy       String
-  tagexpireAt     DateTime             
-  createdAt       DateTime             @default(now())
+  id             Int                  @id @default(autoincrement())
+  ScanId         String
+  tag            String
+  barcode        String
+  auction        Auction              @relation(fields: [auctionId], references: [id])
+  auctionId      String
+  locations      Location             @relation(fields: [locid], references: [locid])
+  locid          String
+  status         ScannedStatus        @default(UNDERREVIEW)
+  failedStatus   ScannedFailedStatus?
+  rejectedreason String?
+  scannedUser    User                 @relation(fields: [scannedBy], references: [id])
+  scannedBy      String
+  tagexpireAt    DateTime
+  createdAt      DateTime             @default(now())
 }
 
 model locationItemType {
-  id              String               @id @default(uuid())
-  itemtag         String
-  locations       Location             @relation(fields:[locid], references: [locid])
-  locid           String
-  itemname         String        
-  createdAt       DateTime             @default(now())
+  id        String   @id @default(uuid())
+  itemtag   String
+  locations Location @relation(fields: [locid], references: [locid], onDelete: Cascade)
+  locid     String
+  itemname  String
+  createdAt DateTime @default(now())
 }
 
 model ItemType {
-  id              Int                   @id @default(autoincrement())
-  uuid            String                @unique @default(uuid())
-  name            String                @unique
-  createdAt       DateTime              @default(now())
+  id        Int      @id @default(autoincrement())
+  uuid      String   @unique @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
 }
 
 model ScraperZip {
-  id                  Int                   @id @default(autoincrement())
-  auction             Auction               @relation(fields:[auctionId], references: [id])
-  auctionId           String
-  locations           Location              @relation(fields:[locid], references: [locid])
-  locid               String                
-  filePath            String
-  lastcsvgenerated    DateTime              @default(now())
-  isNewUploaded       Boolean               @default(false)
-  createdAt           DateTime              @default(now())
+  id               Int      @id @default(autoincrement())
+  auction          Auction  @relation(fields: [auctionId], references: [id])
+  auctionId        String
+  locations        Location @relation(fields: [locid], references: [locid])
+  locid            String
+  filePath         String
+  lastcsvgenerated DateTime @default(now())
+  isNewUploaded    Boolean  @default(false)
+  createdAt        DateTime @default(now())
 }
 
 model Auction {
-  id            String      @id @default(uuid())
-  auctionType   AuctionType @default(Auction1)
-  scannedItem   Scans[]
-  locations     Location    @relation(fields:[locid], references: [locid])
-  locid         String
-  startDate     DateTime
-  startTime     DateTime
-  endDate       DateTime
-  endTime       DateTime
-  startNumber   Int?
-  isRecover     DateTime? 
-  srappers      ScraperZip[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @default(now()) 
+  id          String       @id @default(uuid())
+  auctionType AuctionType  @default(Auction1)
+  scannedItem Scans[]
+  locations   Location     @relation(fields: [locid], references: [locid], onDelete: Cascade)
+  locid       String
+  startDate   DateTime
+  startTime   DateTime
+  endDate     DateTime
+  endTime     DateTime
+  startNumber Int?
+  isRecover   DateTime?
+  srappers    ScraperZip[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now())
 }
 
 enum AuctionType {
