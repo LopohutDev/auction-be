@@ -25,9 +25,9 @@ const isNotValidWarehouse = (warehouses: WarehousesDataDto[]) => {
 const isNotValidlocationItemType = (itemType: locationItemTypeDto[]) => {
   for (let i = 0; i < itemType.length; i += 1) {
     if (!itemType[i].itemtag || !itemType[i]?.itemtag?.trim().length) {
-      return 'Invalid Item Name';
-    } else if (!itemType[i].itemname || !itemType[i]?.itemtag?.trim().length) {
       return 'Invalid Tag Name';
+    } else if (!itemType[i].itemname || !itemType[i]?.itemname?.trim().length) {
+      return 'Invalid Item Name';
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { itemtag, itemname, ...others } = itemType[i];
