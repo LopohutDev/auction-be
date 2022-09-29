@@ -26,3 +26,9 @@ export type authTokenDto = {
   lastname: string;
   locid?: string;
 };
+
+export interface requestTokenDto {
+  email: string;
+  reId: string;
+  role: string;
+}

@@ -76,6 +76,7 @@ model Products {
   barcode         String      @unique
   lotNo           String
   quantity        Int         @default(1)
+  images          String[]
   startingBid     Float
   title           String
   description     String
@@ -92,7 +93,7 @@ model Scans {
   ScanId          String
   tag             String
   barcode         String               @unique
-  products        Products             @relation(fields: [barcode], references: [barcode])
+  products        Products             @relation(fields: [barcode], references: [barcode], onDelete: Cascade)
   auction         Auction              @relation(fields:[auctionId], references: [id])
   auctionId       String               
   locations       Location             @relation(fields:[locid], references: [locid])
@@ -102,6 +103,7 @@ model Scans {
   rejectedreason  String?
   scannedUser     User                 @relation(fields:[scannedBy], references: [id])
   scannedBy       String
+  scannedName     String
   tagexpireAt     DateTime             
   createdAt       DateTime             @default(now())
 }

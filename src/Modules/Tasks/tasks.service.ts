@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { BarcodeData } from 'src/Cache/BarCodes';
-
 import { Jobs } from 'src/Cache/Jobs';
-
 import { PrismaService } from 'src/Services/prisma.service';
-
 import { Jwt } from 'src/tokens/Jwt';
+import { addDays } from 'src/utils/common.utils';
+import { uuid } from 'src/utils/uuid.utils';
 import setAuction from '../admin/auction /auction.utils';
+import { getLotNo } from '../user/scan/scrapper.utils';
 
 @Injectable()
 export class TasksService {
@@ -69,14 +69,64 @@ export class TasksService {
       const len = Jobs.queue.length;
       try {
         for await (const que of Jobs.queue) {
-          const { data, error } = await que.func();
-          this.logger.debug({ data, error });
+          const { data, scanParams, error } = await que.func();
+          const lastScannedItem = await this.prismaService.scans.findMany({
+            orderBy: { id: 'desc' },
+            take: 1,
+          });
+          const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
+          const ScanData = {
+            ScanId: uuid(),
+            tag:
+              scanParams.areaname +
+              lastScannedIndex +
+              scanParams.locationItemId,
+            auctionId: scanParams.auctionId,
+            locid: scanParams.locid,
+            scannedBy: scanParams.userid,
+            scannedName: scanParams.username,
+            tagexpireAt: addDays(30),
+          };
+          if (data && scanParams) {
+            const lastProduct = await this.prismaService.products.findMany({
+              orderBy: { id: 'desc' },
+              take: 1,
+            });
+            const productData = {
+              barcode: scanParams.barcode,
+              lotNo: lastScannedItem.length
+                ? getLotNo(
+                    lastProduct[0]?.lotNo,
+                    lastScannedItem[0].auctionId !== scanParams.auctionId,
+                  )
+                : '20D',
+              startingBid: Number(data.price) * 0.5,
+              title: scanParams.areaname + lastScannedIndex + data.title,
+              images: data.images?.map((l) => l.link),
+              description: data.description,
+              category: '',
+              manufacturer: data.manufacturer,
+              scans: {
+                create: ScanData,
+              },
+            };
+            await this.prismaService.products.create({ data: productData });
+          } else if (error) {
+            await this.prismaService.scans.create({
+              data: {
+                ...ScanData,
+                barcode: scanParams.barcode,
+                status: 'FAILED',
+                rejectedreason: error.message,
+              },
+            });
+          }
           Jobs.dequeue();
+          this.logger.debug({
+            module: 'Queue',
+            message: `Total queue ${len} is cleared now`,
+          });
         }
-        this.logger.debug({
-          module: 'Queue',
-          message: `Total queue ${len} is cleared now`,
-        });
       } catch (error) {
         this.logger.debug({
           module: 'Queue',

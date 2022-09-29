@@ -19,62 +19,119 @@ export class ScanService {
       return { error };
     }
     const islocationExists = await this.prismaService.location.findFirst({
-      where: { Warehouses: { some: { areaname: item.location } } },
+      where: {
+        Warehouses: { some: { areaname: item.areaname } },
+        locationItem: { some: { itemname: item.itemtype } },
+      },
     });
     if (!islocationExists) {
       return { error: { status: 404, message: 'Invalid Location' } };
     }
     const { data } = BarcodeData.get(item.barcode);
     if (data) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { exp, ...sendedData } = data;
-      return { data: sendedData };
+      return { error: { status: 409, message: 'Already scanned product' } };
     }
+    const isAuctionExists = await this.prismaService.auction.findUnique({
+      where: { id: item.auction },
+      rejectOnNotFound: false,
+    });
+    if (!isAuctionExists) {
+      return { error: { status: 404, message: 'Invalid auction' } };
+    }
+    const isProductAlreadyScanned = await this.prismaService.scans.findUnique({
+      where: { barcode: item.barcode },
+      rejectOnNotFound: false,
+    });
+    if (isProductAlreadyScanned) {
+      return { error: { status: 409, message: 'Product already scanned' } };
+    }
+    const userdata = await this.prismaService.user.findUnique({
+      where: { email: scaninfo.email },
+    });
     const params = {
       barcode: item.barcode,
-      areaname: item.location,
+      areaname: item.areaname,
       locationItemId: item.itemtype,
       auctionId: item.auction,
-    };
-    Jobs.set(() => getScrapperData(item.barcode, params));
-    const { data: scrapperdata, error: scrappererror } = await getScrapperData(
-      item.barcode,
-      params,
-    );
-    if (scrappererror) {
-      return { error: scrappererror };
-    }
-    BarcodeData.set(item.barcode, scrapperdata);
-    const lastScannedItem = await this.prismaService.scans.findMany({
-      orderBy: { id: 'desc' },
-      take: 1,
-    });
-    const productData = {
-      barcode: item.barcode,
-      lotNo: 20 + 'D',
-      startingBid: Number(scrapperdata.price),
-      title: scrapperdata.title,
-      description: scrapperdata.description,
-      category: '',
-      manufacturer: 'Walmart',
-    };
-    const createdData = {
-      ScanId: uuid(),
-      tag: item.location + lastScannedItem[0]?.id || 1 + item.itemtype,
-      barcode: item.barcode,
-      auctionId: item.auction,
+      userid: userdata.id,
+      username: userdata.firstname + ' ' + userdata.lastname,
       locid: islocationExists.locid,
-      scannedBy: '2d381ae9-cb5d-46a6-abd9-aba176173f1c' as never,
-      tagexpireAt: addDays(30),
     };
+    BarcodeData.set(item.barcode, {}, 300);
+    Jobs.set(() => getScrapperData(item.barcode, params));
+    return { data: { message: 'Scan Product Job Started' } };
+  }
+
+  async createFailedProducts(scaninfo: ScanQueryDto) {
+    const { item, error } = validateUserScan(scaninfo, true);
+    if (error) {
+      return { error };
+    }
     try {
-      await this.prismaService.scans.create({
-        data: createdData,
+      const islocationExists = await this.prismaService.location.findFirst({
+        where: {
+          Warehouses: { some: { areaname: item.areaname } },
+          locationItem: { some: { itemname: item.itemtype } },
+        },
       });
-      await this.prismaService.products.create({ data: productData });
-      return { data: scrapperdata };
+      if (!islocationExists) {
+        return { error: { status: 404, message: 'Invalid Location' } };
+      }
+      const isAuctionExists = await this.prismaService.auction.findUnique({
+        where: { id: item.auction },
+        rejectOnNotFound: false,
+      });
+      if (!isAuctionExists) {
+        return { error: { status: 404, message: 'Invalid auction' } };
+      }
+      const userdata = await this.prismaService.user.findUnique({
+        where: { email: scaninfo.email },
+      });
+      const lastScannedItem = await this.prismaService.scans.findMany({
+        orderBy: { id: 'desc' },
+        take: 1,
+      });
+
+      const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
+      const ScanData = {
+        ScanId: uuid(),
+        tag: item.areaname + lastScannedIndex + item.itemtype,
+        auctionId: item.auction,
+        locid: islocationExists.locid,
+        scannedBy: userdata.id,
+        scannedName: userdata.firstname + '' + userdata.lastname,
+        tagexpireAt: addDays(30),
+        barcode: uuid(),
+      };
+      if (!item.barcode) {
+        await this.prismaService.scans.create({
+          data: {
+            ...ScanData,
+            status: 'FAILED',
+            rejectedreason: 'The Program could not read barcode',
+          },
+        });
+        return { data: { message: 'Successfully marked as failed' } };
+      }
+      const isProductAlreadyScanned = await this.prismaService.scans.findUnique(
+        {
+          where: { barcode: item.barcode },
+          rejectOnNotFound: false,
+        },
+      );
+      if (isProductAlreadyScanned) {
+        return { error: { status: 409, message: 'Product already scanned' } };
+      }
+      await this.prismaService.scans.create({
+        data: {
+          ...ScanData,
+          status: 'FAILED',
+          rejectedreason: 'Some other issue occur',
+        },
+      });
+      return { data: { message: 'Successfully marked as failed' } };
     } catch (error) {
-      return { error: { status: 500, message: 'Server Error' } };
+      return { error: { status: 500, message: 'Server error' } };
     }
   }
 }

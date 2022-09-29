@@ -3,13 +3,10 @@ import {
   Controller,
   HttpCode,
   HttpException,
-  HttpStatus,
-  Patch,
   Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { Public } from 'src/decorator/public.decorator';
 import {
   forgotPasswordDto,
   forgotPasswordInitDto,
