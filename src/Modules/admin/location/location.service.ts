@@ -10,6 +10,7 @@ import {
   validateLocationBody,
 } from 'src/validations/admin.location.validations';
 import { InitialAuctionCreation } from '../auction /initialAuction';
+import { setObjectLowercaseKeys } from '../utils';
 
 @Injectable()
 export class LocationService {
@@ -61,7 +62,7 @@ export class LocationService {
       return { error: { status: 422, message: 'Location is required' } };
     }
     try {
-      const data = await this.prismaService.location.findUniqueOrThrow({
+      const locationData = await this.prismaService.location.findUniqueOrThrow({
         where: { locid: location },
         select: {
           city: true,
@@ -83,6 +84,8 @@ export class LocationService {
           },
         },
       });
+
+      const data = setObjectLowercaseKeys(locationData);
       return { data };
     } catch (error) {
       return { error: { status: 422, message: 'Location not found' } };
