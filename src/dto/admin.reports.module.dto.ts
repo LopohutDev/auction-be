@@ -9,6 +9,10 @@ export type getScanReportBodyDto = {
   auction: string;
 };
 
+export interface exportScanReportBodyDto extends getScanReportBodyDto {
+  isNewReport?: boolean;
+}
+
 export type getScanQueryDto = {
   page: number;
   limit: number;
