@@ -69,7 +69,8 @@ export class TasksService {
       const len = Jobs.queue.length;
       try {
         for await (const que of Jobs.queue) {
-          await que.func();
+          const { data, error } = await que.func();
+          this.logger.debug({ data, error });
           Jobs.dequeue();
         }
         this.logger.debug({

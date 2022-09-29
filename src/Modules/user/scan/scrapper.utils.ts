@@ -1,8 +1,13 @@
 import { AMZENV, SCANENV, WALLENV } from 'src/constants/common.constants';
-import { scrapperReturnDataDto } from 'src/dto/user.scan.module.dto';
+import {
+  scanItemParamsDto,
+  scrapperReturnDataDto,
+} from 'src/dto/user.scan.module.dto';
+import { uuid } from 'src/utils/uuid.utils';
 
 export const getScrapperData = async (
   barcode: string,
+  scaninfo: scanItemParamsDto,
 ): Promise<scrapperReturnDataDto> => {
   const params = {
     barcode: barcode,
@@ -29,12 +34,13 @@ export const getScrapperData = async (
       );
       if (walmartdata.request_info.success) {
         const sendedData = {
-          productId: walmartdata.product.product_id,
+          productId: uuid(),
           images: walmartdata.product.images,
           description: walmartdata.product.description,
           title: walmartdata.product.title,
+          price: walmartdata.product?.buybox_winner?.price,
         };
-        return { data: sendedData };
+        return { data: sendedData, scanParams: scaninfo };
       }
     } else if (AmazonProduct) {
       const { data: amazondata } = await get(
@@ -42,14 +48,15 @@ export const getScrapperData = async (
       );
       if (amazondata.request_info.success) {
         const sendedData = {
-          productId: amazondata.product?.product_id,
+          productId: uuid(),
           images: amazondata.product?.images,
           description:
             amazondata.product?.description ||
             amazondata.product?.feature_bullets?.join(' '),
           title: amazondata.product?.title,
+          price: amazondata.product?.buybox_winner?.price,
         };
-        return { data: sendedData };
+        return { data: sendedData, scanParams: scaninfo };
       }
     }
     return { error: { status: 404, message: 'No Products found' } };

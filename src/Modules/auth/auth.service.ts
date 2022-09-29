@@ -1,11 +1,6 @@
-import {
-  ForbiddenException,
-  Injectable,
-  Logger,
-  UnprocessableEntityException,
-} from '@nestjs/common';
-import { sign, verify } from 'jsonwebtoken';
-// import * as argon from 'argon2';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { sign } from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
 import {
   accessTokenConfig,
   AccessTokenSecret,
@@ -38,16 +33,6 @@ import {
   validateLoginUser,
   validateregisterUser,
 } from 'src/validations/auth.validation';
-// import { User } from '@prisma/client';
-import * as nodemailer from 'nodemailer';
-
-// interface IUserOTP {
-//   otp: string;
-//   timeStamp: string;
-//   userId: string;
-// }
-
-// let userOtp: IUserOTP[] = [];
 
 @Injectable()
 export class AuthService {
@@ -59,8 +44,11 @@ export class AuthService {
     const payload = {
       email: user.email,
       role: user?.role || Roles.NORMAL,
-      name: user?.firstname || '' + user?.lastname || '',
+      name: user.firstname + ' ' + user.lastname,
     };
+    if (user.locid) {
+      payload['locid'] = user.locid;
+    }
     const id = uuid();
     const refresh_token = sign(
       { id, ...payload },

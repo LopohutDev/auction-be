@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   HttpException,
-  Param,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -30,6 +29,7 @@ export class AdminUsersController {
       throw new HttpException(error.message, error.status);
     }
   }
+
   @UseGuards(AdminGuard)
   @Get()
   async listAdminUsersController() {

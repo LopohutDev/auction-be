@@ -2,6 +2,7 @@ export type tokenDto = {
   name: string;
   email: string;
   role: string;
+  locid?: string;
   iat: number;
   exp: number;
 };
@@ -23,4 +24,5 @@ export type authTokenDto = {
   role: string;
   firstname: string;
   lastname: string;
+  locid?: string;
 };

@@ -1,13 +1,7 @@
+import { addDays } from 'src/utils/common.utils';
+
 type rowDto = {
   locid: string;
-};
-
-const addDays = (days: number, date?: Date): any => {
-  if (date) {
-    return new Date(new Date(date).getTime() + days * 24 * 60 * 60 * 1000);
-  } else {
-    return new Date(new Date().getTime() + days * 24 * 60 * 60 * 1000);
-  }
 };
 
 const setAuction = (i: number, row: rowDto) => {
