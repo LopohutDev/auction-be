@@ -33,7 +33,7 @@ enum ScannedFailedStatus {
 model Warehouses {
   id              Int           @id @default(autoincrement())
   areaname        String
-  locations       Location      @relation(fields: [locid], references: [locid])
+  locations       Location      @relation(fields: [locid], references: [locid], onDelete: Cascade)
   locid           String        
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @default(now())
@@ -109,7 +109,7 @@ model Scans {
 model locationItemType {
   id              String               @id @default(uuid())
   itemtag         String
-  locations       Location             @relation(fields:[locid], references: [locid])
+  locations       Location             @relation(fields:[locid], references: [locid], onDelete: Cascade)
   locid           String
   itemname         String        
   createdAt       DateTime             @default(now())
@@ -138,7 +138,7 @@ model Auction {
   id            String      @id @default(uuid())
   auctionType   AuctionType @default(Auction1)
   scannedItem   Scans[]
-  locations     Location    @relation(fields:[locid], references: [locid])
+  locations     Location    @relation(fields:[locid], references: [locid], onDelete: Cascade)
   locid         String
   startDate     DateTime
   startTime     DateTime

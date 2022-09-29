@@ -9,6 +9,12 @@ export type getScanReportBodyDto = {
   auction: string;
 };
 
+export type getScanQueryDto = {
+  page: number;
+  limit: number;
+  location: string;
+};
+
 export interface scanReportValidateDto extends errorDto {
   value?: getScanReportBodyDto;
 }
