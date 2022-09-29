@@ -3,9 +3,10 @@ import { errorDto, successErrorDto } from './common.dto';
 
 export type ScanQueryDto = {
   barcode: string;
-  location: string;
+  areaname: string;
   itemtype: string;
   auction: string;
+  email: string;
 };
 
 export interface ScanDataReturnDto extends successErrorDto {
@@ -27,6 +28,7 @@ export interface scrapperDataDto {
   description: string;
   title: string;
   price: string;
+  manufacturer: string;
 }
 
 export interface scanItemParamsDto {
@@ -34,6 +36,9 @@ export interface scanItemParamsDto {
   areaname: string;
   locationItemId: string;
   auctionId: string;
+  userid: string;
+  username: string;
+  locid: string;
 }
 
 export interface scrapperReturnDataDto extends errorDto {

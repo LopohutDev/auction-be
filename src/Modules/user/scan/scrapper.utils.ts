@@ -39,6 +39,7 @@ export const getScrapperData = async (
           description: walmartdata.product.description,
           title: walmartdata.product.title,
           price: walmartdata.product?.buybox_winner?.price,
+          manufacturer: 'Walmart',
         };
         return { data: sendedData, scanParams: scaninfo };
       }
@@ -55,6 +56,7 @@ export const getScrapperData = async (
             amazondata.product?.feature_bullets?.join(' '),
           title: amazondata.product?.title,
           price: amazondata.product?.buybox_winner?.price,
+          manufacturer: 'Amazon',
         };
         return { data: sendedData, scanParams: scaninfo };
       }
@@ -66,4 +68,40 @@ export const getScrapperData = async (
     }
     return { error: { status: 500, message: 'Some error occured' } };
   }
+};
+
+export const getLotNo = (previousLotNo: string, isNew?: boolean): string => {
+  const NumbLot = previousLotNo.match(/\d+/);
+  const stringlot = previousLotNo.match(/[D-Z]/);
+  const Chars = [
+    'D',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+  ];
+  const charindexof = Chars.indexOf(stringlot[0]);
+  const numb = Number(NumbLot[0]) + 1;
+  if (isNew) {
+    return 20 + Chars[charindexof + 1];
+  }
+
+  return numb + Chars[charindexof];
 };
