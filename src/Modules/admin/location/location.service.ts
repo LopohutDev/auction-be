@@ -74,7 +74,12 @@ export class LocationService {
             },
           },
           assigneduser: {
-            select: { firstname: true, lastname: true, createdAt: true },
+            select: {
+              id: true,
+              firstname: true,
+              lastname: true,
+              createdAt: true,
+            },
           },
         },
       });
