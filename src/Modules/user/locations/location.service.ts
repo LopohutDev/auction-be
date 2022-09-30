@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { setObjectLowercaseKeys } from 'src/Modules/admin/utils';
 import { PrismaService } from 'src/Services/prisma.service';
 
 @Injectable()
@@ -20,7 +19,7 @@ export class UserLocationService {
   }
   async getLocationItemsService(param: string) {
     try {
-      const locationItemData = await this.prismaService.location.findFirst({
+      const data = await this.prismaService.location.findFirst({
         where: { locid: param },
         select: {
           id: true,
@@ -40,7 +39,7 @@ export class UserLocationService {
         },
       });
 
-      const data = setObjectLowercaseKeys(locationItemData);
+      // const data = setObjectLowercaseKeys(locationItemData);
       return { success: true, data };
     } catch (error) {
       this.logger.debug(error?.message || error);

@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { locationQueryDataDto } from 'src/dto/admin.location.module.dto';
-import { setArrayLowercaseKeys } from 'src/Modules/admin/utils';
 import { PrismaService } from 'src/Services/prisma.service';
 
 @Injectable()
@@ -44,11 +43,11 @@ export class UserAuctionService {
         },
       });
 
-      const currData = auctionData[0]?.Auction.filter(
+      const data = auctionData[0]?.Auction.filter(
         (row) => row.startNumber && row.scannedItem?.length === 0 && row,
       );
 
-      const data = setArrayLowercaseKeys(currData);
+      // const data = setArrayLowercaseKeys(currData);
 
       return { success: true, data };
     } catch (error) {
