@@ -30,51 +30,14 @@ export class InitialAuctionCreation {
 
       noAuction.map((row) => {
         for (let i = 1, j = 0; i <= remainingDays; i++) {
-          const currDateDay = currDate.getDay();
-
-          if (i === 1 && j === 0) {
-            j++;
-            switch (currDateDay) {
-              case 1:
-                i = 1;
-                break;
-
-              case 2:
-                i = 0;
-                break;
-
-              case 3:
-                i = -1;
-                break;
-
-              case 4:
-                i = 1;
-                break;
-
-              case 5:
-                i = 0;
-                break;
-
-              case 6:
-                i = -1;
-                break;
-
-              case 0:
-                i = 2;
-                break;
-
-              default:
-                null;
-                break;
-            }
-          }
-
-          const { newArr, n } = setAuction(i, row);
+          const { newArr, n, m } = setAuction(i, j, row, currDate);
 
           i = n;
+          j = m;
           arr = [...arr, newArr];
         }
       });
+
       await this.prismaService.auction.createMany({
         data: arr,
       });

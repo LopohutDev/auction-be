@@ -9,7 +9,17 @@ export class UserLocationService {
   async getAllLocationService() {
     try {
       const data = await this.prismaService.location.findMany({
-        select: { locid: true, city: true, address: true },
+        select: {
+          locid: true,
+          city: true,
+          address: true,
+          createdAt: true,
+          _count: {
+            select: {
+              Warehouses: true,
+            },
+          },
+        },
       });
       return { success: true, data };
     } catch (error) {
