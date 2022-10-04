@@ -4,9 +4,11 @@ import {
   Get,
   HttpException,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { usersQueryDataDto } from 'src/dto/admin.location.module.dto';
+import { paginationDto } from 'src/dto/common.dto';
 import { AdminGuard } from 'src/guards/admin.guard';
 import { AdminUsers } from '../routes/admin.routes';
 import { AdminUsersService } from './users.service';
@@ -32,11 +34,13 @@ export class AdminUsersController {
 
   @UseGuards(AdminGuard)
   @Get()
-  async listAdminUsersController() {
-    const { error, data } = await this.adminuserservice.listAdminUser();
+  async listAdminUsersController(@Query() pagination: paginationDto) {
+    const { error, pageCount, data } =
+      await this.adminuserservice.listAdminUser(pagination);
     if (data) {
       return {
         success: true,
+        pageCount,
         data,
       };
     } else {

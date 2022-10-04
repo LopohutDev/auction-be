@@ -1,14 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/Services/prisma.service';
-import { successErrorDto, successErrorReturnDto } from 'src/dto/common.dto';
+import { paginationDto, successErrorReturnDto } from 'src/dto/common.dto';
 import { usersQueryDataDto } from 'src/dto/admin.location.module.dto';
 import { validateUsersBody } from 'src/validations/admin.location.validations';
 import { AccountEnum } from '@prisma/client';
 import { Roles } from 'src/dto/auth.module.dto';
+import { paginationHelper } from '../utils';
 
 @Injectable()
 export class AdminUsersService {
   constructor(private readonly prismaService: PrismaService) {}
+  private readonly logger = new Logger(PrismaService.name);
 
   async acceptAdminUser(
     userinfo: usersQueryDataDto,
@@ -65,9 +67,10 @@ export class AdminUsersService {
       return { error: { status: 422, message: 'User id is not valid' } };
     }
   }
-  async listAdminUser() {
+  async listAdminUser(pagination: paginationDto) {
+    const { page, limit } = pagination;
     try {
-      const data = await this.prismaService.user.findMany({
+      const userData = await this.prismaService.user.findMany({
         where: {
           account: {
             not: AccountEnum.DELETED,
@@ -86,7 +89,9 @@ export class AdminUsersService {
           location: true,
         },
       });
-      return { data };
+      const { data, pageCount } = paginationHelper(userData, page, limit);
+
+      return { data, pageCount };
     } catch (error) {
       return { error: { status: 422, message: 'users not found' } };
     }
