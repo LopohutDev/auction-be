@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { EMAILURL } from 'src/constants/common.constants';
 import { sign } from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
+import { createTransport } from 'nodemailer';
 import {
   accessTokenConfig,
   AccessTokenSecret,
@@ -201,12 +202,14 @@ export class AuthService {
     const { access_token } = await this.getUserToken(user);
     const subject = 'Reset Password Email';
     const message =
-      'Click on this link for reset password : <a href="http://localhost:5000/' +
+      'Click on this link for reset password : <a href="' +
+      EMAILURL +
+      'auction-management/forgot-password/' +
       user.id +
       '/token=' +
       access_token +
       '">click</a>';
-    const transporter = nodemailer.createTransport({
+    const transporter = createTransport({
       host: process.env.EMAIL_HOST,
       port: Number(process.env.EMAIL_PORT),
       secure: false,
