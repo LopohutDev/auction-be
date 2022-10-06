@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { EMAILURL } from 'src/constants/common.constants';
 import { sign } from 'jsonwebtoken';
 import { createTransport } from 'nodemailer';
 import {
@@ -201,7 +202,9 @@ export class AuthService {
     const { access_token } = await this.getUserToken(user);
     const subject = 'Reset Password Email';
     const message =
-      'Click on this link for reset password : <a href="http://106.201.236.129:4242/auction-management/forgot-password/' +
+      'Click on this link for reset password : <a href="' +
+      EMAILURL +
+      'auction-management/forgot-password/' +
       user.id +
       '/token=' +
       access_token +
