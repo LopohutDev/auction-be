@@ -25,7 +25,7 @@ const isNotValidWarehouse = (warehouses: WarehousesDataDto[]) => {
 const isNotValidlocationItemType = (itemType: locationItemTypeDto[]) => {
   for (let i = 0; i < itemType.length; i += 1) {
     if (!itemType[i].itemtag || !itemType[i]?.itemtag?.trim().length) {
-      return 'Invalid Tag Name';
+      return 'Invalid Item Tag';
     } else if (!itemType[i].itemname || !itemType[i]?.itemname?.trim().length) {
       return 'Invalid Item Name';
     }

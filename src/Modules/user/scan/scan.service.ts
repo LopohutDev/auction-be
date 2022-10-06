@@ -57,6 +57,7 @@ export class ScanService {
       username: userdata.firstname + ' ' + userdata.lastname,
       locid: islocationExists.locid,
     };
+
     BarcodeData.set(item.barcode, {}, 300);
     Jobs.set(() => getScrapperData(item.barcode, params));
     return { data: { message: 'Scan Product Job Started' } };
@@ -84,6 +85,7 @@ export class ScanService {
       if (!isAuctionExists) {
         return { error: { status: 404, message: 'Invalid auction' } };
       }
+
       const userdata = await this.prismaService.user.findUnique({
         where: { email: scaninfo.email },
       });
@@ -101,7 +103,8 @@ export class ScanService {
         scannedBy: userdata.id,
         scannedName: userdata.firstname + '' + userdata.lastname,
         tagexpireAt: addDays(30),
-        barcode: uuid(),
+        // barcode: uuid(),
+        barcode: scaninfo.barcode,
       };
       if (!item.barcode) {
         await this.prismaService.scans.create({
@@ -122,6 +125,7 @@ export class ScanService {
       if (isProductAlreadyScanned) {
         return { error: { status: 409, message: 'Product already scanned' } };
       }
+
       await this.prismaService.scans.create({
         data: {
           ...ScanData,

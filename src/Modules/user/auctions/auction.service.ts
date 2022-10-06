@@ -13,6 +13,15 @@ export class UserAuctionService {
       return { error: { status: 422, message: 'Location is required' } };
     }
     try {
+      const isLocation = await this.prismaService.location.findUnique({
+        where: {
+          locid: location,
+        },
+      });
+
+      if (!isLocation) {
+        return { error: { status: 422, message: 'Location not found' } };
+      }
       const auctionData = await this.prismaService.location.findMany({
         where: {
           locid: location,
@@ -37,6 +46,8 @@ export class UserAuctionService {
       const data = auctionData[0]?.Auction.filter(
         (row) => row.startNumber && row.scannedItem?.length === 0 && row,
       );
+
+      // const data = setArrayLowercaseKeys(currData);
 
       return { success: true, data };
     } catch (error) {

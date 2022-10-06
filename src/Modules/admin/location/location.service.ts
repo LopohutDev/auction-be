@@ -83,6 +83,8 @@ export class LocationService {
           },
         },
       });
+
+      // const data = setObjectLowercaseKeys(locationData);
       return { data };
     } catch (error) {
       return { error: { status: 422, message: 'Location not found' } };

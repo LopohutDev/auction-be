@@ -142,7 +142,7 @@ export class TasksService {
 
     const futureMonthLastDay = new Date(
       currDate.getFullYear(),
-      currDate.getMonth() + 2,
+      currDate.getMonth() + 1,
       0,
     );
 
@@ -150,13 +150,15 @@ export class TasksService {
 
     if (allLocations) {
       allLocations.map((row) => {
-        for (let i = 1; i <= futureMonthLastDay.getDate(); i++) {
-          const { newArr, n } = setAuction(i, row);
+        for (let i = 1, j = 0; i <= futureMonthLastDay.getDate(); i++) {
+          const { newArr, n, m } = setAuction(i, j, row, currDate);
           i = n;
+          j = m;
           arr = [...arr, newArr];
         }
       });
     }
+
     await this.prismaService.auction.createMany({
       data: arr,
     });

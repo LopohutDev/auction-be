@@ -29,7 +29,8 @@ export class AuctionService {
           endDate,
           endTime,
           startNumber,
-          isRecover: startNumber && new Date().toISOString(),
+          isRecover:
+            startNumber || startNumber === 0 ? new Date().toISOString() : null,
         },
       });
 
@@ -92,12 +93,15 @@ export class AuctionService {
             ...row,
             status: auctionStatusDto.Past,
           };
-        } else if (!row.startNumber) {
+        } else if (!row.startNumber && row.startNumber !== 0) {
           return {
             ...row,
             status: auctionStatusDto.Future,
           };
-        } else if (row.startNumber && currDate < endDate) {
+        } else if (
+          (row.startNumber && currDate < endDate) ||
+          row.startNumber === 0
+        ) {
           return {
             ...row,
             status: auctionStatusDto.Current,

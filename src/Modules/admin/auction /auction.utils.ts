@@ -4,9 +4,47 @@ type rowDto = {
   locid: string;
 };
 
-const setAuction = (i: number, row: rowDto) => {
+const setAuction = (i: number, j: number, row: rowDto, currDate: Date) => {
+  const currDateDay = currDate.getDay();
   let newArr = {};
   let n = i;
+  let m = j;
+  if (n === 1 && m === 0) {
+    m++;
+    switch (currDateDay) {
+      case 1:
+        n = 1;
+        break;
+
+      case 2:
+        n = 0;
+        break;
+
+      case 3:
+        n = -1;
+        break;
+
+      case 4:
+        n = 1;
+        break;
+
+      case 5:
+        n = 0;
+        break;
+
+      case 6:
+        n = -1;
+        break;
+
+      case 0:
+        n = 2;
+        break;
+
+      default:
+        null;
+        break;
+    }
+  }
 
   const futureDate = new Date(addDays(n));
 
@@ -44,7 +82,7 @@ const setAuction = (i: number, row: rowDto) => {
       locid: row.locid,
     };
   }
-  return { newArr, n };
+  return { newArr, n, m };
 };
 
 export default setAuction;
