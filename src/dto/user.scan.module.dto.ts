@@ -42,6 +42,6 @@ export interface scanItemParamsDto {
 }
 
 export interface scrapperReturnDataDto extends errorDto {
-  dataScrapper?: scrapperDataDto;
+  data?: scrapperDataDto;
   scanParams?: scanItemParamsDto;
 }

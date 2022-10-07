@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BarcodeData } from 'src/Cache/BarCodes';
 import { Jobs } from 'src/Cache/Jobs';
+import { SCANENV } from 'src/constants/common.constants';
 import { ScanQueryDto } from 'src/dto/user.scan.module.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { addDays } from 'src/utils/common.utils';
@@ -59,60 +60,27 @@ export class ScanService {
     };
 
     BarcodeData.set(item.barcode, {}, 300);
-    const dataScrapper = await getScrapperData(item.barcode, params);
-    console.log('dataOne------------------', dataScrapper);
-    if (dataScrapper?.error) {
-      return { error: dataScrapper?.error };
-    }
 
-    const lastScannedItem = await this.prismaService.scans.findMany({
-      orderBy: { id: 'desc' },
-      take: 1,
-    });
-    const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
-    const ScanData = {
-      ScanId: uuid(),
-      tag:
-        dataScrapper.scanParams.areaname +
-        lastScannedIndex +
-        dataScrapper.scanParams.locationItemId,
-      auctionId: dataScrapper.scanParams.auctionId,
-      locid: dataScrapper.scanParams.locid,
-      scannedBy: dataScrapper.scanParams.userid,
-      scannedName: dataScrapper.scanParams.username,
-      tagexpireAt: addDays(30),
+    const values = {
+      barcode: item.barcode,
+      key: process.env[SCANENV],
     };
-    if (dataScrapper.dataScrapper && dataScrapper.scanParams) {
-      const lastProduct = await this.prismaService.products.findMany({
-        orderBy: { id: 'desc' },
-        take: 1,
+    const {
+      default: { get },
+    } = await import('axios');
+    try {
+      const { data } = await get('https://api.barcodelookup.com/v3/products', {
+        params: values,
       });
 
-      console.log('lastProduct>>>>', lastProduct);
-      const productData = {
-        barcode: dataScrapper.scanParams.barcode,
-        lotNo: lastScannedItem.length
-          ? getLotNo(
-              lastProduct[0]?.lotNo,
-              lastScannedItem[0].auctionId !==
-                dataScrapper.scanParams.auctionId,
-            )
-          : '20D',
-        startingBid: Number(dataScrapper.dataScrapper.price) * 0.5,
-        title:
-          dataScrapper.scanParams.areaname +
-          lastScannedIndex +
-          dataScrapper.dataScrapper.title,
-        images: dataScrapper.dataScrapper.images?.map((l) => l.link),
-        description: dataScrapper.dataScrapper.description,
-        category: '',
-        manufacturer: dataScrapper.dataScrapper.manufacturer,
-        scans: {
-          create: ScanData,
-        },
-      };
-      await this.prismaService.products.create({ data: productData });
+      Jobs.set(() => getScrapperData(data, params));
       return { data: { message: 'Scan Product Job Started' } };
+    } catch (err) {
+      console.log('err?.response?.status>>>>>>>>>>>>', err);
+      if (err?.response?.status === 404) {
+        return { error: { status: 404, message: 'No product found' } };
+      }
+      return { error: { status: 500, message: 'Some error occured' } };
     }
   }
 

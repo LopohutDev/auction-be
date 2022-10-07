@@ -60,83 +60,83 @@ export class TasksService {
     });
   }
 
-  // @Cron(CronExpression.EVERY_MINUTE)
-  // async handlePriorityQueue() {
-  //   const jobs = Jobs.queue;
-  //   if (!jobs.length) {
-  //     this.logger.debug({ module: 'Queues', message: 'Already cleared' });
-  //   } else {
-  //     const len = Jobs.queue.length;
-  //     try {
-  //       for await (const que of Jobs.queue) {
-  //         // const { data, scanParams, error } = await que.func();
-  //         // console.log('error===========>>>>', data, scanParams, error);
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handlePriorityQueue() {
+    const jobs = Jobs.queue;
+    if (!jobs.length) {
+      this.logger.debug({ module: 'Queues', message: 'Already cleared' });
+    } else {
+      const len = Jobs.queue.length;
+      try {
+        for await (const que of Jobs.queue) {
+          const { data, scanParams, error } = await que.func();
+          console.log('error===========>>>>', data, scanParams, error);
 
-  //         const lastScannedItem = await this.prismaService.scans.findMany({
-  //           orderBy: { id: 'desc' },
-  //           take: 1,
-  //         });
-  //         const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
-  //         const ScanData = {
-  //           ScanId: uuid(),
-  //           tag:
-  //             scanParams.areaname +
-  //             lastScannedIndex +
-  //             scanParams.locationItemId,
-  //           auctionId: scanParams.auctionId,
-  //           locid: scanParams.locid,
-  //           scannedBy: scanParams.userid,
-  //           scannedName: scanParams.username,
-  //           tagexpireAt: addDays(30),
-  //         };
-  //         if (data && scanParams) {
-  //           const lastProduct = await this.prismaService.products.findMany({
-  //             orderBy: { id: 'desc' },
-  //             take: 1,
-  //           });
-  //           const productData = {
-  //             barcode: scanParams.barcode,
-  //             lotNo: lastScannedItem.length
-  //               ? getLotNo(
-  //                   lastProduct[0]?.lotNo,
-  //                   lastScannedItem[0].auctionId !== scanParams.auctionId,
-  //                 )
-  //               : '20D',
-  //             startingBid: Number(data.price) * 0.5,
-  //             title: scanParams.areaname + lastScannedIndex + data.title,
-  //             images: data.images?.map((l) => l.link),
-  //             description: data.description,
-  //             category: '',
-  //             manufacturer: data.manufacturer,
-  //             scans: {
-  //               create: ScanData,
-  //             },
-  //           };
-  //           await this.prismaService.products.create({ data: productData });
-  //         } else if (error) {
-  //           await this.prismaService.scans.create({
-  //             data: {
-  //               ...ScanData,
-  //               barcode: scanParams.barcode,
-  //               status: 'FAILED',
-  //               rejectedreason: error.message,
-  //             },
-  //           });
-  //         }
-  //         Jobs.dequeue();
-  //         this.logger.debug({
-  //           module: 'Queue',
-  //           message: `Total queue ${len} is cleared now`,
-  //         });
-  //       }
-  //     } catch (error) {
-  //       this.logger.debug({
-  //         module: 'Queue',
-  //         message: `Facing issue ie: ${error?.message || error}`,
-  //       });
-  //     }
-  //   }
-  // }
+          const lastScannedItem = await this.prismaService.scans.findMany({
+            orderBy: { id: 'desc' },
+            take: 1,
+          });
+          const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
+          const ScanData = {
+            ScanId: uuid(),
+            tag:
+              scanParams.areaname +
+              lastScannedIndex +
+              scanParams.locationItemId,
+            auctionId: scanParams.auctionId,
+            locid: scanParams.locid,
+            scannedBy: scanParams.userid,
+            scannedName: scanParams.username,
+            tagexpireAt: addDays(30),
+          };
+          if (data && scanParams) {
+            const lastProduct = await this.prismaService.products.findMany({
+              orderBy: { id: 'desc' },
+              take: 1,
+            });
+            const productData = {
+              barcode: scanParams.barcode,
+              lotNo: lastScannedItem.length
+                ? getLotNo(
+                    lastProduct[0]?.lotNo,
+                    lastScannedItem[0].auctionId !== scanParams.auctionId,
+                  )
+                : '20D',
+              startingBid: Number(data.price) * 0.5,
+              title: scanParams.areaname + lastScannedIndex + data.title,
+              images: data.images?.map((l) => l.link),
+              description: data.description,
+              category: '',
+              manufacturer: data.manufacturer,
+              scans: {
+                create: ScanData,
+              },
+            };
+            await this.prismaService.products.create({ data: productData });
+          } else if (error) {
+            await this.prismaService.scans.create({
+              data: {
+                ...ScanData,
+                barcode: scanParams.barcode,
+                status: 'FAILED',
+                rejectedreason: error.message,
+              },
+            });
+          }
+          Jobs.dequeue();
+          this.logger.debug({
+            module: 'Queue',
+            message: `Total queue ${len} is cleared now`,
+          });
+        }
+      } catch (error) {
+        this.logger.debug({
+          module: 'Queue',
+          message: `Facing issue ie: ${error?.message || error}`,
+        });
+      }
+    }
+  }
   @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
   async addFutureAuction() {
     let arr = [];

@@ -3,14 +3,16 @@ import { scrapperReturnDataDto } from 'src/dto/user.scan.module.dto';
 
 export const Jobs: JobQueueDto = {
   queue: [],
-  set(priority?: number): void {
+  set(func: () => Promise<scrapperReturnDataDto>, priority?: number): void {
     if (!Jobs.queue.length) {
       const valuesToPush = {
+        func,
         priority: priority || 1,
       };
       Jobs.queue.push(valuesToPush);
     } else if (!priority && Jobs.queue.length) {
       const valuesToPush = {
+        func,
         priority: Jobs.queue[Jobs.queue.length - 1].priority + 1,
       };
       Jobs.queue.push(valuesToPush);
@@ -20,6 +22,7 @@ export const Jobs: JobQueueDto = {
       for (let i = 0; i < Jobs.queue.length; i += 1) {
         if (Jobs.queue[i].priority > priority && i === 0) {
           const values = {
+            func,
             priority,
           };
           Jobs.queue = [values, ...Jobs.queue];
@@ -29,14 +32,14 @@ export const Jobs: JobQueueDto = {
           tempi = i;
         } else if (Jobs.queue[i].priority > priority) {
           if (tempi) {
-            tempqueue.push({ priority });
+            tempqueue.push({ func, priority });
             tempi = null;
           }
           tempqueue.push(Jobs.queue[i]);
         }
 
         if (tempi !== null && i === Jobs.queue.length - 1) {
-          tempqueue.push({ priority });
+          tempqueue.push({ func, priority });
         }
       }
       Jobs.queue = tempqueue;

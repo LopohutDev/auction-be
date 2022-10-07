@@ -6,20 +6,20 @@ import {
 import { uuid } from 'src/utils/uuid.utils';
 
 export const getScrapperData = async (
-  barcode: string,
+  data: any,
   scaninfo: scanItemParamsDto,
 ): Promise<scrapperReturnDataDto> => {
-  const params = {
-    barcode: barcode,
-    key: process.env[SCANENV],
-  };
+  // const params = {
+  //   barcode: barcode,
+  //   key: process.env[SCANENV],
+  // };
   const {
     default: { get },
   } = await import('axios');
   try {
-    const { data } = await get('https://api.barcodelookup.com/v3/products', {
-      params,
-    });
+    // const { data } = await get('https://api.barcodelookup.com/v3/products', {
+    //   params,
+    // });
 
     const storedata = data?.products?.length
       ? (data.products[0].stores as [])
@@ -46,7 +46,7 @@ export const getScrapperData = async (
           price: walmartdata.product?.buybox_winner?.price,
           manufacturer: 'Walmart',
         };
-        return { dataScrapper: sendedData, scanParams: scaninfo };
+        return { data: sendedData, scanParams: scaninfo };
       }
     } else if (AmazonProduct) {
       const { data: amazondata } = await get(
@@ -63,7 +63,7 @@ export const getScrapperData = async (
           price: amazondata.product?.buybox_winner?.price,
           manufacturer: 'Amazon',
         };
-        return { dataScrapper: sendedData, scanParams: scaninfo };
+        return { data: sendedData, scanParams: scaninfo };
       }
     }
     return { error: { status: 404, message: 'No Products found' } };
