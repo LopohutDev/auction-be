@@ -20,18 +20,23 @@ export const getScrapperData = async (
     const { data } = await get('https://api.barcodelookup.com/v3/products', {
       params,
     });
+
     const storedata = data?.products?.length
       ? (data.products[0].stores as [])
       : [];
+
+    console.log('storedata: ', storedata);
     const wallmartProduct = storedata.find((l) => l.name === 'Walmart');
-    const AmazonProduct = storedata.find((l) => l.name === 'Amazon');
-    if (!storedata.length || (!wallmartProduct && AmazonProduct)) {
+    const AmazonProduct = storedata.find((l) => l.name === 'Amazon.com');
+    if (!storedata.length || (!wallmartProduct && !AmazonProduct)) {
       return { error: { status: 422, message: 'No store found' } };
     }
     if (wallmartProduct) {
       const { data: walmartdata } = await get(
         `https://api.bluecartapi.com/request?api_key=${process.env[WALLENV]}&type=product&url=${wallmartProduct.link}`,
       );
+
+      console.log('walmartdata======>>>', walmartdata.product);
       if (walmartdata.request_info.success) {
         const sendedData = {
           productId: uuid(),
@@ -41,7 +46,7 @@ export const getScrapperData = async (
           price: walmartdata.product?.buybox_winner?.price,
           manufacturer: 'Walmart',
         };
-        return { data: sendedData, scanParams: scaninfo };
+        return { dataScrapper: sendedData, scanParams: scaninfo };
       }
     } else if (AmazonProduct) {
       const { data: amazondata } = await get(
@@ -58,11 +63,12 @@ export const getScrapperData = async (
           price: amazondata.product?.buybox_winner?.price,
           manufacturer: 'Amazon',
         };
-        return { data: sendedData, scanParams: scaninfo };
+        return { dataScrapper: sendedData, scanParams: scaninfo };
       }
     }
     return { error: { status: 404, message: 'No Products found' } };
   } catch (err) {
+    console.log('err?.response?.status>>>>>>>>>>>>', err);
     if (err?.response?.status === 404) {
       return { error: { status: 404, message: 'No product found' } };
     }

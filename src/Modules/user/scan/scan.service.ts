@@ -6,7 +6,7 @@ import { PrismaService } from 'src/Services/prisma.service';
 import { addDays } from 'src/utils/common.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import { validateUserScan } from 'src/validations/user.scans.validations';
-import { getScrapperData } from './scrapper.utils';
+import { getLotNo, getScrapperData } from './scrapper.utils';
 
 @Injectable()
 export class ScanService {
@@ -59,8 +59,61 @@ export class ScanService {
     };
 
     BarcodeData.set(item.barcode, {}, 300);
-    Jobs.set(() => getScrapperData(item.barcode, params));
-    return { data: { message: 'Scan Product Job Started' } };
+    const dataScrapper = await getScrapperData(item.barcode, params);
+    console.log('dataOne------------------', dataScrapper);
+    if (dataScrapper?.error) {
+      return { error: dataScrapper?.error };
+    }
+
+    const lastScannedItem = await this.prismaService.scans.findMany({
+      orderBy: { id: 'desc' },
+      take: 1,
+    });
+    const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
+    const ScanData = {
+      ScanId: uuid(),
+      tag:
+        dataScrapper.scanParams.areaname +
+        lastScannedIndex +
+        dataScrapper.scanParams.locationItemId,
+      auctionId: dataScrapper.scanParams.auctionId,
+      locid: dataScrapper.scanParams.locid,
+      scannedBy: dataScrapper.scanParams.userid,
+      scannedName: dataScrapper.scanParams.username,
+      tagexpireAt: addDays(30),
+    };
+    if (dataScrapper.dataScrapper && dataScrapper.scanParams) {
+      const lastProduct = await this.prismaService.products.findMany({
+        orderBy: { id: 'desc' },
+        take: 1,
+      });
+
+      console.log('lastProduct>>>>', lastProduct);
+      const productData = {
+        barcode: dataScrapper.scanParams.barcode,
+        lotNo: lastScannedItem.length
+          ? getLotNo(
+              lastProduct[0]?.lotNo,
+              lastScannedItem[0].auctionId !==
+                dataScrapper.scanParams.auctionId,
+            )
+          : '20D',
+        startingBid: Number(dataScrapper.dataScrapper.price) * 0.5,
+        title:
+          dataScrapper.scanParams.areaname +
+          lastScannedIndex +
+          dataScrapper.dataScrapper.title,
+        images: dataScrapper.dataScrapper.images?.map((l) => l.link),
+        description: dataScrapper.dataScrapper.description,
+        category: '',
+        manufacturer: dataScrapper.dataScrapper.manufacturer,
+        scans: {
+          create: ScanData,
+        },
+      };
+      await this.prismaService.products.create({ data: productData });
+      return { data: { message: 'Scan Product Job Started' } };
+    }
   }
 
   async createFailedProducts(scaninfo: ScanQueryDto) {
