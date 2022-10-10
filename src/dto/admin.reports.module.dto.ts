@@ -7,8 +7,12 @@ export type getReportsQueryDto = {
 export type getScanReportBodyDto = {
   location: string;
   auction: string;
+  markdone?: boolean;
 };
-
+export type updateMarkDoneBodyDto = {
+  id: number;
+  markdone: boolean;
+};
 export interface exportScanReportBodyDto extends getScanReportBodyDto {
   isNewReport?: boolean;
 }

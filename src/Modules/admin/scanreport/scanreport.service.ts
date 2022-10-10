@@ -8,11 +8,14 @@ import {
   exportScanReportBodyDto,
   getScanReportBodyDto,
   ScannedFailedStatus,
+  updateMarkDoneBodyDto,
 } from 'src/dto/admin.reports.module.dto';
 import { ScanDataReturnDto } from 'src/dto/user.scan.module.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { formatDate } from 'src/utils/formatDate.utils';
 import { valdiateScanAuction } from 'src/validations/admin.scan.validations';
+import { paginationDto } from 'src/dto/common.dto';
+import { paginationHelper } from '../utils';
 
 @Injectable()
 export class ScanReportsService {
@@ -21,21 +24,40 @@ export class ScanReportsService {
 
   async getFailedScanByAuction(
     reportinfo: getScanReportBodyDto,
-  ): Promise<ScanDataReturnDto> {
+    pagination: paginationDto,
+  ) {
     const { error } = valdiateScanAuction(reportinfo);
     if (error) {
       return { error };
     }
-    const { location, auction } = reportinfo;
+    const { location, auction, markdone } = reportinfo;
+    const { page, limit } = pagination;
     try {
-      const data = await this.prismaService.scans.findMany({
+      const scanData = await this.prismaService.failedScans.findMany({
         where: {
           locid: location,
           auctionId: auction,
-          failedStatus: ScannedFailedStatus.DONE,
+          markDone: markdone,
         },
       });
-      return { data };
+      const { data, pageCount } = paginationHelper(scanData, page, limit);
+
+      return { data, pageCount };
+    } catch (error) {
+      this.logger.error(error);
+      return { error: { status: 500, message: 'Server error' } };
+    }
+  }
+  async updateMarkDone(markdoneinfo: updateMarkDoneBodyDto) {
+    const { id, markdone } = markdoneinfo;
+    try {
+      const scanData = await this.prismaService.failedScans.update({
+        where: {
+          id: id,
+        },
+        data: { markDone: markdone },
+      });
+      return { success: true };
     } catch (error) {
       this.logger.error(error);
       return { error: { status: 500, message: 'Server error' } };
