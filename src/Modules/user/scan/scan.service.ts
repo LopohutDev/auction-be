@@ -43,7 +43,13 @@ export class ScanService {
       where: { barcode: item.barcode },
       rejectOnNotFound: false,
     });
-    if (isProductAlreadyScanned) {
+    const isProductAlreadyFailedScanned =
+      await this.prismaService.failedScans.findUnique({
+        where: { barcode: item.barcode },
+        rejectOnNotFound: false,
+      });
+
+    if (isProductAlreadyScanned || isProductAlreadyFailedScanned) {
       return { error: { status: 409, message: 'Product already scanned' } };
     }
     const userdata = await this.prismaService.user.findUnique({
@@ -110,14 +116,14 @@ export class ScanService {
       const userdata = await this.prismaService.user.findUnique({
         where: { email: scaninfo.email },
       });
-      const lastScannedItem = await this.prismaService.scans.findMany({
+      const lastScannedItem = await this.prismaService.failedScans.findMany({
         orderBy: { id: 'desc' },
         take: 1,
       });
 
       const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
-      const ScanData = {
-        ScanId: uuid(),
+      const FailedScanData = {
+        failedScanId: uuid(),
         tag: item.areaname + lastScannedIndex + item.itemtype,
         auctionId: item.auction,
         locid: islocationExists.locid,
@@ -128,30 +134,29 @@ export class ScanService {
         barcode: scaninfo.barcode,
       };
       if (!item.barcode) {
-        await this.prismaService.scans.create({
+        await this.prismaService.failedScans.create({
           data: {
-            ...ScanData,
-            status: 'FAILED',
-            rejectedreason: 'The Program could not read barcode',
+            ...FailedScanData,
+            failedStatus: 'DONE',
+            rejectedReason: 'The Program could not read barcode',
           },
         });
         return { data: { message: 'Successfully marked as failed' } };
       }
-      const isProductAlreadyScanned = await this.prismaService.scans.findUnique(
-        {
+      const isProductAlreadyScanned =
+        await this.prismaService.failedScans.findUnique({
           where: { barcode: item.barcode },
           rejectOnNotFound: false,
-        },
-      );
+        });
       if (isProductAlreadyScanned) {
         return { error: { status: 409, message: 'Product already scanned' } };
       }
 
-      await this.prismaService.scans.create({
+      await this.prismaService.failedScans.create({
         data: {
-          ...ScanData,
-          status: 'FAILED',
-          rejectedreason: 'Some other issue occur',
+          ...FailedScanData,
+          failedStatus: 'DONE',
+          rejectedReason: 'Some other issue occur',
         },
       });
       return { data: { message: 'Successfully marked as failed' } };
