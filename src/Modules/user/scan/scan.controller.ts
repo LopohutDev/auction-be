@@ -46,7 +46,7 @@ export class ScanController {
     const { email } = req;
     const { data, error } = await this.scanService.createFailedProducts({
       ...query,
-      // email,
+      email,
     });
     if (data) {
       return {

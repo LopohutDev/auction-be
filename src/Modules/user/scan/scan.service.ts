@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BarcodeData } from 'src/Cache/BarCodes';
 import { Jobs } from 'src/Cache/Jobs';
+import { SCANENV } from 'src/constants/common.constants';
 import { ScanQueryDto } from 'src/dto/user.scan.module.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { addDays } from 'src/utils/common.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import { validateUserScan } from 'src/validations/user.scans.validations';
-import { getScrapperData } from './scrapper.utils';
+import { getLotNo, getScrapperData } from './scrapper.utils';
 
 @Injectable()
 export class ScanService {
@@ -42,7 +43,13 @@ export class ScanService {
       where: { barcode: item.barcode },
       rejectOnNotFound: false,
     });
-    if (isProductAlreadyScanned) {
+    const isProductAlreadyFailedScanned =
+      await this.prismaService.failedScans.findUnique({
+        where: { barcode: item.barcode },
+        rejectOnNotFound: false,
+      });
+
+    if (isProductAlreadyScanned || isProductAlreadyFailedScanned) {
       return { error: { status: 409, message: 'Product already scanned' } };
     }
     const userdata = await this.prismaService.user.findUnique({
@@ -59,8 +66,28 @@ export class ScanService {
     };
 
     BarcodeData.set(item.barcode, {}, 300);
-    Jobs.set(() => getScrapperData(item.barcode, params));
-    return { data: { message: 'Scan Product Job Started' } };
+
+    const values = {
+      barcode: item.barcode,
+      key: process.env[SCANENV],
+    };
+    const {
+      default: { get },
+    } = await import('axios');
+    try {
+      const { data } = await get('https://api.barcodelookup.com/v3/products', {
+        params: values,
+      });
+
+      Jobs.set(() => getScrapperData(data, params));
+      return { data: { message: 'Scan Product Job Started' } };
+    } catch (err) {
+      console.log('err?.response?.status>>>>>>>>>>>>', err);
+      if (err?.response?.status === 404) {
+        return { error: { status: 404, message: 'No product found' } };
+      }
+      return { error: { status: 500, message: 'Some error occured' } };
+    }
   }
 
   async createFailedProducts(scaninfo: ScanQueryDto) {
@@ -89,14 +116,14 @@ export class ScanService {
       const userdata = await this.prismaService.user.findUnique({
         where: { email: scaninfo.email },
       });
-      const lastScannedItem = await this.prismaService.scans.findMany({
+      const lastScannedItem = await this.prismaService.failedScans.findMany({
         orderBy: { id: 'desc' },
         take: 1,
       });
 
       const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
-      const ScanData = {
-        ScanId: uuid(),
+      const FailedScanData = {
+        failedScanId: uuid(),
         tag: item.areaname + lastScannedIndex + item.itemtype,
         auctionId: item.auction,
         locid: islocationExists.locid,
@@ -107,30 +134,29 @@ export class ScanService {
         barcode: scaninfo.barcode,
       };
       if (!item.barcode) {
-        await this.prismaService.scans.create({
+        await this.prismaService.failedScans.create({
           data: {
-            ...ScanData,
-            status: 'FAILED',
-            rejectedreason: 'The Program could not read barcode',
+            ...FailedScanData,
+            failedStatus: 'DONE',
+            rejectedReason: 'The Program could not read barcode',
           },
         });
         return { data: { message: 'Successfully marked as failed' } };
       }
-      const isProductAlreadyScanned = await this.prismaService.scans.findUnique(
-        {
+      const isProductAlreadyScanned =
+        await this.prismaService.failedScans.findUnique({
           where: { barcode: item.barcode },
           rejectOnNotFound: false,
-        },
-      );
+        });
       if (isProductAlreadyScanned) {
         return { error: { status: 409, message: 'Product already scanned' } };
       }
 
-      await this.prismaService.scans.create({
+      await this.prismaService.failedScans.create({
         data: {
-          ...ScanData,
-          status: 'FAILED',
-          rejectedreason: 'Some other issue occur',
+          ...FailedScanData,
+          failedStatus: 'DONE',
+          rejectedReason: 'Some other issue occur',
         },
       });
       return { data: { message: 'Successfully marked as failed' } };
