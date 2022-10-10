@@ -100,7 +100,7 @@ model Scans {
   auctionId       String               
   locations       Location             @relation(fields:[locid], references: [locid])
   locid           String
-  status          ScannedStatus        @default(UNDERREVIEW)
+  status          ScannedStatus        @default(SUCCESSFULL)
   failedStatus    ScannedFailedStatus?
   rejectedreason  String?
   scannedUser     User                 @relation(fields:[scannedBy], references: [id])
@@ -163,7 +163,7 @@ enum AuctionType {
 
 model FailedScans {
   id              Int                  @id @default(autoincrement())
-  FailedScanId    String
+  failedScanId    String
   tag             String
   barcode         String               @unique
   auction         Auction              @relation(fields:[auctionId], references: [id])
@@ -175,7 +175,7 @@ model FailedScans {
   scannedUser     User                 @relation(fields:[scannedBy], references: [id])
   scannedBy       String
   scannedName     String
-  markDone        Boolean
+  markDone        Boolean              @default(false)
   tagexpireAt     DateTime             
   createdAt       DateTime             @default(now())
 }

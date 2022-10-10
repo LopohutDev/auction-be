@@ -70,7 +70,6 @@ export class TasksService {
       try {
         for await (const que of Jobs.queue) {
           const { data, scanParams, error } = await que.func();
-          console.log('error===========>>>>', data, scanParams, error);
 
           const lastScannedItem = await this.prismaService.scans.findMany({
             orderBy: { id: 'desc' },
@@ -114,12 +113,24 @@ export class TasksService {
             };
             await this.prismaService.products.create({ data: productData });
           } else if (error) {
-            await this.prismaService.scans.create({
+            const failedScanData = {
+              failedScanId: uuid(),
+              tag:
+                scanParams.areaname +
+                lastScannedIndex +
+                scanParams.locationItemId,
+              auctionId: scanParams.auctionId,
+              locid: scanParams.locid,
+              scannedBy: scanParams.userid,
+              scannedName: scanParams.username,
+              tagexpireAt: addDays(30),
+            };
+            await this.prismaService.failedScans.create({
               data: {
-                ...ScanData,
+                ...failedScanData,
                 barcode: scanParams.barcode,
-                status: 'FAILED',
-                rejectedreason: error.message,
+                failedStatus: 'DONE',
+                rejectedReason: error.message,
               },
             });
           }
