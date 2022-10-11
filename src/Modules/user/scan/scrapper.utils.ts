@@ -25,7 +25,7 @@ export const getScrapperData = async (
       ? (data.products[0].stores as [])
       : [];
 
-    console.log('storedata: ', storedata);
+    // console.log('storedata: ', storedata);
     const wallmartProduct = storedata.find((l) => l.name === 'Walmart');
     const AmazonProduct = storedata.find((l) => l.name === 'Amazon.com');
     if (!storedata.length || (!wallmartProduct && !AmazonProduct)) {

@@ -1,10 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import * as fs from 'fs';
 import { BarcodeData } from 'src/Cache/BarCodes';
 import { Jobs } from 'src/Cache/Jobs';
 import { PrismaService } from 'src/Services/prisma.service';
 import { Jwt } from 'src/tokens/Jwt';
 import { addDays } from 'src/utils/common.utils';
+import { Download } from 'src/utils/imageDownload.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import setAuction from '../admin/auction /auction.utils';
 import { getLotNo } from '../user/scan/scrapper.utils';
@@ -60,7 +62,7 @@ export class TasksService {
     });
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handlePriorityQueue() {
     const jobs = Jobs.queue;
     if (!jobs.length) {
@@ -70,6 +72,16 @@ export class TasksService {
       try {
         for await (const que of Jobs.queue) {
           const { data, scanParams, error } = await que.func();
+          const dir = `./src/scrapper`;
+
+          if (!fs.existsSync(`${dir}/images`)) {
+            fs.mkdirSync(`${dir}/images`);
+          }
+
+          const imagesPath = data.images.map((img) => {
+            const imgFile = Download(img.link, `${dir}/images/${img.id}.jpeg`);
+            return imgFile;
+          });
 
           const lastScannedItem = await this.prismaService.scans.findMany({
             orderBy: { id: 'desc' },
@@ -103,7 +115,7 @@ export class TasksService {
                 : '20D',
               startingBid: Number(data.price) * 0.5,
               title: scanParams.areaname + lastScannedIndex + data.title,
-              images: data.images?.map((l) => l.link),
+              images: imagesPath,
               description: data.description,
               category: '',
               manufacturer: data.manufacturer,
