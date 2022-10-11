@@ -42,17 +42,64 @@ export class ReportsService {
               ScanId: true,
               barcode: true,
               scannedUser: { select: { firstname: true, lastname: true } },
+              status: true,
             },
           },
           _count: {
-            select: { assigneduser: true, Scanned: true },
+            select: {
+              assigneduser: true,
+              Scanned: true,
+            },
           },
         },
       });
+
+      const getFailedScrapes = await this.prismaService.location.findFirst({
+        where: {
+          locid: { equals: location },
+          createdAt: { lte: new Date() },
+          Scanned: {
+            every: {
+              status: 'FAILED',
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        include: { Scanned: true },
+      });
+
+      const getSuccessfulScrapes = await this.prismaService.location.findFirst({
+        where: {
+          locid: { equals: location },
+          createdAt: { lte: new Date() },
+          Scanned: {
+            every: {
+              status: 'SUCCESSFULL',
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        include: { Scanned: true },
+      });
+
       if (!data) {
         return { error: { status: 404, message: 'No Scans Exists' } };
       }
-      return { data };
+
+      return {
+        data: {
+          ...data,
+          _count: {
+            ...data._count,
+            failedScrapes: getFailedScrapes
+              ? getFailedScrapes.Scanned.length
+              : 0,
+            successfulScrapes: getSuccessfulScrapes
+              ? getSuccessfulScrapes.Scanned.length
+              : 0,
+          },
+        },
+      };
     } catch (error) {
       this.logger.error(error);
       return { error: { status: 500, message: 'Server error' } };
