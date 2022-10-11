@@ -22,6 +22,7 @@ export interface locationReturnValidateDto extends errorDto {
 
 export interface locationQueryDataDto {
   location: string;
+  isAdmin?: boolean;
 }
 export type usersQueryDataDto = {
   id: string;
