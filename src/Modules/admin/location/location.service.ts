@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { AccountEnum, Roles } from '@prisma/client';
 import {
   locationBodyDto,
   locationQueryDataDto,
@@ -74,6 +75,11 @@ export class LocationService {
             },
           },
           assigneduser: {
+            where: {
+              account: {
+                not: AccountEnum.DELETED,
+              },
+            },
             select: {
               id: true,
               firstname: true,
@@ -134,7 +140,13 @@ export class LocationService {
       const scan = await this.prismaService.scans.findFirst({
         where: { locid: param },
       });
-      if (!scan) {
+      const failedscan = await this.prismaService.failedScans.findFirst({
+        where: { locid: param },
+      });
+      const user = await this.prismaService.user.findFirst({
+        where: { locid: param },
+      });
+      if (!scan && !failedscan && !user) {
         await this.prismaService.location.delete({
           where: { locid: param },
         });
