@@ -75,7 +75,7 @@ model User {
 model Products {
   id              Int         @id @default(autoincrement())
   productId       String      @unique @default(uuid())
-  barcode         String      @unique
+  barcode         String      
   lotNo           String
   quantity        Int         @default(1)
   images          String[]
@@ -85,17 +85,19 @@ model Products {
   category        String
   manufacturer    String
   consignor       Int?
-  scans           Scans?
+  scans           Scans       @relation(fields: [scanid], references: [ScanId], onDelete: Cascade)
+  scanid          String      @unique
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @default(now())
 }
 
 model Scans {
   id              Int                  @id @default(autoincrement())
-  ScanId          String
+  ScanId          String               @unique
   tag             String
-  barcode         String               @unique
-  products        Products             @relation(fields: [barcode], references: [barcode], onDelete: Cascade)
+  barcode         String               
+  products        Products?
+  tags            Tags?
   auction         Auction              @relation(fields:[auctionId], references: [id])
   auctionId       String               
   locations       Location             @relation(fields:[locid], references: [locid])
@@ -163,13 +165,14 @@ enum AuctionType {
 
 model FailedScans {
   id              Int                  @id @default(autoincrement())
-  failedScanId    String
+  failedScanId    String               @unique
   tag             String
-  barcode         String               @unique
+  barcode         String               
   auction         Auction              @relation(fields:[auctionId], references: [id])
   auctionId       String               
   locations       Location             @relation(fields:[locid], references: [locid])
   locid           String
+  tags            Tags?
   failedStatus    ScannedFailedStatus? @default(DONE)
   rejectedReason  String?
   scannedUser     User                 @relation(fields:[scannedBy], references: [id])
@@ -178,4 +181,14 @@ model FailedScans {
   markDone        Boolean              @default(false)
   tagexpireAt     DateTime             
   createdAt       DateTime             @default(now())
+}
+
+model Tags{
+  id              Int                   @id @default(autoincrement())
+  tag             String
+  successScan     Scans?                @relation(fields:[successScanId], references: [ScanId])
+  successScanId   String?               @unique
+  failedScan      FailedScans?          @relation(fields:[failedScanId], references: [failedScanId])
+  failedScanId    String?               @unique
+  taxexpireAt     DateTime
 }
