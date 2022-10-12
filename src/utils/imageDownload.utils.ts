@@ -12,7 +12,7 @@ export const Download = (
     res.pipe(fileStream);
 
     fileStream.on('error', (err: Error) => {
-      console.log('ERROR:', err);
+      console.error('ERROR:', err);
     });
 
     fileStream.on('close', () => {
@@ -25,7 +25,7 @@ export const Download = (
   });
 
   req.on('error', (err: Error) => {
-    console.log('ERROR:', err);
+    console.error('ERROR:', err);
     throw new Error('Error Downloading Image');
   });
 
