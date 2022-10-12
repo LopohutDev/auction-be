@@ -42,25 +42,17 @@ export class ReportsService {
               ScanId: true,
               barcode: true,
               scannedUser: { select: { firstname: true, lastname: true } },
-              status: true,
             },
           },
           _count: {
-            select: {
-              assigneduser: true,
-              Scanned: true,
-            },
+            select: { assigneduser: true, Scanned: true },
           },
         },
       });
-
       if (!data) {
         return { error: { status: 404, message: 'No Scans Exists' } };
       }
-
-      return {
-        data,
-      };
+      return { data };
     } catch (error) {
       this.logger.error(error);
       return { error: { status: 500, message: 'Server error' } };
