@@ -12,10 +12,15 @@ export class ReportsController {
 
   @Get()
   async getcurrentReports(@Query() locinfo: getReportsQueryDto) {
-    const { data, error } = await this.reportsService.getReports(locinfo);
+    const { data, error, user, successScan, failedScan, barcode } =
+      await this.reportsService.getReports(locinfo);
     if (data) {
       return {
         data,
+        user,
+        successScan,
+        failedScan,
+        barcode,
         success: true,
       };
     } else {
