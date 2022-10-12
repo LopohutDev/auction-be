@@ -54,51 +54,12 @@ export class ReportsService {
         },
       });
 
-      const getFailedScrapes = await this.prismaService.location.findFirst({
-        where: {
-          locid: { equals: location },
-          createdAt: { lte: new Date() },
-          Scanned: {
-            every: {
-              status: 'FAILED',
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        include: { Scanned: true },
-      });
-
-      const getSuccessfulScrapes = await this.prismaService.location.findFirst({
-        where: {
-          locid: { equals: location },
-          createdAt: { lte: new Date() },
-          Scanned: {
-            every: {
-              status: 'SUCCESSFULL',
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        include: { Scanned: true },
-      });
-
       if (!data) {
         return { error: { status: 404, message: 'No Scans Exists' } };
       }
 
       return {
-        data: {
-          ...data,
-          _count: {
-            ...data._count,
-            failedScrapes: getFailedScrapes
-              ? getFailedScrapes.Scanned.length
-              : 0,
-            successfulScrapes: getSuccessfulScrapes
-              ? getSuccessfulScrapes.Scanned.length
-              : 0,
-          },
-        },
+        data,
       };
     } catch (error) {
       this.logger.error(error);
