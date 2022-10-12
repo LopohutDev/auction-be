@@ -54,15 +54,11 @@ export class UserAuctionService {
       }
       const auctiondata = await this.prismaService.auction.findMany({
         where: {
-          AND: [
-            {
-              startDate: {
-                gte: new Date(new Date().setDate(new Date().getDate() - 3)),
-              },
-            },
-            { startNumber: { gte: 0 } },
-            { locid: location },
-          ],
+          startDate: {
+            gte: new Date(new Date().setDate(new Date().getDate() - 3)),
+          },
+          startNumber: { gte: 0 },
+          locid: location,
         },
       });
       return { success: true, data: auctiondata };
