@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { AccountEnum } from '@prisma/client';
 import {
   getReportsQueryDto,
   getScanQueryDto,
@@ -12,7 +13,7 @@ export class ReportsService {
   private readonly logger = new Logger(ReportsService.name);
 
   async getReports(locquery: getReportsQueryDto) {
-    const { location } = locquery;
+    const { location, range } = locquery;
     try {
       const isLocationExists = await this.prismaService.location.findUnique({
         where: { locid: location },
@@ -21,38 +22,92 @@ export class ReportsService {
       if (!isLocationExists) {
         return { error: { status: 404, message: 'Invalid location' } };
       }
+      let firstDay;
+      let lastDay;
+      const date = new Date();
+      const currentYear = date.getFullYear();
+      switch (range) {
+        case 'this-month':
+          firstDay = new Date(currentYear, date.getMonth(), 1);
+          lastDay = new Date(currentYear, date.getMonth() + 1, 0);
+          break;
+        case 'this-year':
+          firstDay = new Date(currentYear, 0, 1);
+          lastDay = new Date(currentYear, 11, 31);
+          break;
+        case 'this-week':
+          firstDay = new Date(date.setDate(date.getDate() - date.getDay()));
+          lastDay = new Date(date.setDate(date.getDate() - date.getDay() + 6));
+          break;
+        case 'last-month':
+          firstDay = new Date(currentYear, date.getMonth() - 1, 1);
+          lastDay = new Date(currentYear, date.getMonth(), 0);
+          break;
+        case 'last-year':
+          const previousYear = currentYear - 1;
+          firstDay = new Date(previousYear, 0, 1);
+          lastDay = new Date(previousYear, 11, 31);
+          break;
+        case 'last-week':
+          lastDay = new Date(date.setDate(date.getDate() - date.getDay() - 1));
+          firstDay = new Date(date.setDate(date.getDate() - date.getDay()));
+          break;
+        case 'today':
+          firstDay = date;
+          lastDay = date;
+          break;
+        default:
+          break;
+      }
+      this.logger.log('first day>>>>', firstDay.toISOString());
+      this.logger.log('last day>>>>', lastDay.toISOString());
+      this.logger.log(' day>>>>', new Date());
       const data = await this.prismaService.location.findFirst({
         where: {
           locid: { equals: location },
-          Scanned: { some: { createdAt: { lte: new Date() } } },
         },
         select: {
           assigneduser: {
             select: {
               firstname: true,
               lastname: true,
-              _count: { select: { scanProducts: true } },
+              email: true,
+              _count: { select: { scanProducts: true, failedScans: true } },
+            },
+            where: {
+              createdAt: {
+                gte: firstDay,
+                lte: lastDay,
+              },
+              account: { equals: AccountEnum.ACCEPTED },
             },
           },
           Scanned: {
-            orderBy: { createdAt: 'desc' },
-            take: 10,
-            select: {
-              createdAt: true,
-              ScanId: true,
-              barcode: true,
-              scannedUser: { select: { firstname: true, lastname: true } },
+            where: {
+              createdAt: {
+                gte: firstDay,
+                lte: lastDay,
+              },
             },
           },
-          _count: {
-            select: { assigneduser: true, Scanned: true },
+          failedScans: {
+            where: {
+              createdAt: {
+                gte: firstDay,
+                lte: lastDay,
+              },
+            },
           },
         },
       });
+      const user = data.assigneduser.length;
+      const successScan = data.Scanned.length;
+      const failedScan = data.failedScans.length;
+      const barcode = successScan + failedScan;
       if (!data) {
         return { error: { status: 404, message: 'No Scans Exists' } };
       }
-      return { data };
+      return { data, user, successScan, failedScan, barcode };
     } catch (error) {
       this.logger.error(error);
       return { error: { status: 500, message: 'Server error' } };
@@ -62,9 +117,9 @@ export class ReportsService {
   async allScans(allScanQuery: getScanQueryDto) {
     const { page, limit, location } = allScanQuery;
 
-    const allData = await this.prismaService.location.findUnique({
+    const allData = await this.prismaService.location.findFirst({
       where: {
-        locid: location,
+        locid: { equals: location },
       },
       select: {
         Scanned: {
@@ -76,13 +131,25 @@ export class ReportsService {
             scannedUser: { select: { firstname: true, lastname: true } },
           },
         },
+        failedScans: {
+          orderBy: { createdAt: 'desc' },
+          select: {
+            createdAt: true,
+            failedScanId: true,
+            barcode: true,
+            scannedUser: { select: { firstname: true, lastname: true } },
+          },
+        },
       },
     });
-
+    const failedScans = allData.failedScans;
+    const Scanned = allData.Scanned;
+    const mergdata = [...Scanned, ...failedScans];
+    this.logger.log(JSON.stringify(mergdata));
     if (!allData) {
       return { error: { status: 404, message: 'No Scans Exists' } };
     }
-    const { data, pageCount } = paginationHelper(allData?.Scanned, page, limit);
+    const { data, pageCount } = paginationHelper(mergdata, page, limit);
 
     return { data, pageCount };
   }

@@ -90,10 +90,7 @@ export class TasksService {
           const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
           const ScanData = {
             ScanId: uuid(),
-            tag:
-              scanParams.areaname +
-              lastScannedIndex +
-              scanParams.locationItemId,
+            tag: scanParams.tag,
             auctionId: scanParams.auctionId,
             locid: scanParams.locid,
             scannedBy: scanParams.userid,
@@ -124,13 +121,18 @@ export class TasksService {
               },
             };
             await this.prismaService.products.create({ data: productData });
+            await this.prismaService.tags.update({
+              where: {
+                id: scanParams.lastInsertId,
+              },
+              data: {
+                successScanId: ScanData.ScanId,
+              },
+            });
           } else if (error) {
             const failedScanData = {
               failedScanId: uuid(),
-              tag:
-                scanParams.areaname +
-                lastScannedIndex +
-                scanParams.locationItemId,
+              tag: scanParams.tag,
               auctionId: scanParams.auctionId,
               locid: scanParams.locid,
               scannedBy: scanParams.userid,
@@ -143,6 +145,14 @@ export class TasksService {
                 barcode: scanParams.barcode,
                 failedStatus: 'DONE',
                 rejectedReason: error.message,
+              },
+            });
+            await this.prismaService.tags.update({
+              where: {
+                id: scanParams.lastInsertId,
+              },
+              data: {
+                failedScanId: failedScanData.failedScanId,
               },
             });
           }

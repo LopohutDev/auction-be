@@ -92,10 +92,11 @@ model Products {
 
 model Scans {
   id              Int                  @id @default(autoincrement())
-  ScanId          String
+  ScanId          String               @unique
   tag             String
   barcode         String               @unique
   products        Products             @relation(fields: [barcode], references: [barcode], onDelete: Cascade)
+  tags            Tags[]
   auction         Auction              @relation(fields:[auctionId], references: [id])
   auctionId       String               
   locations       Location             @relation(fields:[locid], references: [locid])
@@ -145,6 +146,7 @@ model Auction {
   failedScans   FailedScans[]
   locations     Location    @relation(fields:[locid], references: [locid], onDelete: Cascade)
   locid         String
+  tags          Tags[]
   startDate     DateTime
   startTime     DateTime
   endDate       DateTime
@@ -163,13 +165,14 @@ enum AuctionType {
 
 model FailedScans {
   id              Int                  @id @default(autoincrement())
-  failedScanId    String
+  failedScanId    String               @unique
   tag             String
   barcode         String               @unique
   auction         Auction              @relation(fields:[auctionId], references: [id])
   auctionId       String               
   locations       Location             @relation(fields:[locid], references: [locid])
   locid           String
+  tags           Tags[]
   failedStatus    ScannedFailedStatus? @default(DONE)
   rejectedReason  String?
   scannedUser     User                 @relation(fields:[scannedBy], references: [id])
@@ -178,4 +181,16 @@ model FailedScans {
   markDone        Boolean              @default(false)
   tagexpireAt     DateTime             
   createdAt       DateTime             @default(now())
+}
+model Tags{
+  id              Int                   @id @default(autoincrement())
+  tag             String
+  successScan     Scans?                @relation(fields:[successScanId], references: [ScanId])
+  successScanId   String?               @unique
+  failedScan      FailedScans?          @relation(fields:[failedScanId], references: [failedScanId])
+  failedScanId    String?               @unique
+  auction         Auction              @relation(fields:[auctionId], references: [id])
+  auctionId       String  
+  auctionStartNo  Int?
+  tagexpireAt     DateTime
 }
