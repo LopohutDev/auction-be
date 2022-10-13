@@ -7,7 +7,7 @@ import { PrismaService } from 'src/Services/prisma.service';
 import { addDays } from 'src/utils/common.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import { validateUserScan } from 'src/validations/user.scans.validations';
-import { getScrapperData } from './scrapper.utils';
+import { getLotNo, getScrapperData } from './scrapper.utils';
 
 @Injectable()
 export class ScanService {
@@ -82,6 +82,7 @@ export class ScanService {
       Jobs.set(() => getScrapperData(data, params));
       return { data: { message: 'Scan Product Job Started' } };
     } catch (err) {
+      console.log('err?.response?.status>>>>>>>>>>>>', err);
       if (err?.response?.status === 404) {
         return { error: { status: 404, message: 'No product found' } };
       }
@@ -140,11 +141,7 @@ export class ScanService {
             rejectedReason: 'The Program could not read barcode',
           },
         });
-        return {
-          data: {
-            message: `Successfully marked as failed & tag is: ${FailedScanData.tag}`,
-          },
-        };
+        return { data: { message: 'Successfully marked as failed' } };
       }
       const isProductAlreadyScanned =
         await this.prismaService.failedScans.findUnique({
@@ -162,11 +159,7 @@ export class ScanService {
           rejectedReason: 'Some other issue occur',
         },
       });
-      return {
-        data: {
-          message: `Successfully marked as failed & tag is: ${FailedScanData.tag}`,
-        },
-      };
+      return { data: { message: 'Successfully marked as failed' } };
     } catch (error) {
       return { error: { status: 500, message: 'Server error' } };
     }
