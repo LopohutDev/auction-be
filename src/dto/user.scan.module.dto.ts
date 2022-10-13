@@ -39,6 +39,9 @@ export interface scanItemParamsDto {
   userid: string;
   username: string;
   locid: string;
+  tag: string;
+  autionStartNo: number;
+  lastInsertId: number;
 }
 
 export interface scrapperReturnDataDto extends errorDto {

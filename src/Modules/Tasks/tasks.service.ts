@@ -78,10 +78,7 @@ export class TasksService {
           const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
           const ScanData = {
             ScanId: uuid(),
-            tag:
-              scanParams.areaname +
-              lastScannedIndex +
-              scanParams.locationItemId,
+            tag: scanParams.tag,
             auctionId: scanParams.auctionId,
             locid: scanParams.locid,
             scannedBy: scanParams.userid,
@@ -112,25 +109,53 @@ export class TasksService {
               },
             };
             await this.prismaService.products.create({ data: productData });
+            await this.prismaService.tags.update({
+              where: {
+                id: scanParams.lastInsertId,
+              },
+              data: {
+                successScanId: ScanData.ScanId,
+              },
+            });
           } else if (error) {
             const failedScanData = {
               failedScanId: uuid(),
-              tag:
-                scanParams.areaname +
-                lastScannedIndex +
-                scanParams.locationItemId,
+              tag: scanParams.tag,
               auctionId: scanParams.auctionId,
               locid: scanParams.locid,
               scannedBy: scanParams.userid,
               scannedName: scanParams.username,
               tagexpireAt: addDays(30),
             };
+            await this.prismaService.tags.create({
+              data: {
+                tag: scanParams.tag,
+                auctionId: scanParams.auctionId,
+                tagexpireAt: addDays(30),
+                auctionStartNo: scanParams.autionStartNo,
+              },
+            });
+            const lastInsertId = await this.prismaService.tags.findFirst({
+              orderBy: { id: 'desc' },
+              take: 1,
+              select: {
+                id: true,
+              },
+            });
             await this.prismaService.failedScans.create({
               data: {
                 ...failedScanData,
                 barcode: scanParams.barcode,
                 failedStatus: 'DONE',
                 rejectedReason: error.message,
+              },
+            });
+            await this.prismaService.tags.update({
+              where: {
+                id: lastInsertId.id,
+              },
+              data: {
+                failedScanId: failedScanData.failedScanId,
               },
             });
           }

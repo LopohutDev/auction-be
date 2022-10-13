@@ -55,15 +55,6 @@ export class ScanService {
     const userdata = await this.prismaService.user.findUnique({
       where: { email: scaninfo.email },
     });
-    const params = {
-      barcode: item.barcode,
-      areaname: item.areaname,
-      locationItemId: item.itemtype,
-      auctionId: item.auction,
-      userid: userdata.id,
-      username: userdata.firstname + ' ' + userdata.lastname,
-      locid: islocationExists.locid,
-    };
 
     BarcodeData.set(item.barcode, {}, 300);
 
@@ -78,11 +69,107 @@ export class ScanService {
       const { data } = await get('https://api.barcodelookup.com/v3/products', {
         params: values,
       });
-
-      Jobs.set(() => getScrapperData(data, params));
-      return { data: { message: 'Scan Product Job Started' } };
+      if (data) {
+        const fetchStartNo = await this.prismaService.auction.findUnique({
+          where: { id: item.auction },
+          select: {
+            startNumber: true,
+          },
+        });
+        let startNumber = fetchStartNo.startNumber;
+        let tag = item.areaname + fetchStartNo.startNumber + item.itemtype;
+        const checkTag = await this.prismaService.tags.findFirst({
+          where: {
+            tag: tag,
+            tagexpireAt: {
+              gte: new Date(),
+            },
+          },
+          select: { tag: true, auctionStartNo: true },
+        });
+        if (checkTag) {
+          const fetchAuctionSNo = await this.prismaService.tags.findMany({
+            where: {
+              auctionId: item.auction,
+              tagexpireAt: {
+                gte: new Date(),
+              },
+            },
+            orderBy: { id: 'desc' },
+            take: 1,
+            select: {
+              auctionStartNo: true,
+            },
+          });
+          if (fetchAuctionSNo) {
+            const checkTagAgian = await this.prismaService.tags.findFirst({
+              where: {
+                tag: tag,
+                tagexpireAt: {
+                  gte: new Date(),
+                },
+              },
+              select: { tag: true, auctionStartNo: true },
+            });
+            if (checkTagAgian) {
+              const fetchSNo = await this.prismaService.tags.findMany({
+                where: {
+                  tagexpireAt: {
+                    gte: new Date(),
+                  },
+                },
+                orderBy: { id: 'desc' },
+                take: 1,
+                select: {
+                  auctionStartNo: true,
+                },
+              });
+              const num = fetchSNo[0].auctionStartNo + 1;
+              tag = item.areaname + num + item.itemtype;
+              startNumber = num;
+            } else {
+              const num = fetchAuctionSNo[0].auctionStartNo + 1;
+              tag = item.areaname + num + item.itemtype;
+              startNumber = num;
+            }
+          }
+        }
+        await this.prismaService.tags.create({
+          data: {
+            tag: tag,
+            auctionId: item.auction,
+            tagexpireAt: addDays(30),
+            auctionStartNo: startNumber,
+          },
+        });
+        const lastInsertId = await this.prismaService.tags.findFirst({
+          orderBy: { id: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+          },
+        });
+        const params = {
+          barcode: item.barcode,
+          areaname: item.areaname,
+          locationItemId: item.itemtype,
+          auctionId: item.auction,
+          userid: userdata.id,
+          username: userdata.firstname + ' ' + userdata.lastname,
+          locid: islocationExists.locid,
+          tag: tag,
+          autionStartNo: startNumber,
+          lastInsertId: lastInsertId.id,
+        };
+        Jobs.set(() => getScrapperData(data, params));
+        return {
+          data: {
+            message:
+              'The item was successfully submitted. The tag number is: ' + tag,
+          },
+        };
+      }
     } catch (err) {
-      console.log('err?.response?.status>>>>>>>>>>>>', err);
       if (err?.response?.status === 404) {
         return { error: { status: 404, message: 'No product found' } };
       }
@@ -116,15 +203,78 @@ export class ScanService {
       const userdata = await this.prismaService.user.findUnique({
         where: { email: scaninfo.email },
       });
-      const lastScannedItem = await this.prismaService.failedScans.findMany({
-        orderBy: { id: 'desc' },
-        take: 1,
+      // const lastScannedItem = await this.prismaService.failedScans.findMany({
+      //   orderBy: { id: 'desc' },
+      //   take: 1,
+      // });
+      const fetchStartNo = await this.prismaService.auction.findUnique({
+        where: { id: item.auction },
+        select: {
+          startNumber: true,
+        },
       });
-
-      const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
+      let startNumber = fetchStartNo.startNumber;
+      let tag = item.areaname + fetchStartNo.startNumber + item.itemtype;
+      const checkTag = await this.prismaService.tags.findFirst({
+        where: {
+          tag: tag,
+          tagexpireAt: {
+            gte: new Date(),
+          },
+        },
+        select: { tag: true, auctionStartNo: true },
+      });
+      if (checkTag) {
+        const fetchAuctionSNo = await this.prismaService.tags.findMany({
+          where: {
+            auctionId: item.auction,
+            tagexpireAt: {
+              gte: new Date(),
+            },
+          },
+          orderBy: { id: 'desc' },
+          take: 1,
+          select: {
+            auctionStartNo: true,
+          },
+        });
+        if (fetchAuctionSNo) {
+          const checkTagAgian = await this.prismaService.tags.findFirst({
+            where: {
+              tag: tag,
+              tagexpireAt: {
+                gte: new Date(),
+              },
+            },
+            select: { tag: true, auctionStartNo: true },
+          });
+          if (checkTagAgian) {
+            const fetchSNo = await this.prismaService.tags.findMany({
+              where: {
+                tagexpireAt: {
+                  gte: new Date(),
+                },
+              },
+              orderBy: { id: 'desc' },
+              take: 1,
+              select: {
+                auctionStartNo: true,
+              },
+            });
+            const num = fetchSNo[0].auctionStartNo + 1;
+            tag = item.areaname + num + item.itemtype;
+            startNumber = num;
+          } else {
+            const num = fetchAuctionSNo[0].auctionStartNo + 1;
+            tag = item.areaname + num + item.itemtype;
+            startNumber = num;
+          }
+        }
+      }
+      // const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
       const FailedScanData = {
         failedScanId: uuid(),
-        tag: item.areaname + lastScannedIndex + item.itemtype,
+        tag: tag,
         auctionId: item.auction,
         locid: islocationExists.locid,
         scannedBy: userdata.id,
@@ -134,6 +284,21 @@ export class ScanService {
         barcode: scaninfo.barcode,
       };
       if (!item.barcode) {
+        await this.prismaService.tags.create({
+          data: {
+            tag: tag,
+            auctionId: item.auction,
+            tagexpireAt: addDays(30),
+            auctionStartNo: startNumber,
+          },
+        });
+        const lastInsertId = await this.prismaService.tags.findFirst({
+          orderBy: { id: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+          },
+        });
         await this.prismaService.failedScans.create({
           data: {
             ...FailedScanData,
@@ -141,7 +306,20 @@ export class ScanService {
             rejectedReason: 'The Program could not read barcode',
           },
         });
-        return { data: { message: 'Successfully marked as failed' } };
+        await this.prismaService.tags.update({
+          where: {
+            id: lastInsertId.id,
+          },
+          data: {
+            failedScanId: FailedScanData.failedScanId,
+          },
+        });
+        return {
+          data: {
+            message:
+              'The item reported as a failed scan. The tag number is: ' + tag,
+          },
+        };
       }
       const isProductAlreadyScanned =
         await this.prismaService.failedScans.findUnique({
@@ -151,7 +329,21 @@ export class ScanService {
       if (isProductAlreadyScanned) {
         return { error: { status: 409, message: 'Product already scanned' } };
       }
-
+      await this.prismaService.tags.create({
+        data: {
+          tag: tag,
+          auctionId: item.auction,
+          tagexpireAt: addDays(30),
+          auctionStartNo: startNumber,
+        },
+      });
+      const lastInsertId = await this.prismaService.tags.findFirst({
+        orderBy: { id: 'desc' },
+        take: 1,
+        select: {
+          id: true,
+        },
+      });
       await this.prismaService.failedScans.create({
         data: {
           ...FailedScanData,
@@ -159,7 +351,20 @@ export class ScanService {
           rejectedReason: 'Some other issue occur',
         },
       });
-      return { data: { message: 'Successfully marked as failed' } };
+      await this.prismaService.tags.update({
+        where: {
+          id: lastInsertId.id,
+        },
+        data: {
+          failedScanId: FailedScanData.failedScanId,
+        },
+      });
+      return {
+        data: {
+          message:
+            'The item reported as a failed scan. The tag number is: ' + tag,
+        },
+      };
     } catch (error) {
       return { error: { status: 500, message: 'Server error' } };
     }
