@@ -116,6 +116,7 @@ export class ScanReportsService {
                   barcode: true,
                   startingBid: true,
                   consignor: true,
+                  images: true,
                 },
               },
             },
@@ -181,7 +182,7 @@ export class ScanReportsService {
       const currFormatDate = `${formatDate(new Date())}_${
         lastNumber ? lastNumber + 1 : 1
       }`;
-      const dir = `./src/scrapper/`;
+      const dir = `./src/scrapper`;
       const archive = archiver('zip');
       if (!fs.existsSync(`${dir}/${currFormatDate}`)) {
         fs.mkdirSync(`${dir}/${currFormatDate}`);
@@ -196,9 +197,29 @@ export class ScanReportsService {
       if (isNewReport && auction) {
         // Zipper
 
+        const scanProducts = data.Scanned.map((scan) => {
+          return { images: scan.products.images };
+        });
+
         const output = fs.createWriteStream(
           `${dir}/zipFiles/${currFormatDate}.zip`,
         );
+
+        if (scanProducts.length > 0) {
+          scanProducts.forEach((products) => {
+            products.images.forEach((image) => {
+              const imageSplit = image.split('/');
+              const imageFileName = imageSplit[imageSplit.length - 1];
+              fs.copyFile(
+                image,
+                `${dir}/${currFormatDate}/${imageFileName}`,
+                (err) => {
+                  console.error(err);
+                },
+              );
+            });
+          });
+        }
 
         output.on('close', () => {
           console.log(archive.pointer() + ' total bytes');
