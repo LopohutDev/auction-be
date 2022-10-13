@@ -139,21 +139,6 @@ export class TasksService {
               scannedName: scanParams.username,
               tagexpireAt: addDays(30),
             };
-            await this.prismaService.tags.create({
-              data: {
-                tag: scanParams.tag,
-                auctionId: scanParams.auctionId,
-                tagexpireAt: addDays(30),
-                auctionStartNo: scanParams.autionStartNo,
-              },
-            });
-            const lastInsertId = await this.prismaService.tags.findFirst({
-              orderBy: { id: 'desc' },
-              take: 1,
-              select: {
-                id: true,
-              },
-            });
             await this.prismaService.failedScans.create({
               data: {
                 ...failedScanData,
@@ -164,7 +149,7 @@ export class TasksService {
             });
             await this.prismaService.tags.update({
               where: {
-                id: lastInsertId.id,
+                id: scanParams.lastInsertId,
               },
               data: {
                 failedScanId: failedScanData.failedScanId,
