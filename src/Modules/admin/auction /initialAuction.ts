@@ -11,11 +11,46 @@ export class InitialAuctionCreation {
     let arr = [];
     const currDate = new Date();
 
-    const currMonthLastDay = new Date(
+    const currMonthLast = new Date(
       currDate.getFullYear(),
       currDate.getMonth() + 1,
       0,
     );
+    const currMonthLastDay = currMonthLast.getDay();
+    let d = null;
+    switch (currMonthLastDay) {
+      case 1:
+        d = 0;
+        break;
+
+      case 2:
+        d = 2;
+        break;
+
+      case 3:
+        d = 1;
+        break;
+
+      case 4:
+        d = 0;
+        break;
+
+      case 5:
+        d = 3;
+        break;
+
+      case 6:
+        d = 2;
+        break;
+
+      case 0:
+        d = 1;
+        break;
+
+      default:
+        null;
+        break;
+    }
 
     const noAuction = await this.prismaService.location.findMany({
       where: {
@@ -26,7 +61,7 @@ export class InitialAuctionCreation {
     });
 
     if (noAuction) {
-      const remainingDays = currMonthLastDay.getDate() - currDate.getDate();
+      const remainingDays = currMonthLast.getDate() + d - currDate.getDate();
 
       noAuction.map((row) => {
         for (let i = 1, j = 0; i <= remainingDays; i++) {

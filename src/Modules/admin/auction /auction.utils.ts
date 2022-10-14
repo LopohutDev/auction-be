@@ -4,6 +4,62 @@ type rowDto = {
   locid: string;
 };
 
+const checkBlackFriday = (futureDate: any) => {
+  const month = futureDate.getMonth();
+  const currMonthLast = new Date(
+    futureDate.getFullYear(),
+    futureDate.getMonth() + 1,
+    0,
+  );
+
+  const currMonthLastDay = currMonthLast.getDay();
+
+  let d = null;
+  if (month + 1 == 10) {
+    switch (currMonthLastDay) {
+      case 1:
+        d = -3;
+        break;
+
+      case 2:
+        d = -4;
+        break;
+
+      case 3:
+        d = -5;
+        break;
+
+      case 4:
+        d = -6;
+        break;
+
+      case 5:
+        d = 0;
+        break;
+
+      case 6:
+        d = -1;
+        break;
+
+      case 0:
+        d = -2;
+        break;
+
+      default:
+        null;
+        break;
+    }
+
+    const monthLastFriday = currMonthLast.setDate(currMonthLast.getDate() + d);
+    const blackFriday = new Date(monthLastFriday).toLocaleDateString();
+    const endBlackFriday = new Date(
+      addDays(3, futureDate),
+    ).toLocaleDateString();
+
+    return blackFriday == endBlackFriday;
+  }
+};
+
 const setAuction = (i: number, j: number, row: rowDto, currDate: Date) => {
   const currDateDay = currDate.getDay();
   let newArr = {};
@@ -52,14 +108,22 @@ const setAuction = (i: number, j: number, row: rowDto, currDate: Date) => {
 
   if (futureDateDay === 2 || futureDateDay === 3 || futureDateDay === 4) {
     n = n + 2;
+    const blackFriday: any = checkBlackFriday(futureDate);
+
     newArr = {
       auctionType: 'Auction1',
       startDate: futureDate.toISOString(),
       startTime: new Date(futureDate.setHours(8, 0, 0)).toISOString(),
-      endDate: new Date(addDays(2, futureDate)).toISOString(),
-      endTime: new Date(
-        new Date(addDays(2, futureDate)).setHours(19, 0, 0),
-      ).toISOString(),
+      endDate: blackFriday
+        ? new Date(addDays(3, futureDate)).toISOString()
+        : new Date(addDays(2, futureDate)).toISOString(),
+      endTime: blackFriday
+        ? new Date(
+            new Date(addDays(3, futureDate)).setHours(19, 0, 0),
+          ).toISOString()
+        : new Date(
+            new Date(addDays(2, futureDate)).setHours(19, 0, 0),
+          ).toISOString(),
       locid: row.locid,
     };
   }
