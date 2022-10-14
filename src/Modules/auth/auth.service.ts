@@ -233,7 +233,6 @@ export class AuthService {
       if (mailSent) {
         return {
           success: true,
-          message: 'Forgot password Link has been sent to your email.',
         };
       } else {
         return {

@@ -96,7 +96,7 @@ export class AuthController {
     if (success) {
       return {
         success: true,
-        message: 'Password has successfully changed.',
+        message: 'Forgot password Link has been sent to your email.',
       };
     } else {
       throw new HttpException(error.message, error.status);
