@@ -204,4 +204,14 @@ export class TasksService {
       data: arr,
     });
   }
+  @Cron(CronExpression.EVERY_DAY_AT_11PM)
+  async deleteExpiredTag() {
+    await this.prismaService.tags.deleteMany({
+      where: {
+        tagexpireAt: {
+          lte: new Date(),
+        },
+      },
+    });
+  }
 }
