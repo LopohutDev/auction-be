@@ -24,6 +24,7 @@ import { ScanReportsService } from './scanreport.service';
 export class ScanReportsController {
   constructor(private readonly reportsService: ScanReportsService) {}
 
+  @UseGuards(AdminGuard)
   @Get()
   async exportReportsByLocation(
     @Response() res: Res,

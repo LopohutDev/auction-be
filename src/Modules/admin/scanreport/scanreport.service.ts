@@ -87,12 +87,10 @@ export class ScanReportsService {
     try {
       const data = await this.prismaService.location.findFirst({
         where: {
-          locid: { equals: location },
+          locid: location,
           Scanned: {
-            every: {
-              auctionId: {
-                equals: auction,
-              },
+            some: {
+              auctionId: auction,
             },
           },
         },
@@ -116,6 +114,7 @@ export class ScanReportsService {
                   barcode: true,
                   startingBid: true,
                   consignor: true,
+                  images: true,
                 },
               },
             },
@@ -134,6 +133,10 @@ export class ScanReportsService {
           },
         },
       });
+
+      if (!data) {
+        return { error: { status: 404, message: 'No Data Found' } };
+      }
 
       const formattedData = data.Scanned.map((scan) => {
         const prod = scan.products;
@@ -181,8 +184,14 @@ export class ScanReportsService {
       const currFormatDate = `${formatDate(new Date())}_${
         lastNumber ? lastNumber + 1 : 1
       }`;
-      const dir = `./src/scrapper/`;
+
+      const dir = `./src/scrapper`;
       const archive = archiver('zip');
+
+      if (!fs.existsSync(`${dir}`)) {
+        fs.mkdirSync(`${dir}`);
+      }
+
       if (!fs.existsSync(`${dir}/${currFormatDate}`)) {
         fs.mkdirSync(`${dir}/${currFormatDate}`);
       }
@@ -196,9 +205,41 @@ export class ScanReportsService {
       if (isNewReport && auction) {
         // Zipper
 
+        if (!data.Scanned) {
+          return { error: { status: 406, message: 'No Scans Exist!' } };
+        }
+
+        const scanProducts = data.Scanned.map((scan) => {
+          return { images: scan.products.images };
+        });
+
         const output = fs.createWriteStream(
           `${dir}/zipFiles/${currFormatDate}.zip`,
         );
+
+        if (!fs.existsSync(`${dir}/zipFiles`)) {
+          fs.mkdirSync(`${dir}/zipFiles`);
+        }
+
+        if (!fs.existsSync(`${dir}/images`)) {
+          fs.mkdirSync(`${dir}/images`);
+        }
+
+        if (scanProducts.length > 0) {
+          scanProducts.forEach((products) => {
+            products.images.forEach((image) => {
+              const imageSplit = image.split('/');
+              const imageFileName = imageSplit[imageSplit.length - 1];
+              fs.copyFile(
+                image,
+                `${dir}/${currFormatDate}/${imageFileName}`,
+                (err) => {
+                  console.error(err);
+                },
+              );
+            });
+          });
+        }
 
         output.on('close', () => {
           console.log(archive.pointer() + ' total bytes');

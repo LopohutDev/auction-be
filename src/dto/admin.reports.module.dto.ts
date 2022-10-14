@@ -2,6 +2,7 @@ import { errorDto } from './common.dto';
 
 export type getReportsQueryDto = {
   location: string;
+  range: string;
 };
 
 export type getScanReportBodyDto = {
