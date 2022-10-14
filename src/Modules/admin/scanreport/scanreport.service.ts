@@ -92,12 +92,10 @@ export class ScanReportsService {
     try {
       const data = await this.prismaService.location.findFirst({
         where: {
-          locid: { equals: location },
+          locid: location,
           Scanned: {
-            every: {
-              auctionId: {
-                equals: auction,
-              },
+            some: {
+              auctionId: auction,
             },
           },
         },
@@ -140,6 +138,10 @@ export class ScanReportsService {
           },
         },
       });
+
+      if (!data) {
+        return { error: { status: 404, message: 'No Data Found' } };
+      }
 
       const formattedData = data.Scanned.map((scan) => {
         const prod = scan.products;
@@ -187,8 +189,18 @@ export class ScanReportsService {
       const currFormatDate = `${formatDate(new Date())}_${
         lastNumber ? lastNumber + 1 : 1
       }`;
-      const dir = `./src/scrapper`;
+
+      const olddir = __dirname.split('/');
+      olddir.splice(olddir.length - 3, 3);
       const archive = archiver('zip');
+      const dir = `${olddir.join('/')}/scrapper`;
+
+      console.log(dir);
+
+      if (!fs.existsSync(`${dir}`)) {
+        fs.mkdirSync(`${dir}`);
+      }
+
       if (!fs.existsSync(`${dir}/${currFormatDate}`)) {
         fs.mkdirSync(`${dir}/${currFormatDate}`);
       }
@@ -202,6 +214,10 @@ export class ScanReportsService {
       if (isNewReport && auction) {
         // Zipper
 
+        if (!data.Scanned) {
+          return { error: { status: 406, message: 'No Scans Exist!' } };
+        }
+
         const scanProducts = data.Scanned.map((scan) => {
           return { images: scan.products.images };
         });
@@ -209,6 +225,14 @@ export class ScanReportsService {
         const output = fs.createWriteStream(
           `${dir}/zipFiles/${currFormatDate}.zip`,
         );
+
+        if (!fs.existsSync(`${dir}/zipFiles`)) {
+          fs.mkdirSync(`${dir}/zipFiles`);
+        }
+
+        if (!fs.existsSync(`${dir}/images`)) {
+          fs.mkdirSync(`${dir}/images`);
+        }
 
         if (scanProducts.length > 0) {
           scanProducts.forEach((products) => {
