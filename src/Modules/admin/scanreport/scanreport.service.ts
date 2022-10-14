@@ -185,8 +185,12 @@ export class ScanReportsService {
         lastNumber ? lastNumber + 1 : 1
       }`;
 
-      const dir = `./src/scrapper`;
+      const olddir = __dirname.split('/');
+      olddir.splice(olddir.length - 3, 3);
       const archive = archiver('zip');
+      const dir = `${olddir.join('/')}/scrapper`;
+
+      console.log(dir);
 
       if (!fs.existsSync(`${dir}`)) {
         fs.mkdirSync(`${dir}`);

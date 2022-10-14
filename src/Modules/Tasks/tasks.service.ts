@@ -72,7 +72,13 @@ export class TasksService {
       try {
         for await (const que of Jobs.queue) {
           const { data, scanParams, error } = await que.func();
-          const dir = `./src/scrapper`;
+          const olddir = __dirname.split('/');
+          olddir.splice(olddir.length - 2, 2);
+          const dir = `${olddir.join('/')}/scrapper`;
+
+          if (!fs.existsSync(`${dir}`)) {
+            fs.mkdirSync(`${dir}`);
+          }
 
           if (!fs.existsSync(`${dir}/images`)) {
             fs.mkdirSync(`${dir}/images`);
