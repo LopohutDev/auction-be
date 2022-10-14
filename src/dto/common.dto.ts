@@ -22,6 +22,7 @@ export interface successErrorReturnDto extends errorDto {
   message?: string;
 }
 export type paginationDto = {
-  page: number;
-  limit: number;
+  page?: number;
+  limit?: number;
+  all?: string;
 };
