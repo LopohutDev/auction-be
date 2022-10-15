@@ -18,6 +18,11 @@ export interface exportScanReportBodyDto extends getScanReportBodyDto {
   isNewReport?: boolean;
 }
 
+export interface getScanReportsDto {
+  scrapperId: string;
+  location: string;
+}
+
 export type getScanQueryDto = {
   page: number;
   limit: number;

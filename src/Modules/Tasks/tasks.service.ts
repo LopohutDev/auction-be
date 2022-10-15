@@ -84,11 +84,6 @@ export class TasksService {
             fs.mkdirSync(`${dir}/images`);
           }
 
-          const imagesPath = data.images.map((img) => {
-            const imgFile = Download(img.link, `${dir}/images/${img.id}.jpeg`);
-            return imgFile;
-          });
-
           const lastScannedItem = await this.prismaService.scans.findMany({
             orderBy: { id: 'desc' },
             take: 1,
@@ -103,19 +98,35 @@ export class TasksService {
             scannedName: scanParams.username,
             tagexpireAt: addDays(30),
           };
+
           if (data && scanParams) {
             const lastProduct = await this.prismaService.products.findMany({
               orderBy: { id: 'desc' },
               take: 1,
             });
+
+            const generatedLotNo = lastScannedItem.length
+              ? getLotNo(
+                  lastProduct[0]?.lotNo,
+                  lastScannedItem[0].auctionId !== scanParams.auctionId,
+                )
+              : '20D';
+
+            const lastGeneratedNo = 0;
+
+            const imagesPath = data.images.map((img) => {
+              const imgFile = Download(
+                img.link,
+                `${dir}/images/${generatedLotNo}_${
+                  lastGeneratedNo > 0 ? lastGeneratedNo + 1 : 1
+                }.jpeg`,
+              );
+              return imgFile;
+            });
+
             const productData = {
               barcode: scanParams.barcode,
-              lotNo: lastScannedItem.length
-                ? getLotNo(
-                    lastProduct[0]?.lotNo,
-                    lastScannedItem[0].auctionId !== scanParams.auctionId,
-                  )
-                : '20D',
+              lotNo: generatedLotNo,
               startingBid: Number(data.price) * 0.5,
               title: scanParams.areaname + lastScannedIndex + data.title,
               images: imagesPath,

@@ -13,6 +13,7 @@ import { Response as Res } from 'express';
 import {
   exportScanReportBodyDto,
   getScanReportBodyDto,
+  getScanReportsDto,
   updateMarkDoneBodyDto,
 } from 'src/dto/admin.reports.module.dto';
 import { paginationDto } from 'src/dto/common.dto';
@@ -26,11 +27,11 @@ export class ScanReportsController {
 
   @UseGuards(AdminGuard)
   @Get()
-  async exportReportsByLocation(
+  async getReportsZipFile(
     @Response() res: Res,
-    @Body() scanReport: exportScanReportBodyDto,
+    @Query() scanReport: getScanReportsDto,
   ) {
-    const { data, error } = await this.reportsService.exportScrapperScans(
+    const { data, error } = await this.reportsService.getZipScanReport(
       scanReport,
       res,
     );
@@ -44,6 +45,24 @@ export class ScanReportsController {
       throw new HttpException(error.message, error.status);
     }
   }
+
+  @UseGuards(AdminGuard)
+  @Post()
+  async exportReportsByLocation(@Body() scanReport: exportScanReportBodyDto) {
+    const { data, error } = await this.reportsService.exportScrapperScans(
+      scanReport,
+    );
+
+    if (data) {
+      return {
+        data,
+        success: true,
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
+  }
+
   @UseGuards(AdminGuard)
   @Post('failed')
   @HttpCode(200)

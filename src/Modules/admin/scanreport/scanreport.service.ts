@@ -2,20 +2,19 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Response as Res } from 'express';
 import { Parser } from 'json2csv';
 import * as fs from 'fs';
-import * as archiver from 'archiver';
 import { LOCATION } from 'src/constants/location.constants';
 import {
   exportScanReportBodyDto,
   getScanReportBodyDto,
-  ScannedFailedStatus,
+  getScanReportsDto,
   updateMarkDoneBodyDto,
 } from 'src/dto/admin.reports.module.dto';
-import { ScanDataReturnDto } from 'src/dto/user.scan.module.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { formatDate } from 'src/utils/formatDate.utils';
 import { valdiateScanAuction } from 'src/validations/admin.scan.validations';
 import { paginationDto } from 'src/dto/common.dto';
 import { paginationHelper, paginationHelperForAllData } from '../utils';
+import * as AdmZip from 'adm-zip';
 
 @Injectable()
 export class ScanReportsService {
@@ -86,7 +85,7 @@ export class ScanReportsService {
     }
   }
 
-  async exportScrapperScans(scanReport: exportScanReportBodyDto, res: Res) {
+  async exportScrapperScans(scanReport: exportScanReportBodyDto) {
     const { auction, location, isNewReport } = scanReport;
 
     try {
@@ -131,6 +130,7 @@ export class ScanReportsService {
             take: 1,
             select: {
               filePath: true,
+              createdAt: true,
             },
             where: {
               isNewUploaded: true,
@@ -181,21 +181,23 @@ export class ScanReportsService {
           .split('_');
 
       // Creation of CSV
+      const zip = new AdmZip();
       const json2csv = new Parser({ fields: Object.keys(formattedData[0]) });
       const CSV_FINAL = json2csv.parse(formattedData);
       const lastNumber =
         existingFileNameArr &&
         parseInt(existingFileNameArr[existingFileNameArr.length - 1]);
+
       const currFormatDate = `${formatDate(new Date())}_${
-        lastNumber ? lastNumber + 1 : 1
+        formatDate(new Date(data?.scapper[0]?.createdAt || undefined)) ===
+          formatDate(new Date()) && lastNumber
+          ? lastNumber + 1
+          : 1
       }`;
 
       const olddir = __dirname.split('/');
       olddir.splice(olddir.length - 3, 3);
-      const archive = archiver('zip');
       const dir = `${olddir.join('/')}/scrapper`;
-
-      console.log(dir);
 
       if (!fs.existsSync(`${dir}`)) {
         fs.mkdirSync(`${dir}`);
@@ -213,7 +215,6 @@ export class ScanReportsService {
 
       if (isNewReport && auction) {
         // Zipper
-
         if (!data.Scanned) {
           return { error: { status: 406, message: 'No Scans Exist!' } };
         }
@@ -222,9 +223,7 @@ export class ScanReportsService {
           return { images: scan.products.images };
         });
 
-        const output = fs.createWriteStream(
-          `${dir}/zipFiles/${currFormatDate}.zip`,
-        );
+        const output = `${dir}/zipFiles/${currFormatDate}.zip`;
 
         if (!fs.existsSync(`${dir}/zipFiles`)) {
           fs.mkdirSync(`${dir}/zipFiles`);
@@ -243,22 +242,19 @@ export class ScanReportsService {
                 image,
                 `${dir}/${currFormatDate}/${imageFileName}`,
                 (err) => {
-                  console.error(err);
+                  if (err) {
+                    this.logger.error(err);
+                  }
                 },
               );
             });
           });
         }
 
-        output.on('close', () => {
-          console.log(archive.pointer() + ' total bytes');
-        });
-        archive.on('error', (err: archiver.ArchiverError) => {
-          throw err;
-        });
-        archive.pipe(output);
-        archive.directory(`${dir}/${currFormatDate}`, false);
-        await archive.finalize();
+        zip.addLocalFolder(`${dir}/${currFormatDate}`);
+        zip.writeZip(output);
+        // Log Successful Creation of Zip File
+        this.logger.log('Create Zip File Success');
 
         const zipFilePath = fs.realpathSync(
           `${dir}/zipFiles/${currFormatDate}.zip`,
@@ -267,7 +263,9 @@ export class ScanReportsService {
         await this.prismaService.scraperZip.create({
           data: {
             filePath: zipFilePath,
-            lastcsvgenerated: new Date(),
+            lastcsvgenerated: data.scapper[0]?.createdAt
+              ? data.scapper[0]?.createdAt
+              : new Date(),
             auction: {
               connect: {
                 id: auction,
@@ -283,14 +281,36 @@ export class ScanReportsService {
         });
       }
 
-      res.setHeader(
-        'Content-disposition',
-        `attachment; filename=${currFormatDate}.csv`,
-      );
-      res.set('Content-Type', 'text/csv');
-      res.status(200).send(CSV_FINAL);
+      return { data: { status: 200, message: 'Generate Scan Report Success' } };
+    } catch (error) {
+      this.logger.error(error);
+      return { error: { status: 500, message: 'Server error' } };
+    }
+  }
 
-      return { data: formattedData };
+  async getZipScanReport(scanReportQuery: getScanReportsDto, res: Res) {
+    try {
+      const scanReport = await this.prismaService.scraperZip.findFirst({
+        where: {
+          id: Number(scanReportQuery.scrapperId),
+          locid: scanReportQuery.location,
+        },
+        select: {
+          filePath: true,
+        },
+      });
+
+      const zip = new AdmZip(scanReport.filePath);
+      const data = zip.toBuffer();
+      const splittedFilePath = scanReport.filePath.split('/');
+      const fileName = splittedFilePath[splittedFilePath.length - 1].toString();
+
+      res.setHeader('Content-disposition', `attachment; filename=${fileName}`);
+      res.set('Content-Type', 'application/octet-stream');
+      res.set('Content-length', data.length.toString());
+      res.send(data);
+
+      return { data: { status: 200, message: 'Download is Starting' } };
     } catch (error) {
       this.logger.error(error);
       return { error: { status: 500, message: 'Server error' } };
