@@ -15,7 +15,7 @@ const checkBlackFriday = (futureDate: any) => {
   const currMonthLastDay = currMonthLast.getDay();
 
   let d = null;
-  if (month + 1 == 11) {
+  if (month + 1 == 10) {
     switch (currMonthLastDay) {
       case 1:
         d = -3;
