@@ -59,9 +59,6 @@ export class ReportsService {
         default:
           break;
       }
-      this.logger.log('first day>>>>', firstDay.toISOString());
-      this.logger.log('last day>>>>', lastDay.toISOString());
-      this.logger.log(' day>>>>', new Date());
       const data = await this.prismaService.location.findFirst({
         where: {
           locid: { equals: location },
@@ -100,6 +97,41 @@ export class ReportsService {
           },
         },
       });
+      const allData = await this.prismaService.location.findFirst({
+        where: {
+          locid: { equals: location },
+        },
+        select: {
+          Scanned: {
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+            select: {
+              createdAt: true,
+              ScanId: true,
+              barcode: true,
+              scannedUser: { select: { firstname: true, lastname: true } },
+            },
+          },
+          failedScans: {
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+            select: {
+              createdAt: true,
+              failedScanId: true,
+              barcode: true,
+              scannedUser: { select: { firstname: true, lastname: true } },
+            },
+          },
+        },
+      });
+
+      const failedScans = allData.failedScans;
+      const Scanned = allData.Scanned;
+      const mergdata = [...Scanned, ...failedScans];
+      const sortedDesc = mergdata.sort(
+        (objA, objB) => Number(objB.createdAt) - Number(objA.createdAt),
+      );
+      const latestScan = sortedDesc.splice(0, 10);
       const user = data.assigneduser.length;
       const successScan = data.Scanned.length;
       const failedScan = data.failedScans.length;
@@ -107,7 +139,7 @@ export class ReportsService {
       if (!data) {
         return { error: { status: 404, message: 'No Scans Exists' } };
       }
-      return { data, user, successScan, failedScan, barcode };
+      return { data, user, successScan, failedScan, barcode, latestScan };
     } catch (error) {
       this.logger.error(error);
       return { error: { status: 500, message: 'Server error' } };
@@ -145,7 +177,6 @@ export class ReportsService {
     const failedScans = allData.failedScans;
     const Scanned = allData.Scanned;
     const mergdata = [...Scanned, ...failedScans];
-    this.logger.log(JSON.stringify(mergdata));
     if (!allData) {
       return { error: { status: 404, message: 'No Scans Exists' } };
     }

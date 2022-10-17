@@ -99,6 +99,7 @@ export class TasksService {
             scannedBy: scanParams.userid,
             scannedName: scanParams.username,
             tagexpireAt: addDays(30),
+            barcode: scanParams.barcode,
           };
 
           if (data && scanParams) {
@@ -106,26 +107,13 @@ export class TasksService {
               orderBy: { id: 'desc' },
               take: 1,
             });
-
-            const generatedLotNo = lastScannedItem.length
-              ? getLotNo(
-                  lastProduct[0]?.lotNo,
-                  lastScannedItem[0].auctionId !== scanParams.auctionId,
-                )
-              : '20D';
-
-            const lastGeneratedNo = 0;
-
             const imagesPath = data.images.map((img) => {
               const imgFile = Download(
                 img.link,
-                `${dir}/images/${generatedLotNo}_${
-                  lastGeneratedNo > 0 ? lastGeneratedNo + 1 : 1
-                }.jpeg`,
+                `${dir}/images/${img.id}.jpeg`,
               );
               return imgFile;
             });
-
             const productData = {
               barcode: scanParams.barcode,
               lotNo: generatedLotNo,
@@ -135,11 +123,13 @@ export class TasksService {
               description: data.description,
               category: '',
               manufacturer: data.manufacturer,
-              scans: {
-                create: ScanData,
-              },
             };
-            await this.prismaService.products.create({ data: productData });
+            await this.prismaService.scans.create({
+              data: {
+                ...ScanData,
+                products: { create: productData },
+              },
+            });
             await this.prismaService.tags.update({
               where: {
                 id: scanParams.lastInsertId,

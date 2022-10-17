@@ -132,9 +132,11 @@ export class AuthService {
         rejectOnNotFound: false,
       });
       if (!isUserExists) {
-        return { error: { status: 422, message: 'User not found' } };
+        return { error: { status: 422, message: 'Invalid Credentials' } };
       } else if (user.password !== decrypt(isUserExists.password)) {
-        return { error: { status: 422, message: 'email password not valid' } };
+        return {
+          error: { status: 422, message: 'Invalid Credentials' },
+        };
       } else if (isUserExists.account !== AccountEnum.ACCEPTED) {
         return {
           error: {

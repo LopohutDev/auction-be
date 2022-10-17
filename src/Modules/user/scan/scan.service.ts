@@ -7,7 +7,7 @@ import { PrismaService } from 'src/Services/prisma.service';
 import { addDays } from 'src/utils/common.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import { validateUserScan } from 'src/validations/user.scans.validations';
-import { getLotNo, getScrapperData } from './scrapper.utils';
+import { getScrapperData } from './scrapper.utils';
 
 @Injectable()
 export class ScanService {
@@ -39,24 +39,9 @@ export class ScanService {
     if (!isAuctionExists) {
       return { error: { status: 404, message: 'Invalid auction' } };
     }
-    const isProductAlreadyScanned = await this.prismaService.scans.findUnique({
-      where: { barcode: item.barcode },
-      rejectOnNotFound: false,
-    });
-    const isProductAlreadyFailedScanned =
-      await this.prismaService.failedScans.findUnique({
-        where: { barcode: item.barcode },
-        rejectOnNotFound: false,
-      });
-
-    if (isProductAlreadyScanned || isProductAlreadyFailedScanned) {
-      return { error: { status: 409, message: 'Product already scanned' } };
-    }
     const userdata = await this.prismaService.user.findUnique({
       where: { email: scaninfo.email },
     });
-
-    BarcodeData.set(item.barcode, {}, 300);
 
     const values = {
       barcode: item.barcode,
@@ -280,7 +265,6 @@ export class ScanService {
         scannedBy: userdata.id,
         scannedName: userdata.firstname + '' + userdata.lastname,
         tagexpireAt: addDays(30),
-        // barcode: uuid(),
         barcode: scaninfo.barcode,
       };
       if (!item.barcode) {
@@ -320,14 +304,6 @@ export class ScanService {
               'The item reported as a failed scan. The tag number is: ' + tag,
           },
         };
-      }
-      const isProductAlreadyScanned =
-        await this.prismaService.failedScans.findUnique({
-          where: { barcode: item.barcode },
-          rejectOnNotFound: false,
-        });
-      if (isProductAlreadyScanned) {
-        return { error: { status: 409, message: 'Product already scanned' } };
       }
       await this.prismaService.tags.create({
         data: {
