@@ -6,9 +6,11 @@ import { Jobs } from 'src/Cache/Jobs';
 import { PrismaService } from 'src/Services/prisma.service';
 import { Jwt } from 'src/tokens/Jwt';
 import { addDays } from 'src/utils/common.utils';
+import { formatDate } from 'src/utils/formatDate.utils';
 import { Download } from 'src/utils/imageDownload.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import setAuction from '../admin/auction /auction.utils';
+import { ScanReportsService } from '../admin/scanreport/scanreport.service';
 import { getLotNo } from '../user/scan/scrapper.utils';
 
 @Injectable()
@@ -187,6 +189,29 @@ export class TasksService {
       }
     }
   }
+
+  @Cron(CronExpression.EVERY_DAY_AT_7PM)
+  async handleZipGeneration() {
+    const scanReport = new ScanReportsService(this.prismaService);
+    const scans = await this.prismaService.scans.findMany({
+      select: {
+        auctionId: true,
+        locid: true,
+        createdAt: true,
+      },
+    });
+
+    scans.map((scan) => {
+      if (formatDate(scan.createdAt) === formatDate(new Date())) {
+        return scanReport.exportScrapperScans({
+          auction: scan.auctionId,
+          isNewReport: true,
+          location: scan.locid,
+        });
+      }
+    });
+  }
+
   @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
   async addFutureAuction() {
     let arr = [];
