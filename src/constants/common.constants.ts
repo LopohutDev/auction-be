@@ -3,4 +3,4 @@ export const HOSTENV = 'DEFAULT_HOST';
 export const SCANENV = 'SCAN_KEY';
 export const WALLENV = 'WALLMART_KEY';
 export const AMZENV = 'AMAZON_KEY';
-export const EMAILURL = 'http://106.201.236.129:4242/';
+export const EMAILURL = 'auction://auctionmanagement.com/';

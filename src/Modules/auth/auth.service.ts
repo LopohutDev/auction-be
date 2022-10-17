@@ -207,9 +207,7 @@ export class AuthService {
       const message =
         'Click on this link for reset password : <a href="' +
         EMAILURL +
-        'auction-management/forgot-password/' +
-        user.id +
-        '/token=' +
+        'forgot-password/' +
         access_token +
         '">click</a>';
       const transporter = createTransport({
