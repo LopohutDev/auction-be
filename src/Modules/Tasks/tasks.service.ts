@@ -84,11 +84,6 @@ export class TasksService {
             fs.mkdirSync(`${dir}/images`);
           }
 
-          const imagesPath = data.images.map((img) => {
-            const imgFile = Download(img.link, `${dir}/images/${img.id}.jpeg`);
-            return imgFile;
-          });
-
           const lastScannedItem = await this.prismaService.scans.findMany({
             orderBy: { id: 'desc' },
             take: 1,
@@ -108,6 +103,13 @@ export class TasksService {
             const lastProduct = await this.prismaService.products.findMany({
               orderBy: { id: 'desc' },
               take: 1,
+            });
+            const imagesPath = data.images.map((img) => {
+              const imgFile = Download(
+                img.link,
+                `${dir}/images/${img.id}.jpeg`,
+              );
+              return imgFile;
             });
             const productData = {
               barcode: scanParams.barcode,
