@@ -144,7 +144,7 @@ export class ScanReportsService {
       }
 
       const formattedData = data.Scanned.map((scan) => {
-        const prod = scan.products;
+        const prod = scan.products[0];
 
         if (data.city === LOCATION.HOUSTON || LOCATION.DALLAS) {
           return {
@@ -162,10 +162,10 @@ export class ScanReportsService {
           Title: `${scan.tag} + ${prod.title}`,
           Category: prod.category,
           Featured: 'N',
-          QuantityAvailable: scan.products.quantity,
-          StartingBid: scan.products.startingBid,
+          QuantityAvailable: scan.products[0].quantity,
+          StartingBid: scan.products[0].startingBid,
           NewLot: '',
-          Description: scan.products.description,
+          Description: scan.products[0].description,
         };
       });
 
@@ -219,7 +219,7 @@ export class ScanReportsService {
         }
 
         const scanProducts = data.Scanned.map((scan) => {
-          return { images: scan.products.images };
+          return { images: scan.products[0].images };
         });
 
         const output = fs.createWriteStream(

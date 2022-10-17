@@ -84,11 +84,6 @@ export class TasksService {
             fs.mkdirSync(`${dir}/images`);
           }
 
-          const imagesPath = data.images.map((img) => {
-            const imgFile = Download(img.link, `${dir}/images/${img.id}.jpeg`);
-            return imgFile;
-          });
-
           const lastScannedItem = await this.prismaService.scans.findMany({
             orderBy: { id: 'desc' },
             take: 1,
@@ -102,11 +97,19 @@ export class TasksService {
             scannedBy: scanParams.userid,
             scannedName: scanParams.username,
             tagexpireAt: addDays(30),
+            barcode: scanParams.barcode,
           };
           if (data && scanParams) {
             const lastProduct = await this.prismaService.products.findMany({
               orderBy: { id: 'desc' },
               take: 1,
+            });
+            const imagesPath = data.images.map((img) => {
+              const imgFile = Download(
+                img.link,
+                `${dir}/images/${img.id}.jpeg`,
+              );
+              return imgFile;
             });
             const productData = {
               barcode: scanParams.barcode,
@@ -122,11 +125,13 @@ export class TasksService {
               description: data.description,
               category: '',
               manufacturer: data.manufacturer,
-              scans: {
-                create: ScanData,
-              },
             };
-            await this.prismaService.products.create({ data: productData });
+            await this.prismaService.scans.create({
+              data: {
+                ...ScanData,
+                products: { create: productData },
+              },
+            });
             await this.prismaService.tags.update({
               where: {
                 id: scanParams.lastInsertId,
