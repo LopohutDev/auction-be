@@ -233,8 +233,6 @@ export class TasksService {
         break;
     }
 
-    console.log('futureMonthLastDay: ', futureMonthLast, futureMonthLastDay, d);
-
     const allLocations = await this.prismaService.location.findMany({});
 
     if (allLocations) {
@@ -248,11 +246,9 @@ export class TasksService {
       });
     }
 
-    console.log('arr--->>>>', JSON.stringify(arr));
-
-    // await this.prismaService.auction.createMany({
-    //   data: arr,
-    // });
+    await this.prismaService.auction.createMany({
+      data: arr,
+    });
   }
   @Cron(CronExpression.EVERY_DAY_AT_11PM)
   async deleteExpiredTag() {
