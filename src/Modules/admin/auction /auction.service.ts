@@ -76,6 +76,7 @@ export class AuctionService {
               _count: {
                 select: {
                   scannedItem: true,
+                  failedScans: true,
                 },
               },
             },
@@ -88,7 +89,7 @@ export class AuctionService {
       const data = locationAuctionData[0]?.Auction.map((row) => {
         const endDate = new Date(row.endDate).toISOString().slice(0, 10);
 
-        if (row._count.scannedItem > 0 && currDate > endDate) {
+        if (currDate > endDate) {
           return {
             ...row,
             status: auctionStatusDto.Past,
@@ -99,7 +100,7 @@ export class AuctionService {
             status: auctionStatusDto.Future,
           };
         } else if (
-          (row.startNumber && currDate < endDate) ||
+          (row.startNumber && currDate <= endDate) ||
           row.startNumber === 0
         ) {
           return {
