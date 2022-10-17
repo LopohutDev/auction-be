@@ -181,17 +181,52 @@ export class TasksService {
     let arr = [];
     const currDate = new Date();
 
-    const futureMonthLastDay = new Date(
+    const futureMonthLast = new Date(
       currDate.getFullYear(),
       currDate.getMonth() + 1,
       0,
     );
+    const futureMonthLastDay = futureMonthLast.getDay();
+    let d = null;
+    switch (futureMonthLastDay) {
+      case 1:
+        d = 0;
+        break;
+
+      case 2:
+        d = 2;
+        break;
+
+      case 3:
+        d = 1;
+        break;
+
+      case 4:
+        d = 0;
+        break;
+
+      case 5:
+        d = 3;
+        break;
+
+      case 6:
+        d = 2;
+        break;
+
+      case 0:
+        d = 1;
+        break;
+
+      default:
+        null;
+        break;
+    }
 
     const allLocations = await this.prismaService.location.findMany({});
 
     if (allLocations) {
       allLocations.map((row) => {
-        for (let i = 1, j = 0; i <= futureMonthLastDay.getDate(); i++) {
+        for (let i = 1, j = 0; i <= futureMonthLast.getDate() + d; i++) {
           const { newArr, n, m } = setAuction(i, j, row, currDate);
           i = n;
           j = m;
