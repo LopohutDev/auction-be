@@ -193,49 +193,58 @@ export class AuthService {
   }
 
   async forgotPassword(dto: forgotPasswordInitDto) {
-    const user = await this.prismaService.user.findUnique({
-      where: {
-        email: dto.email,
-      },
-    });
-    if (!user) throw new ForbiddenException('Credentials incorrect');
-    const { access_token } = await this.getUserToken(user);
-    const subject = 'Reset Password Email';
-    const message =
-      'Click on this link for reset password : <a href="' +
-      EMAILURL +
-      'auction-management/forgot-password/' +
-      user.id +
-      '/token=' +
-      access_token +
-      '">click</a>';
-    const transporter = createTransport({
-      host: process.env.EMAIL_HOST,
-      port: Number(process.env.EMAIL_PORT),
-      secure: false,
-      tls: {
-        rejectUnauthorized: false,
-      },
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    try {
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          email: dto.email,
+        },
+      });
+      if (!user) throw new ForbiddenException('Credentials incorrect');
+      const { access_token } = await this.getUserToken(user);
+      const subject = 'Reset Password Email';
+      const message =
+        'Click on this link for reset password : <a href="' +
+        EMAILURL +
+        'auction-management/forgot-password/' +
+        user.id +
+        '/token=' +
+        access_token +
+        '">click</a>';
+      const transporter = createTransport({
+        host: process.env.EMAIL_HOST,
+        port: Number(process.env.EMAIL_PORT),
+        secure: false,
+        tls: {
+          rejectUnauthorized: false,
+        },
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
 
-    const mailOptions = {
-      from: process.env.SENDER_EMAIL,
-      to: dto.email,
-      subject: subject,
-      html: message,
-    };
-    const mailSent = await transporter.sendMail(mailOptions);
-    if (mailSent) {
-      return {
-        message: 'Forgot password Link has been sent to your email.',
+      const mailOptions = {
+        from: process.env.SENDER_EMAIL,
+        to: dto.email,
+        subject: subject,
+        html: message,
       };
-    } else {
+      const mailSent = await transporter.sendMail(mailOptions);
+      if (mailSent) {
+        return {
+          success: true,
+        };
+      } else {
+        return {
+          message: 'Something went wrong. Please try again.',
+        };
+      }
+    } catch (error) {
       return {
-        message: 'something went wrong',
+        error: {
+          status: 500,
+          message: 'Some error occured',
+        },
       };
     }
   }

@@ -91,8 +91,16 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(200)
-  forgotPassword(@Body() dto: forgotPasswordInitDto) {
-    return this.authService.forgotPassword(dto);
+  async forgotPassword(@Body() dto: forgotPasswordInitDto) {
+    const { error, success } = await this.authService.forgotPassword(dto);
+    if (success) {
+      return {
+        success: true,
+        message: 'Forgot password Link has been sent to your email.',
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
   }
 
   @Post('reset-password')

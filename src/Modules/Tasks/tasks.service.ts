@@ -72,7 +72,13 @@ export class TasksService {
       try {
         for await (const que of Jobs.queue) {
           const { data, scanParams, error } = await que.func();
-          const dir = `./src/scrapper`;
+          const olddir = __dirname.split('/');
+          olddir.splice(olddir.length - 2, 2);
+          const dir = `${olddir.join('/')}/scrapper`;
+
+          if (!fs.existsSync(`${dir}`)) {
+            fs.mkdirSync(`${dir}`);
+          }
 
           if (!fs.existsSync(`${dir}/images`)) {
             fs.mkdirSync(`${dir}/images`);
@@ -199,6 +205,16 @@ export class TasksService {
 
     await this.prismaService.auction.createMany({
       data: arr,
+    });
+  }
+  @Cron(CronExpression.EVERY_DAY_AT_11PM)
+  async deleteExpiredTag() {
+    await this.prismaService.tags.deleteMany({
+      where: {
+        tagexpireAt: {
+          lte: new Date(),
+        },
+      },
     });
   }
 }

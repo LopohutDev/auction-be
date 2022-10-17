@@ -83,11 +83,11 @@ export const getScrapperData = async (
         return { data: sendedData, scanParams: scaninfo };
       }
     }
-    return { error: { status: 404, message: 'No Products found' } };
+    return { error: { status: 404, message: 'Something went wrong' } };
   } catch (err) {
     console.log('err', err);
     if (err?.response?.status === 404) {
-      return { error: { status: 404, message: 'No product found' } };
+      return { error: { status: 404, message: 'Something went wrong' } };
     }
     return { error: { status: 500, message: 'Some error occured' } };
   }

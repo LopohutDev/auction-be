@@ -15,7 +15,7 @@ import { PrismaService } from 'src/Services/prisma.service';
 import { formatDate } from 'src/utils/formatDate.utils';
 import { valdiateScanAuction } from 'src/validations/admin.scan.validations';
 import { paginationDto } from 'src/dto/common.dto';
-import { paginationHelper } from '../utils';
+import { paginationHelper, paginationHelperForAllData } from '../utils';
 
 @Injectable()
 export class ScanReportsService {
@@ -31,7 +31,7 @@ export class ScanReportsService {
       return { error };
     }
     const { location, auction, markdone } = reportinfo;
-    const { page, limit } = pagination;
+    const { page, limit, all } = pagination;
     try {
       const scanData = await this.prismaService.failedScans.findMany({
         where: {
@@ -40,7 +40,12 @@ export class ScanReportsService {
           markDone: markdone,
         },
       });
-      const { data, pageCount } = paginationHelper(scanData, page, limit);
+      const { data, pageCount } = paginationHelperForAllData(
+        scanData,
+        page,
+        limit,
+        all,
+      );
 
       return { data, pageCount };
     } catch (error) {
@@ -185,8 +190,12 @@ export class ScanReportsService {
         lastNumber ? lastNumber + 1 : 1
       }`;
 
-      const dir = `./src/scrapper`;
+      const olddir = __dirname.split('/');
+      olddir.splice(olddir.length - 3, 3);
       const archive = archiver('zip');
+      const dir = `${olddir.join('/')}/scrapper`;
+
+      console.log(dir);
 
       if (!fs.existsSync(`${dir}`)) {
         fs.mkdirSync(`${dir}`);

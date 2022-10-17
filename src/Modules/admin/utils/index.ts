@@ -11,6 +11,28 @@ export const paginationHelper = (allData, page: number, limit: number) => {
   return { data, pageCount };
 };
 
+export const paginationHelperForAllData = (
+  allData,
+  page?: number,
+  limit?: number,
+  all?: string,
+) => {
+  if (all === 'all') {
+    const data = allData;
+    const pageCount = 1;
+    return { data, pageCount };
+  } else {
+    const pageCount = Math.ceil(allData.length / limit);
+    if (!page) {
+      page = 1;
+    }
+    if (page > pageCount) {
+      page = pageCount;
+    }
+    const data = allData.slice(page * limit - limit, page * limit);
+    return { data, pageCount };
+  }
+};
 export const setObjectLowercaseKeys = (obj: any) => {
   const entries = Object.entries(obj);
 
