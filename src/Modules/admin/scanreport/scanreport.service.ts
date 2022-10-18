@@ -196,8 +196,10 @@ export class ScanReportsService {
       }`;
 
       const olddir = __dirname.split('/');
-      olddir.splice(olddir.length - 3, 3);
-      const dir = `${olddir.join('/')}/scrapper`;
+      olddir.splice(olddir.length - 4, 4);
+      const dir = `${olddir.join('/')}/src/scrapper`;
+
+      console.log(dir);
 
       if (!fs.existsSync(`${dir}`)) {
         fs.mkdirSync(`${dir}`);
@@ -234,18 +236,13 @@ export class ScanReportsService {
         }
 
         if (scanProducts.length > 0) {
-          scanProducts.forEach((products) => {
+          await scanProducts.forEach((products) => {
             products.images.forEach((image) => {
               const imageSplit = image.split('/');
               const imageFileName = imageSplit[imageSplit.length - 1];
-              fs.copyFile(
+              fs.copyFileSync(
                 image,
                 `${dir}/${currFormatDate}/${imageFileName}`,
-                (err) => {
-                  if (err) {
-                    this.logger.error(err);
-                  }
-                },
               );
             });
           });
