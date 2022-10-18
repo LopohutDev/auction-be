@@ -29,8 +29,6 @@ export class AuctionService {
           endDate,
           endTime,
           startNumber,
-          isRecover:
-            startNumber || startNumber === 0 ? new Date().toISOString() : null,
         },
       });
 
