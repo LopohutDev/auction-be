@@ -10,17 +10,16 @@ export type getScanReportBodyDto = {
   auction: string;
   markdone?: boolean;
 };
+
 export type updateMarkDoneBodyDto = {
   id: number;
   markdone: boolean;
 };
-export interface exportScanReportBodyDto extends getScanReportBodyDto {
-  isNewReport?: boolean;
-}
 
 export interface getScanReportsDto {
   scrapperId: string;
   location: string;
+  isUploaded: boolean;
 }
 
 export type getScanQueryDto = {

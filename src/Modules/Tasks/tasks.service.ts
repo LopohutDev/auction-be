@@ -206,7 +206,6 @@ export class TasksService {
       if (formatDate(scan.createdAt) === formatDate(new Date())) {
         return scanReport.exportScrapperScans({
           auction: scan.auctionId,
-          isNewReport: true,
           location: scan.locid,
         });
       }
