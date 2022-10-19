@@ -86,6 +86,7 @@ model Products {
   manufacturer    String
   consignor       Int?
   scans           Scans       @relation(fields: [ScanId], references: [ScanId])
+  scrapperZip     ScraperZip[]
   ScanId          String
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @default(now())
@@ -135,6 +136,7 @@ model ScraperZip {
   locations           Location              @relation(fields:[locid], references: [locid])
   locid               String                
   filePath            String
+  products            Products[]
   lastcsvgenerated    DateTime              @default(now())
   isNewUploaded       Boolean               @default(false)
   createdAt           DateTime              @default(now())

@@ -75,8 +75,8 @@ export class TasksService {
         for await (const que of Jobs.queue) {
           const { data, scanParams, error } = await que.func();
           const olddir = __dirname.split('/');
-          olddir.splice(olddir.length - 2, 2);
-          const dir = `${olddir.join('/')}/scrapper`;
+          olddir.splice(olddir.length - 3, 3);
+          const dir = `${olddir.join('/')}/src/scrapper`;
 
           if (!fs.existsSync(`${dir}`)) {
             fs.mkdirSync(`${dir}`);
@@ -99,7 +99,7 @@ export class TasksService {
             scannedBy: scanParams.userid,
             scannedName: scanParams.username,
             tagexpireAt: addDays(30),
-            barcode: scanParams.barcode || '',
+            barcode: scanParams.barcode,
           };
 
           if (data && scanParams) {
@@ -114,14 +114,13 @@ export class TasksService {
                 )
               : '20D';
 
-            const lastGeneratedNo = 0;
+            let lastGeneratedNo = 0;
 
             const imagesPath = data.images.map((img) => {
+              lastGeneratedNo = lastGeneratedNo > 0 ? lastGeneratedNo + 1 : 1;
               const imgFile = Download(
                 img.link,
-                `${dir}/images/${generatedLotNo}_${
-                  lastGeneratedNo > 0 ? lastGeneratedNo + 1 : 1
-                }.jpeg`,
+                `${dir}/images/${generatedLotNo}_${lastGeneratedNo}.jpeg`,
               );
               return imgFile;
             });
@@ -230,31 +229,24 @@ export class TasksService {
       case 1:
         d = 0;
         break;
-
       case 2:
         d = 2;
         break;
-
       case 3:
         d = 1;
         break;
-
       case 4:
         d = 0;
         break;
-
       case 5:
         d = 3;
         break;
-
       case 6:
         d = 2;
         break;
-
       case 0:
         d = 1;
         break;
-
       default:
         null;
         break;
