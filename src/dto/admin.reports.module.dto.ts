@@ -19,7 +19,7 @@ export type updateMarkDoneBodyDto = {
 export interface getScanReportsDto {
   scrapperId: string;
   location: string;
-  isUploaded: boolean;
+  isUploaded: string;
 }
 
 export type getScanQueryDto = {
