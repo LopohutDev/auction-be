@@ -460,7 +460,7 @@ export class ScanReportsService {
                       id: auction,
                     },
                   },
-                  isNewUploaded: true,
+                  isNewUploaded: false,
                   products: {
                     connect: products.map((prod) => ({
                       productId: prod.productId,
