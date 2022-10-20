@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { Response as Res } from 'express';
 import {
-  exportScanReportBodyDto,
   getScanReportBodyDto,
   getScanReportsDto,
   updateMarkDoneBodyDto,
@@ -48,7 +47,7 @@ export class ScanReportsController {
 
   @UseGuards(AdminGuard)
   @Post()
-  async exportReportsByLocation(@Body() scanReport: exportScanReportBodyDto) {
+  async exportReportsByLocation(@Body() scanReport: getScanReportBodyDto) {
     const { data, error } = await this.reportsService.exportScrapperScans(
       scanReport,
     );

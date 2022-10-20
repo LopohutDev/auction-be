@@ -4,7 +4,6 @@ import { Parser } from 'json2csv';
 import * as fs from 'fs';
 import { LOCATION } from 'src/constants/location.constants';
 import {
-  exportScanReportBodyDto,
   getScanReportBodyDto,
   getScanReportsDto,
   updateMarkDoneBodyDto,
@@ -15,7 +14,6 @@ import { valdiateScanAuction } from 'src/validations/admin.scan.validations';
 import { paginationDto } from 'src/dto/common.dto';
 import { paginationHelper, paginationHelperForAllData } from '../utils';
 import * as AdmZip from 'adm-zip';
-import { Products } from '@prisma/client';
 
 @Injectable()
 export class ScanReportsService {
@@ -86,10 +84,24 @@ export class ScanReportsService {
     }
   }
 
-  async exportScrapperScans(scanReport: exportScanReportBodyDto) {
-    const { auction, location, isNewReport } = scanReport;
+  async exportScrapperScans(scanReport: getScanReportBodyDto) {
+    const { auction, location } = scanReport;
 
     try {
+      const scrapperZip = await this.prismaService.scraperZip.findMany({
+        where: {
+          auctionId: auction,
+        },
+        select: {
+          filePath: true,
+          isNewUploaded: true,
+          products: true,
+          createdAt: true,
+          lastcsvgenerated: true,
+          id: true,
+        },
+      });
+
       const data = await this.prismaService.location.findFirst({
         where: {
           locid: location,
@@ -132,30 +144,31 @@ export class ScanReportsService {
         return { error: { status: 404, message: 'No Data Found' } };
       }
 
-      const formattedData = data.Scanned.map((scan) => {
-        const prod = scan.products[0];
-
-        if (data.city === LOCATION.HOUSTON || LOCATION.DALLAS) {
-          return {
-            lotNo: prod.lotNo,
-            Quantity: prod.quantity,
-            Title: `${scan.tag} + ${prod.title}`,
-            Description: prod.description,
-            Consignor: prod.consignor,
-            StartBidEach: prod.startingBid,
-          };
-        }
-
-        return {
-          lotNo: prod.lotNo,
-          Title: `${scan.tag} + ${prod.title}`,
-          Category: prod.category,
-          Featured: 'N',
-          QuantityAvailable: scan.products[0].quantity,
-          StartingBid: scan.products[0].startingBid,
-          NewLot: '',
-          Description: scan.products[0].description,
-        };
+      const formattedData = [];
+      data.Scanned.forEach((scan) => {
+        scan.products.forEach((prod) => {
+          if (data.city === LOCATION.HOUSTON || LOCATION.DALLAS) {
+            formattedData.push({
+              lotNo: prod.lotNo,
+              Quantity: prod.quantity,
+              Title: `${scan.tag} + ${prod.title}`,
+              Description: prod.description,
+              Consignor: prod.consignor,
+              StartBidEach: prod.startingBid,
+            });
+          } else {
+            formattedData.push({
+              lotNo: prod.lotNo,
+              Title: `${scan.tag} + ${prod.title}`,
+              Category: prod.category,
+              Featured: 'N',
+              QuantityAvailable: scan.products[0].quantity,
+              StartingBid: scan.products[0].startingBid,
+              NewLot: '',
+              Description: scan.products[0].description,
+            });
+          }
+        });
       });
 
       if (!formattedData) {
@@ -202,24 +215,11 @@ export class ScanReportsService {
         CSV_FINAL,
       );
 
-      const scrapperZip = await this.prismaService.scraperZip.findFirst({
-        orderBy: {
-          createdAt: 'desc',
-        },
-        where: {
-          isNewUploaded: false,
-          auctionId: auction,
-        },
-        select: {
-          filePath: true,
-          isNewUploaded: true,
-          products: true,
-          id: true,
-        },
-      });
-
-      if (!isNewReport && auction) {
-        if (scrapperZip?.isNewUploaded === false) {
+      if (auction) {
+        if (
+          scrapperZip[scrapperZip.length - 1] === null ||
+          scrapperZip[scrapperZip.length - 1] === undefined
+        ) {
           if (!data.Scanned) {
             return { error: { status: 406, message: 'No Scans Exist!' } };
           }
@@ -241,17 +241,13 @@ export class ScanReportsService {
             fs.mkdirSync(`${dir}/images`);
           }
 
-          const products = scrapperZip?.products;
+          const products = [];
 
           if (scanProducts.length > 0) {
             scanProducts.forEach((scanProd) => {
               scanProd.products.forEach((prod) => {
                 // product checking
-                scrapperZip?.products.forEach((scrapProd) => {
-                  if (scrapProd.productId !== prod.productId) {
-                    products.push(prod);
-                  }
-                });
+                products.push(prod);
 
                 prod.images.forEach((image) => {
                   const imageSplit = image.split('/');
@@ -267,39 +263,12 @@ export class ScanReportsService {
 
           zip.addLocalFolder(`${dir}/${currFormatDate}`);
           zip.writeZip(output);
+          // Log Successful Creation of Zip File
+          this.logger.log('Create Zip File Success');
 
-          await this.prismaService.scraperZip.update({
-            where: {
-              id: scrapperZip?.id,
-            },
-            data: {
-              products: {
-                connect: products.map((prod) => ({
-                  productId: prod.productId,
-                })),
-              },
-            },
-          });
-
-          return {
-            data: { status: 200, message: 'Updated Scan Reports' },
-          };
-        } else if (scrapperZip?.isNewUploaded === undefined) {
           const zipFilePath = fs.realpathSync(
             `${dir}/zipFiles/${currFormatDate}.zip`,
           );
-
-          const products: Products[] = [];
-
-          const scanProducts = data.Scanned.map((scan) => {
-            return { products: scan.products };
-          });
-
-          scanProducts.forEach((scanProd) => {
-            scanProd.products.forEach((prod) => {
-              products.push(prod);
-            });
-          });
 
           await this.prismaService.scraperZip.create({
             data: {
@@ -309,9 +278,7 @@ export class ScanReportsService {
                 })),
               },
               filePath: zipFilePath,
-              lastcsvgenerated: data.scapper[0]?.createdAt
-                ? data.scapper[0]?.createdAt
-                : new Date(),
+              lastcsvgenerated: new Date(),
               auction: {
                 connect: {
                   id: auction,
@@ -326,109 +293,208 @@ export class ScanReportsService {
             },
           });
         } else {
-          return {
-            error: {
-              status: 500,
-              message:
-                'Error updating the zip file \n Possible Cause: \n - isNewUploaded is true',
-            },
-          };
-        }
-      }
+          if (scrapperZip[scrapperZip.length - 1]?.isNewUploaded === false) {
+            if (!data.Scanned) {
+              return { error: { status: 406, message: 'No Scans Exist!' } };
+            }
 
-      if (isNewReport && auction) {
-        // Zipper
-        if (!data.Scanned) {
-          return { error: { status: 406, message: 'No Scans Exist!' } };
-        }
-
-        const scanProducts = data.Scanned.map((scan) => {
-          const prodImages = scan.products.map((prod) => {
-            return { images: prod.images, productId: prod.productId };
-          });
-          return { productImg: prodImages, products: scan.products };
-        });
-
-        const output = `${dir}/zipFiles/${currFormatDate}.zip`;
-
-        if (!fs.existsSync(`${dir}/zipFiles`)) {
-          fs.mkdirSync(`${dir}/zipFiles`);
-        }
-
-        if (!fs.existsSync(`${dir}/images`)) {
-          fs.mkdirSync(`${dir}/images`);
-        }
-
-        const products = scrapperZip?.products;
-
-        if (scanProducts.length > 0) {
-          scanProducts.forEach((scanProd) => {
-            scanProd.products.forEach((prod) => {
-              // product checking
-              scrapperZip?.products.forEach((scrapProd) => {
-                if (scrapProd.productId !== prod.productId) {
-                  products.push(prod);
-                }
-              });
-
-              prod.images.forEach((image) => {
-                const imageSplit = image.split('/');
-                const imageFileName = imageSplit[imageSplit.length - 1];
-                fs.copyFileSync(
-                  image,
-                  `${dir}/${currFormatDate}/${imageFileName}`,
-                );
-              });
+            const filteredData = data.Scanned.filter((filData) => {
+              if (
+                new Date(filData.createdAt) >
+                (new Date(
+                  scrapperZip[scrapperZip.length - 2]?.lastcsvgenerated,
+                ) ||
+                  new Date(
+                    scrapperZip[scrapperZip.length - 1]?.lastcsvgenerated,
+                  ))
+              ) {
+                return true;
+              }
+              return false;
             });
-          });
-        }
 
-        zip.addLocalFolder(`${dir}/${currFormatDate}`);
-        zip.writeZip(output);
-        // Log Successful Creation of Zip File
-        this.logger.log('Create Zip File Success');
+            const scanProducts = filteredData.map((scan) => {
+              const prodImages = scan.products.map((prod) => {
+                return { images: prod.images, productId: prod.productId };
+              });
+              return { productImg: prodImages, products: scan.products };
+            });
 
-        const zipFilePath = fs.realpathSync(
-          `${dir}/zipFiles/${currFormatDate}.zip`,
-        );
+            const output = `${dir}/zipFiles/${currFormatDate}.zip`;
 
-        if (scrapperZip?.isNewUploaded === true) {
-          await this.prismaService.scraperZip.create({
-            data: {
-              filePath: zipFilePath,
-              lastcsvgenerated: data.scapper[0]?.createdAt
-                ? data.scapper[0]?.createdAt
-                : new Date(),
-              auction: {
-                connect: {
-                  id: auction,
+            if (!fs.existsSync(`${dir}/zipFiles`)) {
+              fs.mkdirSync(`${dir}/zipFiles`);
+            }
+
+            if (!fs.existsSync(`${dir}/images`)) {
+              fs.mkdirSync(`${dir}/images`);
+            }
+
+            const products = scrapperZip[scrapperZip.length - 1].products;
+
+            if (scanProducts.length > 0) {
+              scanProducts.forEach((scanProd) => {
+                scanProd.products.forEach((prod) => {
+                  // product checking
+                  scrapperZip[scrapperZip.length - 1].products.forEach(
+                    (scrapProd) => {
+                      if (scrapProd.productId !== prod.productId) {
+                        products.push(prod);
+                      }
+                    },
+                  );
+
+                  prod.images.forEach((image) => {
+                    const imageSplit = image.split('/');
+                    const imageFileName = imageSplit[imageSplit.length - 1];
+                    fs.copyFileSync(
+                      image,
+                      `${dir}/${currFormatDate}/${imageFileName}`,
+                    );
+                  });
+                });
+              });
+            }
+
+            zip.addLocalFolder(`${dir}/${currFormatDate}`);
+            zip.writeZip(output);
+
+            await this.prismaService.scraperZip.update({
+              where: {
+                id: scrapperZip[scrapperZip.length - 1].id,
+              },
+              data: {
+                products: {
+                  connect: products.map((prod) => ({
+                    productId: prod.productId,
+                  })),
                 },
+                lastcsvgenerated: new Date(),
               },
-              isNewUploaded: true,
-              products: {
-                connect: products.map((prod) => ({
-                  productId: prod.productId,
-                })),
-              },
-              locations: {
-                connect: {
-                  locid: location,
+            });
+
+            return {
+              data: { status: 200, message: 'Updated Scan Reports' },
+            };
+          } else if (
+            scrapperZip[scrapperZip.length - 1].isNewUploaded === true
+          ) {
+            if (!data.Scanned) {
+              return { error: { status: 406, message: 'No Scans Exist!' } };
+            }
+
+            const filteredData = data.Scanned.filter((filData) => {
+              if (
+                new Date(filData.createdAt) >
+                (new Date(
+                  scrapperZip[scrapperZip.length - 2]?.lastcsvgenerated,
+                ) ||
+                  new Date(
+                    scrapperZip[scrapperZip.length - 1]?.lastcsvgenerated,
+                  ))
+              ) {
+                return true;
+              }
+              return false;
+            });
+
+            const scanProducts = filteredData.map((scan) => {
+              const prodImages = scan.products.map((prod) => {
+                return { images: prod.images, productId: prod.productId };
+              });
+              return { productImg: prodImages, products: scan.products };
+            });
+
+            const output = `${dir}/zipFiles/${currFormatDate}.zip`;
+
+            if (!fs.existsSync(`${dir}/zipFiles`)) {
+              fs.mkdirSync(`${dir}/zipFiles`);
+            }
+
+            if (!fs.existsSync(`${dir}/images`)) {
+              fs.mkdirSync(`${dir}/images`);
+            }
+
+            const products = scrapperZip[scrapperZip.length - 1].products;
+
+            if (scanProducts.length > 0) {
+              scanProducts.forEach((scanProd) => {
+                scanProd.products.forEach((prod) => {
+                  // product checking
+                  scrapperZip[scrapperZip.length - 1].products.forEach(
+                    (scrapProd) => {
+                      if (scrapProd.productId !== prod.productId) {
+                        products.push(prod);
+                      }
+                    },
+                  );
+
+                  prod.images.forEach((image) => {
+                    const imageSplit = image.split('/');
+                    const imageFileName = imageSplit[imageSplit.length - 1];
+                    fs.copyFileSync(
+                      image,
+                      `${dir}/${currFormatDate}/${imageFileName}`,
+                    );
+                  });
+                });
+              });
+            }
+
+            zip.addLocalFolder(`${dir}/${currFormatDate}`);
+            zip.writeZip(output);
+            // Log Successful Creation of Zip File
+            this.logger.log('Create Zip File Success');
+
+            const zipFilePath = fs.realpathSync(
+              `${dir}/zipFiles/${currFormatDate}.zip`,
+            );
+
+            if (scrapperZip[scrapperZip.length - 1].isNewUploaded === true) {
+              await this.prismaService.scraperZip.create({
+                data: {
+                  filePath: zipFilePath,
+                  lastcsvgenerated: new Date(),
+                  auction: {
+                    connect: {
+                      id: auction,
+                    },
+                  },
+                  isNewUploaded: true,
+                  products: {
+                    connect: products.map((prod) => ({
+                      productId: prod.productId,
+                    })),
+                  },
+                  locations: {
+                    connect: {
+                      locid: location,
+                    },
+                  },
                 },
+              });
+            } else {
+              await this.prismaService.scraperZip.update({
+                where: {
+                  id: scrapperZip[scrapperZip.length - 1].id,
+                },
+                data: {
+                  products: {
+                    set: products,
+                  },
+                  isNewUploaded: true,
+                },
+              });
+            }
+          } else {
+            return {
+              error: {
+                status: 500,
+                message:
+                  'Error updating the zip file \n Possible Cause: \n - isNewUploaded is true',
               },
-            },
-          });
-        } else {
-          await this.prismaService.scraperZip.update({
-            where: {
-              id: scrapperZip?.id,
-            },
-            data: {
-              products: {
-                set: products,
-              },
-              isNewUploaded: true,
-            },
-          });
+            };
+          }
         }
       }
 
@@ -450,6 +516,17 @@ export class ScanReportsService {
           filePath: true,
         },
       });
+
+      if (scanReportQuery.isUploaded === 'true') {
+        await this.prismaService.scraperZip.update({
+          where: {
+            id: Number(scanReportQuery.scrapperId),
+          },
+          data: {
+            isNewUploaded: true,
+          },
+        });
+      }
 
       const zip = new AdmZip(scanReport.filePath);
       const data = zip.toBuffer();
