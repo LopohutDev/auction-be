@@ -6,6 +6,7 @@
 /src/scrapper
 /src/scrapper/images
 /src/scrapper/zipFiles
+/src/scrapper/*
 
 # Logs
 logs
