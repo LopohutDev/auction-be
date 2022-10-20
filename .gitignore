@@ -4,6 +4,8 @@
 
 # Scrapper
 /src/scrapper
+/src/scrapper/images
+/src/scrapper/zipFiles
 
 # Logs
 logs
