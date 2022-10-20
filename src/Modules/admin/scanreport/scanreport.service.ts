@@ -14,7 +14,6 @@ import { valdiateScanAuction } from 'src/validations/admin.scan.validations';
 import { paginationDto } from 'src/dto/common.dto';
 import { paginationHelper, paginationHelperForAllData } from '../utils';
 import * as AdmZip from 'adm-zip';
-import { Products } from '@prisma/client';
 
 @Injectable()
 export class ScanReportsService {
@@ -89,12 +88,8 @@ export class ScanReportsService {
     const { auction, location } = scanReport;
 
     try {
-      const scrapperZip = await this.prismaService.scraperZip.findFirst({
-        orderBy: {
-          createdAt: 'desc',
-        },
+      const scrapperZip = await this.prismaService.scraperZip.findMany({
         where: {
-          isNewUploaded: false,
           auctionId: auction,
         },
         select: {
@@ -102,6 +97,7 @@ export class ScanReportsService {
           isNewUploaded: true,
           products: true,
           createdAt: true,
+          lastcsvgenerated: true,
           id: true,
         },
       });
@@ -160,18 +156,18 @@ export class ScanReportsService {
               Consignor: prod.consignor,
               StartBidEach: prod.startingBid,
             });
+          } else {
+            formattedData.push({
+              lotNo: prod.lotNo,
+              Title: `${scan.tag} + ${prod.title}`,
+              Category: prod.category,
+              Featured: 'N',
+              QuantityAvailable: scan.products[0].quantity,
+              StartingBid: scan.products[0].startingBid,
+              NewLot: '',
+              Description: scan.products[0].description,
+            });
           }
-
-          formattedData.push({
-            lotNo: prod.lotNo,
-            Title: `${scan.tag} + ${prod.title}`,
-            Category: prod.category,
-            Featured: 'N',
-            QuantityAvailable: scan.products[0].quantity,
-            StartingBid: scan.products[0].startingBid,
-            NewLot: '',
-            Description: scan.products[0].description,
-          });
         });
       });
 
@@ -220,7 +216,10 @@ export class ScanReportsService {
       );
 
       if (auction) {
-        if (scrapperZip === null || scrapperZip === undefined) {
+        if (
+          scrapperZip[scrapperZip.length - 1] === null ||
+          scrapperZip[scrapperZip.length - 1] === undefined
+        ) {
           if (!data.Scanned) {
             return { error: { status: 406, message: 'No Scans Exist!' } };
           }
@@ -279,9 +278,7 @@ export class ScanReportsService {
                 })),
               },
               filePath: zipFilePath,
-              lastcsvgenerated: data.scapper[0]?.createdAt
-                ? data.scapper[0]?.createdAt
-                : new Date(),
+              lastcsvgenerated: new Date(),
               auction: {
                 connect: {
                   id: auction,
@@ -296,16 +293,25 @@ export class ScanReportsService {
             },
           });
         } else {
-          if (scrapperZip?.isNewUploaded === false) {
+          if (scrapperZip[scrapperZip.length - 1]?.isNewUploaded === false) {
             if (!data.Scanned) {
               return { error: { status: 406, message: 'No Scans Exist!' } };
             }
 
-            const filteredData = data.Scanned.filter(
-              (filData) =>
-                new Date(filData.createdAt).valueOf() >=
-                new Date(scrapperZip?.createdAt).valueOf(),
-            );
+            const filteredData = data.Scanned.filter((filData) => {
+              if (
+                new Date(filData.createdAt) >
+                (new Date(
+                  scrapperZip[scrapperZip.length - 2]?.lastcsvgenerated,
+                ) ||
+                  new Date(
+                    scrapperZip[scrapperZip.length - 1]?.lastcsvgenerated,
+                  ))
+              ) {
+                return true;
+              }
+              return false;
+            });
 
             const scanProducts = filteredData.map((scan) => {
               const prodImages = scan.products.map((prod) => {
@@ -324,17 +330,19 @@ export class ScanReportsService {
               fs.mkdirSync(`${dir}/images`);
             }
 
-            const products = scrapperZip?.products;
+            const products = scrapperZip[scrapperZip.length - 1].products;
 
             if (scanProducts.length > 0) {
               scanProducts.forEach((scanProd) => {
                 scanProd.products.forEach((prod) => {
                   // product checking
-                  scrapperZip?.products.forEach((scrapProd) => {
-                    if (scrapProd.productId !== prod.productId) {
-                      products.push(prod);
-                    }
-                  });
+                  scrapperZip[scrapperZip.length - 1].products.forEach(
+                    (scrapProd) => {
+                      if (scrapProd.productId !== prod.productId) {
+                        products.push(prod);
+                      }
+                    },
+                  );
 
                   prod.images.forEach((image) => {
                     const imageSplit = image.split('/');
@@ -353,7 +361,7 @@ export class ScanReportsService {
 
             await this.prismaService.scraperZip.update({
               where: {
-                id: scrapperZip?.id,
+                id: scrapperZip[scrapperZip.length - 1].id,
               },
               data: {
                 products: {
@@ -361,23 +369,34 @@ export class ScanReportsService {
                     productId: prod.productId,
                   })),
                 },
-                createdAt: new Date().toISOString(),
+                lastcsvgenerated: new Date(),
               },
             });
 
             return {
               data: { status: 200, message: 'Updated Scan Reports' },
             };
-          } else if (scrapperZip.isNewUploaded === true) {
+          } else if (
+            scrapperZip[scrapperZip.length - 1].isNewUploaded === true
+          ) {
             if (!data.Scanned) {
               return { error: { status: 406, message: 'No Scans Exist!' } };
             }
 
-            const filteredData = data.Scanned.filter(
-              (filData) =>
-                new Date(filData.createdAt).valueOf() >=
-                new Date(scrapperZip?.createdAt).valueOf(),
-            );
+            const filteredData = data.Scanned.filter((filData) => {
+              if (
+                new Date(filData.createdAt) >
+                (new Date(
+                  scrapperZip[scrapperZip.length - 2]?.lastcsvgenerated,
+                ) ||
+                  new Date(
+                    scrapperZip[scrapperZip.length - 1]?.lastcsvgenerated,
+                  ))
+              ) {
+                return true;
+              }
+              return false;
+            });
 
             const scanProducts = filteredData.map((scan) => {
               const prodImages = scan.products.map((prod) => {
@@ -396,17 +415,19 @@ export class ScanReportsService {
               fs.mkdirSync(`${dir}/images`);
             }
 
-            const products = scrapperZip?.products;
+            const products = scrapperZip[scrapperZip.length - 1].products;
 
             if (scanProducts.length > 0) {
               scanProducts.forEach((scanProd) => {
                 scanProd.products.forEach((prod) => {
                   // product checking
-                  scrapperZip?.products.forEach((scrapProd) => {
-                    if (scrapProd.productId !== prod.productId) {
-                      products.push(prod);
-                    }
-                  });
+                  scrapperZip[scrapperZip.length - 1].products.forEach(
+                    (scrapProd) => {
+                      if (scrapProd.productId !== prod.productId) {
+                        products.push(prod);
+                      }
+                    },
+                  );
 
                   prod.images.forEach((image) => {
                     const imageSplit = image.split('/');
@@ -429,13 +450,11 @@ export class ScanReportsService {
               `${dir}/zipFiles/${currFormatDate}.zip`,
             );
 
-            if (scrapperZip?.isNewUploaded === true) {
+            if (scrapperZip[scrapperZip.length - 1].isNewUploaded === true) {
               await this.prismaService.scraperZip.create({
                 data: {
                   filePath: zipFilePath,
-                  lastcsvgenerated: data.scapper[0]?.createdAt
-                    ? data.scapper[0]?.createdAt
-                    : new Date(),
+                  lastcsvgenerated: new Date(),
                   auction: {
                     connect: {
                       id: auction,
@@ -457,7 +476,7 @@ export class ScanReportsService {
             } else {
               await this.prismaService.scraperZip.update({
                 where: {
-                  id: scrapperZip?.id,
+                  id: scrapperZip[scrapperZip.length - 1].id,
                 },
                 data: {
                   products: {
@@ -508,8 +527,6 @@ export class ScanReportsService {
           },
         });
       }
-
-      console.log(scanReport);
 
       const zip = new AdmZip(scanReport.filePath);
       const data = zip.toBuffer();
