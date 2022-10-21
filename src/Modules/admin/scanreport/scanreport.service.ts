@@ -144,8 +144,35 @@ export class ScanReportsService {
         return { error: { status: 404, message: 'No Data Found' } };
       }
 
+      const firstOrSecondScrapper = () => {
+        if (scrapperZip.length > 0) {
+          if (scrapperZip[scrapperZip.length - 2]) {
+            return scrapperZip[scrapperZip.length - 2].lastcsvgenerated;
+          }
+          if (scrapperZip[scrapperZip.length - 1]) {
+            return scrapperZip[scrapperZip.length - 1].lastcsvgenerated;
+          }
+        }
+      };
+
+      const filteredData = data.Scanned.filter((filData) => {
+        if (
+          scrapperZip.length > 0 &&
+          new Date(filData.createdAt).valueOf() >
+            new Date(firstOrSecondScrapper()).valueOf()
+        ) {
+          return true;
+        }
+
+        if (scrapperZip.length <= 0) {
+          return true;
+        }
+
+        return false;
+      });
+
       const formattedData = [];
-      data.Scanned.forEach((scan) => {
+      filteredData.forEach((scan) => {
         scan.products.forEach((prod) => {
           if (data.city === LOCATION.HOUSTON || LOCATION.DALLAS) {
             formattedData.push({
@@ -298,21 +325,6 @@ export class ScanReportsService {
               return { error: { status: 406, message: 'No Scans Exist!' } };
             }
 
-            const filteredData = data.Scanned.filter((filData) => {
-              if (
-                new Date(filData.createdAt) >
-                (new Date(
-                  scrapperZip[scrapperZip.length - 2]?.lastcsvgenerated,
-                ) ||
-                  new Date(
-                    scrapperZip[scrapperZip.length - 1]?.lastcsvgenerated,
-                  ))
-              ) {
-                return true;
-              }
-              return false;
-            });
-
             const scanProducts = filteredData.map((scan) => {
               const prodImages = scan.products.map((prod) => {
                 return { images: prod.images, productId: prod.productId };
@@ -382,21 +394,6 @@ export class ScanReportsService {
             if (!data.Scanned) {
               return { error: { status: 406, message: 'No Scans Exist!' } };
             }
-
-            const filteredData = data.Scanned.filter((filData) => {
-              if (
-                new Date(filData.createdAt) >
-                (new Date(
-                  scrapperZip[scrapperZip.length - 2]?.lastcsvgenerated,
-                ) ||
-                  new Date(
-                    scrapperZip[scrapperZip.length - 1]?.lastcsvgenerated,
-                  ))
-              ) {
-                return true;
-              }
-              return false;
-            });
 
             const scanProducts = filteredData.map((scan) => {
               const prodImages = scan.products.map((prod) => {
