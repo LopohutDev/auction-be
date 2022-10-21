@@ -107,7 +107,7 @@ export class ScanReportsService {
         where: {
           locid: location,
           Scanned: {
-            some: {
+            every: {
               auctionId: auction,
             },
           },
