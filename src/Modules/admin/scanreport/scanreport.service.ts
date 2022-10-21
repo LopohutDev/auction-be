@@ -86,12 +86,17 @@ export class ScanReportsService {
 
   async exportScrapperScans(scanReport: getScanReportBodyDto) {
     const { auction, location } = scanReport;
-
+    let scrapperZip;
     try {
-      const scrapperZip = await this.prismaService.scraperZip.findMany({
+      scrapperZip = await this.prismaService.scraperZip.findMany({
         where: {
           auctionId: auction,
+          locid: location,
         },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
         select: {
           filePath: true,
           isNewUploaded: true,
@@ -101,74 +106,91 @@ export class ScanReportsService {
           id: true,
         },
       });
-
-      const data = await this.prismaService.location.findFirst({
-        where: {
-          locid: location,
-          Scanned: {
-            some: {
-              auctionId: auction,
+      this.logger.log(JSON.stringify(scrapperZip));
+      let lastgeneratedate;
+      if (scrapperZip[0].isNewUploaded == true) {
+        lastgeneratedate = scrapperZip[0].lastcsvgenerated;
+      }
+      this.logger.log('date>>>>>>', lastgeneratedate);
+      let data;
+      if (lastgeneratedate) {
+        data = await this.prismaService.scans.findFirst({
+          where: {
+            locid: location,
+            auctionId: auction,
+            createdAt: {
+              gte: lastgeneratedate,
             },
           },
-        },
-        select: {
-          city: true,
-          Scanned: {
-            orderBy: { createdAt: 'desc' },
-            select: {
-              createdAt: true,
-              ScanId: true,
-              barcode: true,
-              tag: true,
-              scannedUser: { select: { firstname: true, lastname: true } },
-              products: true,
-            },
+          select: {
+            createdAt: true,
+            ScanId: true,
+            barcode: true,
+            tag: true,
+            scannedUser: { select: { firstname: true, lastname: true } },
+            products: true,
           },
-          scapper: {
-            orderBy: {
-              createdAt: 'desc',
-            },
-            take: 1,
-            select: {
-              filePath: true,
-              createdAt: true,
-            },
-            where: {
-              isNewUploaded: true,
-            },
+        });
+      } else {
+        scrapperZip = await this.prismaService.scraperZip.findMany({
+          where: {
+            auctionId: auction,
+            locid: location,
+            isNewUploaded: false,
           },
-        },
-      });
-
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+          select: {
+            filePath: true,
+            isNewUploaded: true,
+            id: true,
+          },
+        });
+        data = await this.prismaService.scans.findFirst({
+          where: {
+            locid: location,
+            auctionId: auction,
+          },
+          select: {
+            createdAt: true,
+            ScanId: true,
+            barcode: true,
+            tag: true,
+            scannedUser: { select: { firstname: true, lastname: true } },
+            products: true,
+          },
+        });
+      }
+      this.logger.log('data>>>>>', JSON.stringify(data));
       if (!data) {
         return { error: { status: 404, message: 'No Data Found' } };
       }
 
       const formattedData = [];
-      data.Scanned.forEach((scan) => {
-        scan.products.forEach((prod) => {
-          if (data.city === LOCATION.HOUSTON || LOCATION.DALLAS) {
-            formattedData.push({
-              lotNo: prod.lotNo,
-              Quantity: prod.quantity,
-              Title: `${scan.tag} + ${prod.title}`,
-              Description: prod.description,
-              Consignor: prod.consignor,
-              StartBidEach: prod.startingBid,
-            });
-          } else {
-            formattedData.push({
-              lotNo: prod.lotNo,
-              Title: `${scan.tag} + ${prod.title}`,
-              Category: prod.category,
-              Featured: 'N',
-              QuantityAvailable: scan.products[0].quantity,
-              StartingBid: scan.products[0].startingBid,
-              NewLot: '',
-              Description: scan.products[0].description,
-            });
-          }
-        });
+      data.products.forEach((prod) => {
+        if (data.city === LOCATION.HOUSTON || LOCATION.DALLAS) {
+          formattedData.push({
+            lotNo: prod.lotNo,
+            Quantity: prod.quantity,
+            Title: `${data.tag} + ${prod.title}`,
+            Description: prod.description,
+            Consignor: prod.consignor,
+            StartBidEach: prod.startingBid,
+          });
+        } else {
+          formattedData.push({
+            lotNo: prod.lotNo,
+            Title: `${data.tag} + ${prod.title}`,
+            Category: prod.category,
+            Featured: 'N',
+            QuantityAvailable: data.products[0].quantity,
+            StartingBid: data.products[0].startingBid,
+            NewLot: '',
+            Description: data.products[0].description,
+          });
+        }
       });
 
       if (!formattedData) {
@@ -176,8 +198,8 @@ export class ScanReportsService {
       }
 
       const existingFileNameArr =
-        data.scapper[0] &&
-        data.scapper[0].filePath
+        scrapperZip[0] &&
+        scrapperZip[0].filePath
           .replace(/^.*[\\\/]/, '')
           .split('.')[0]
           .split('_');
@@ -191,10 +213,7 @@ export class ScanReportsService {
         parseInt(existingFileNameArr[existingFileNameArr.length - 1]);
 
       const currFormatDate = `${formatDate(new Date())}_${
-        formatDate(new Date(data?.scapper[0]?.createdAt || undefined)) ===
-          formatDate(new Date()) && lastNumber
-          ? lastNumber + 1
-          : 1
+        scrapperZip[0].isNewUploaded == true ? lastNumber + 1 : 1
       }`;
 
       const olddir = __dirname.split('/');
@@ -224,11 +243,15 @@ export class ScanReportsService {
             return { error: { status: 406, message: 'No Scans Exist!' } };
           }
 
-          const scanProducts = data.Scanned.map((scan) => {
-            const prodImages = scan.products.map((prod) => {
-              return { images: prod.images, productId: prod.productId };
-            });
-            return { productImg: prodImages, products: scan.products };
+          // const scanProducts = data.Scanned.map((scan) => {
+          const scanProducts = data.products.map((prod) => {
+            return {
+              productImg: {
+                images: prod.images,
+                productId: prod.productId,
+              },
+              products: data.products,
+            };
           });
 
           const output = `${dir}/zipFiles/${currFormatDate}.zip`;
