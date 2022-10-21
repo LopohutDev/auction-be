@@ -7,6 +7,7 @@ import {
 } from 'src/dto/admin.auction.module.dto';
 import { successErrorDto } from 'src/dto/common.dto';
 import { PrismaService } from 'src/Services/prisma.service';
+import { subDays } from 'src/utils/common.utils';
 import { validationAuctionBody } from 'src/validations/admin.auction.validation';
 
 @Injectable()
@@ -29,8 +30,6 @@ export class AuctionService {
           endDate,
           endTime,
           startNumber,
-          isRecover:
-            startNumber || startNumber === 0 ? new Date().toISOString() : null,
         },
       });
 
@@ -118,18 +117,26 @@ export class AuctionService {
   }
 
   async setRecoverData(auctionId: getRecoverQueryDto) {
-    const { id } = auctionId;
+    const { auction } = auctionId;
+    if (!auction || !auction.trim().length) {
+      return { error: { status: 422, message: 'Auction is required' } };
+    }
 
-    const isAuction = await this.prismaService.auction.findUnique({
+    const isAuction = await this.prismaService.auction.findMany({
       where: {
-        id,
+        startDate: {
+          gte: subDays(6),
+        },
       },
     });
+    if (isAuction[0].id !== auction) {
+      return { error: { status: 422, message: 'Invalid auction' } };
+    }
     try {
       if (isAuction) {
         await this.prismaService.auction.update({
           where: {
-            id,
+            id: auction,
           },
           data: {
             isRecover: new Date().toISOString(),
