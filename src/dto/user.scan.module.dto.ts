@@ -48,3 +48,17 @@ export interface scrapperReturnDataDto extends errorDto {
   data?: scrapperDataDto;
   scanParams?: scanItemParamsDto;
 }
+
+export interface locationScansDto {
+  lotNo: string;
+  Title: string;
+  Category?: string;
+  Featured?: string;
+  QuantityAvailable?: number;
+  StartingBid?: number;
+  NewLot?: string;
+  Description: string;
+  Quantity?: number;
+  Consignor?: number;
+  StartBidEach?: number;
+}
