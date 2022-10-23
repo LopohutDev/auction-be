@@ -14,7 +14,7 @@ import { valdiateScanAuction } from 'src/validations/admin.scan.validations';
 import { paginationDto } from 'src/dto/common.dto';
 import { paginationHelperForAllData } from '../utils';
 import * as AdmZip from 'adm-zip';
-import { addDays } from 'src/utils/common.utils';
+import { addDays, subDays } from 'src/utils/common.utils';
 import { locationScansDto } from 'src/dto/user.scan.module.dto';
 import { Products } from '@prisma/client';
 
@@ -91,6 +91,25 @@ export class ScanReportsService {
     const { auction, location } = scanReport;
 
     try {
+      const AuctionData = await this.prismaService.auction.findFirst({
+        where: { id: auction, locid: location, startNumber: { gte: 0 } },
+        rejectOnNotFound: false,
+      });
+
+      if (!AuctionData) {
+        return { error: { status: 404, message: 'Auction not found' } };
+      }
+
+      if (AuctionData.startDate < subDays(3) && !AuctionData.isRecover) {
+        return { error: { status: 409, message: 'Auction is already passed' } };
+      }
+
+      if (AuctionData.startDate > new Date()) {
+        return {
+          error: { status: 409, message: 'Auction is not started yet' },
+        };
+      }
+
       const scrapperZip = await this.prismaService.scraperZip.findMany({
         where: {
           auctionId: auction,
@@ -174,7 +193,9 @@ export class ScanReportsService {
       const currFormatDate = `${formatDate(new Date())}_${
         formatDate(new Date(lastZip?.createdAt || undefined)) ===
           formatDate(new Date()) && lastNumber
-          ? lastNumber + 1
+          ? lastZip && !lastZip.isNewUploaded
+            ? lastNumber
+            : lastNumber + 1
           : 1
       }`;
 
@@ -231,6 +252,11 @@ export class ScanReportsService {
       const zipFilePath = fs.realpathSync(
         `${dir}/zipFiles/${currFormatDate}.zip`,
       );
+      if (lastZip && !lastZip.isNewUploaded) {
+        await this.prismaService.scraperZip.delete({
+          where: { id: lastZip.id },
+        });
+      }
 
       await this.prismaService.scraperZip.create({
         data: {
