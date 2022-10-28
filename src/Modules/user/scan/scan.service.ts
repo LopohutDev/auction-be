@@ -36,9 +36,15 @@ export class ScanService {
       where: { id: item.auction },
       rejectOnNotFound: false,
     });
+
     if (!isAuctionExists) {
       return { error: { status: 404, message: 'Invalid auction' } };
     }
+
+    if (new Date(isAuctionExists.endDate).valueOf() < new Date().valueOf()) {
+      return { error: { status: 500, message: 'Auction is already finished' } };
+    }
+
     const userdata = await this.prismaService.user.findUnique({
       where: { email: scaninfo.email },
     });
@@ -146,7 +152,7 @@ export class ScanService {
           autionStartNo: startNumber,
           lastInsertId: lastInsertId.id,
         };
-        Jobs.set(() => getScrapperData(data, params));
+        // Jobs.set(() => getScrapperData(data, params));
         return {
           data: {
             message:
@@ -183,6 +189,12 @@ export class ScanService {
       });
       if (!isAuctionExists) {
         return { error: { status: 404, message: 'Invalid auction' } };
+      }
+
+      if (new Date(isAuctionExists.endDate).valueOf() < new Date().valueOf()) {
+        return {
+          error: { status: 500, message: 'Auction is already finished' },
+        };
       }
 
       const userdata = await this.prismaService.user.findUnique({
