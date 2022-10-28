@@ -252,34 +252,39 @@ export class ScanReportsService {
       const zipFilePath = fs.realpathSync(
         `${dir}/zipFiles/${currFormatDate}.zip`,
       );
+
+      const scrapperZipData = {
+        products: {
+          connect: products.map((prod) => ({
+            productId: prod.productId,
+          })),
+        },
+        filePath: zipFilePath,
+        lastcsvgenerated: new Date(),
+        auction: {
+          connect: {
+            id: auction,
+          },
+        },
+        isNewUploaded: false,
+        locations: {
+          connect: {
+            locid: location,
+          },
+        },
+      };
+
       if (lastZip && !lastZip.isNewUploaded) {
-        await this.prismaService.scraperZip.delete({
+        await this.prismaService.scraperZip.update({
           where: { id: lastZip.id },
+          data: scrapperZipData,
+        });
+      } else {
+        await this.prismaService.scraperZip.create({
+          data: scrapperZipData,
         });
       }
 
-      await this.prismaService.scraperZip.create({
-        data: {
-          products: {
-            connect: products.map((prod) => ({
-              productId: prod.productId,
-            })),
-          },
-          filePath: zipFilePath,
-          lastcsvgenerated: new Date(),
-          auction: {
-            connect: {
-              id: auction,
-            },
-          },
-          isNewUploaded: false,
-          locations: {
-            connect: {
-              locid: location,
-            },
-          },
-        },
-      });
       return {
         data: { status: 200, message: 'Generate Scan Report Success' },
       };
