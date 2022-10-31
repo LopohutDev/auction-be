@@ -147,6 +147,7 @@ export class TasksService {
               },
               data: {
                 successScanId: ScanData.ScanId,
+                updatedAt: new Date(),
               },
             });
           } else if (error) {
@@ -173,6 +174,7 @@ export class TasksService {
               },
               data: {
                 failedScanId: failedScanData.failedScanId,
+                updatedAt: new Date(),
               },
             });
           }

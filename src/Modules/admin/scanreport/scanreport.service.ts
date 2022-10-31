@@ -139,6 +139,7 @@ export class ScanReportsService {
           locations: { select: { city: true } },
           tags: { select: { tag: true } },
           products: true,
+          scannedName: true,
         },
         orderBy: { createdAt: 'asc' },
       });
@@ -146,9 +147,10 @@ export class ScanReportsService {
       if (!scannedData.length) {
         return { error: { status: 404, messsage: 'No Scanned Item Found!' } };
       }
-
+      const username = [];
       const formattedData: locationScansDto[] = [];
       scannedData.forEach((scan) => {
+        username.push(scan.scannedName);
         if (
           scan.locations.city === LOCATION.HOUSTON ||
           scan.locations.city === LOCATION.DALLAS
@@ -174,7 +176,8 @@ export class ScanReportsService {
           });
         }
       });
-
+      const unique = username.filter((item, i, ar) => ar.indexOf(item) === i);
+      const user = unique.toString();
       const existingFileNameArr =
         scrapperZip.length &&
         lastZip.filePath
@@ -278,6 +281,7 @@ export class ScanReportsService {
               locid: location,
             },
           },
+          scannedBy: user,
         },
       });
       return {
