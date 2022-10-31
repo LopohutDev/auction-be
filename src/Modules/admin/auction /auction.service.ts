@@ -126,10 +126,17 @@ export class AuctionService {
       where: {
         startDate: {
           gte: subDays(6),
+          lt: new Date(),
+        },
+        startNumber: {
+          gte: 0,
         },
       },
+      orderBy: {
+        startDate: 'asc',
+      },
     });
-    if (isAuction[0].id !== auction) {
+    if (!isAuction.length || isAuction[0]?.id !== auction) {
       return { error: { status: 422, message: 'Invalid auction' } };
     }
     try {

@@ -64,7 +64,7 @@ export class TasksService {
     });
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async handlePriorityQueue() {
     const jobs = Jobs.queue;
     if (!jobs.length) {
