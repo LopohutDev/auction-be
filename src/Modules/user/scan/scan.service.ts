@@ -152,7 +152,7 @@ export class ScanService {
           autionStartNo: startNumber,
           lastInsertId: lastInsertId.id,
         };
-        // Jobs.set(() => getScrapperData(data, params));
+        Jobs.set(() => getScrapperData(data, params));
         return {
           data: {
             message:
