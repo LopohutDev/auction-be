@@ -128,6 +128,7 @@ export class ScanService {
         await this.prismaService.tags.create({
           data: {
             tag: tag,
+            barcode: item.barcode,
             auctionId: item.auction,
             tagexpireAt: addDays(30),
             auctionStartNo: startNumber,
@@ -308,6 +309,7 @@ export class ScanService {
           },
           data: {
             failedScanId: FailedScanData.failedScanId,
+            updatedAt: new Date(),
           },
         });
         return {
@@ -320,6 +322,7 @@ export class ScanService {
       await this.prismaService.tags.create({
         data: {
           tag: tag,
+          barcode: FailedScanData.barcode,
           auctionId: item.auction,
           tagexpireAt: addDays(30),
           auctionStartNo: startNumber,
@@ -345,6 +348,7 @@ export class ScanService {
         },
         data: {
           failedScanId: FailedScanData.failedScanId,
+          updatedAt: new Date(),
         },
       });
       return {
