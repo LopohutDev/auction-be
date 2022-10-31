@@ -11,6 +11,7 @@ import { Download } from 'src/utils/imageDownload.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import setAuction from '../admin/auction /auction.utils';
 import { ScanReportsService } from '../admin/scanreport/scanreport.service';
+import { createExceptionFile } from '../user/scan/exceptionhandling.utils';
 import { getLotNo } from '../user/scan/scrapper.utils';
 
 @Injectable()
@@ -74,35 +75,36 @@ export class TasksService {
       try {
         for await (const que of Jobs.queue) {
           const { data, scanParams, error } = await que.func();
-          const olddir = __dirname.split('/');
-          olddir.splice(olddir.length - 3, 3);
-          const dir = `${olddir.join('/')}/src/scrapper`;
-
-          if (!fs.existsSync(`${dir}`)) {
-            fs.mkdirSync(`${dir}`);
-          }
-
-          if (!fs.existsSync(`${dir}/images`)) {
-            fs.mkdirSync(`${dir}/images`);
-          }
-
-          const lastScannedItem = await this.prismaService.scans.findMany({
-            orderBy: { id: 'desc' },
-            take: 1,
-          });
-          const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
-          const ScanData = {
-            ScanId: uuid(),
-            tag: scanParams.tag,
-            auctionId: scanParams.auctionId,
-            locid: scanParams.locid,
-            scannedBy: scanParams.userid,
-            scannedName: scanParams.username,
-            tagexpireAt: addDays(30),
-            barcode: scanParams.barcode,
-          };
-
+          this.logger.error({ error: 'tag error', params: scanParams });
           if (data && scanParams) {
+            const olddir = __dirname.split('/');
+            olddir.splice(olddir.length - 3, 3);
+            const dir = `${olddir.join('/')}/src/scrapper`;
+
+            if (!fs.existsSync(`${dir}`)) {
+              fs.mkdirSync(`${dir}`);
+            }
+
+            if (!fs.existsSync(`${dir}/images`)) {
+              fs.mkdirSync(`${dir}/images`);
+            }
+
+            const lastScannedItem = await this.prismaService.scans.findMany({
+              orderBy: { id: 'desc' },
+              take: 1,
+            });
+            const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
+            const ScanData = {
+              ScanId: uuid(),
+              tag: scanParams.tag,
+              auctionId: scanParams.auctionId,
+              locid: scanParams.locid,
+              scannedBy: scanParams.userid,
+              scannedName: scanParams.username,
+              tagexpireAt: addDays(30),
+              barcode: scanParams.barcode,
+            };
+
             const lastProduct = await this.prismaService.products.findMany({
               orderBy: { id: 'desc' },
               take: 1,
@@ -183,9 +185,10 @@ export class TasksService {
           });
         }
       } catch (error) {
+        createExceptionFile('Exception Caugth: ' + String(error));
         this.logger.debug({
           module: 'Queue',
-          message: `Facing issue ie: ${error?.message || error}`,
+          message: `Facing issue ie: ${error}`,
         });
       }
     }

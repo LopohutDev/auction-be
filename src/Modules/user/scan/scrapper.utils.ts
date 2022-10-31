@@ -1,9 +1,10 @@
-import { AMZENV, SCANENV, WALLENV } from 'src/constants/common.constants';
+import { AMZENV, WALLENV } from 'src/constants/common.constants';
 import {
   scanItemParamsDto,
   scrapperReturnDataDto,
 } from 'src/dto/user.scan.module.dto';
 import { uuid } from 'src/utils/uuid.utils';
+import { createExceptionFile } from './exceptionhandling.utils';
 
 export const getScrapperData = async (
   data: any,
@@ -56,6 +57,8 @@ export const getScrapperData = async (
           manufacturer: 'Walmart',
         };
         return { data: sendedData, scanParams: scaninfo };
+      } else {
+        return { error: { status: 404, message: 'Walmart Data not found' } };
       }
     } else if (AmazonProduct) {
       const { data: amazondata } = await get(
@@ -81,14 +84,21 @@ export const getScrapperData = async (
           manufacturer: 'Amazon',
         };
         return { data: sendedData, scanParams: scaninfo };
+      } else {
+        return { error: { status: 404, message: 'Amazon data not found' } };
       }
     }
+    createExceptionFile(
+      'Some Exception occur for data: ' +
+        JSON.stringify({ scan: scaninfo, data }),
+    );
     return { error: { status: 404, message: 'Something went wrong' } };
   } catch (err) {
     console.log('err', err);
     if (err?.response?.status === 404) {
       return { error: { status: 404, message: 'Something went wrong' } };
     }
+    createExceptionFile('Unhandled Exception for barcode' + scaninfo.barcode);
     return { error: { status: 500, message: 'Some error occured' } };
   }
 };
