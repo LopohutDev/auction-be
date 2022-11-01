@@ -193,7 +193,7 @@ export class ScanReportsService {
         existingFileNameArr &&
         parseInt(existingFileNameArr[existingFileNameArr.length - 1]);
 
-      const currFormatDate = `${formatDate(new Date(AuctionData.startDate))}_${
+      const currFormatDate = `${formatDate(new Date(AuctionData.endDate))}_${
         formatDate(new Date(lastZip?.createdAt || undefined)) ===
           formatDate(new Date()) && lastNumber
           ? lastZip && !lastZip.isNewUploaded
