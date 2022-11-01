@@ -5,6 +5,7 @@ import { SCANENV } from 'src/constants/common.constants';
 import { ScanQueryDto } from 'src/dto/user.scan.module.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { addDays } from 'src/utils/common.utils';
+import { formatDate } from 'src/utils/formatDate.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import { validateUserScan } from 'src/validations/user.scans.validations';
 import { getScrapperData } from './scrapper.utils';
@@ -39,6 +40,20 @@ export class ScanService {
 
     if (!isAuctionExists) {
       return { error: { status: 404, message: 'Invalid auction' } };
+    }
+
+    if (
+      new Date(isAuctionExists.startDate).valueOf() > new Date().valueOf() &&
+      !isAuctionExists.startNumber
+    ) {
+      return {
+        error: {
+          status: 500,
+          message: `Auction will start at ${formatDate(
+            new Date(isAuctionExists.startDate),
+          )}`,
+        },
+      };
     }
 
     if (new Date(isAuctionExists.endDate).valueOf() < new Date().valueOf()) {
@@ -190,6 +205,20 @@ export class ScanService {
       });
       if (!isAuctionExists) {
         return { error: { status: 404, message: 'Invalid auction' } };
+      }
+
+      if (
+        new Date(isAuctionExists.startDate).valueOf() > new Date().valueOf() &&
+        !isAuctionExists.startNumber
+      ) {
+        return {
+          error: {
+            status: 500,
+            message: `Auction will start at ${formatDate(
+              new Date(isAuctionExists.startDate),
+            )}`,
+          },
+        };
       }
 
       if (new Date(isAuctionExists.endDate).valueOf() < new Date().valueOf()) {
