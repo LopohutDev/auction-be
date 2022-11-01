@@ -260,7 +260,7 @@ export class TasksService {
 
     if (allLocations) {
       allLocations.map((row) => {
-        for (let i = 1, j = 0; i <= futureMonthLast.getDate() + d; i++) {
+        for (let i = 1, j = 0; i < futureMonthLast.getDate() + d; i++) {
           const { newArr, n, m } = setAuction(i, j, row, currDate);
           i = n;
           j = m;
