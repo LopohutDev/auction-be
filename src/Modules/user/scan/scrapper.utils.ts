@@ -58,7 +58,10 @@ export const getScrapperData = async (
         };
         return { data: sendedData, scanParams: scaninfo };
       } else {
-        return { error: { status: 404, message: 'Walmart Data not found' } };
+        return {
+          scanParams: scaninfo,
+          error: { status: 404, message: 'Walmart Data not found' },
+        };
       }
     } else if (AmazonProduct) {
       const { data: amazondata } = await get(
@@ -85,21 +88,33 @@ export const getScrapperData = async (
         };
         return { data: sendedData, scanParams: scaninfo };
       } else {
-        return { error: { status: 404, message: 'Amazon data not found' } };
+        return {
+          scanParams: scaninfo,
+          error: { status: 404, message: 'Amazon data not found' },
+        };
       }
     }
     createExceptionFile(
       'Some Exception occur for data: ' +
         JSON.stringify({ scan: scaninfo, data }),
     );
-    return { error: { status: 404, message: 'Something went wrong' } };
+    return {
+      scanParams: scaninfo,
+      error: { status: 404, message: 'Something went wrong' },
+    };
   } catch (err) {
     console.log('err', err);
     if (err?.response?.status === 404) {
-      return { error: { status: 404, message: 'Something went wrong' } };
+      return {
+        scanParams: scaninfo,
+        error: { status: 404, message: 'Something went wrong' },
+      };
     }
     createExceptionFile('Unhandled Exception for barcode' + scaninfo.barcode);
-    return { error: { status: 500, message: 'Some error occured' } };
+    return {
+      scanParams: scaninfo,
+      error: { status: 500, message: 'Some error occured' },
+    };
   }
 };
 
