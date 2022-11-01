@@ -193,7 +193,7 @@ export class ScanReportsService {
         existingFileNameArr &&
         parseInt(existingFileNameArr[existingFileNameArr.length - 1]);
 
-      const currFormatDate = `${formatDate(new Date())}_${
+      const currFormatDate = `${formatDate(new Date(AuctionData.endDate))}_${
         formatDate(new Date(lastZip?.createdAt || undefined)) ===
           formatDate(new Date()) && lastNumber
           ? lastZip && !lastZip.isNewUploaded
@@ -204,7 +204,9 @@ export class ScanReportsService {
 
       const olddir = __dirname.split('/');
       olddir.splice(olddir.length - 4, 4);
-      const dir = `${olddir.join('/')}/src/scrapper`;
+      const id =
+        AuctionData.id.substring(0, 5) + AuctionData.startDate.getTime();
+      const dir = `${olddir.join('/')}/src/scrapper/${id}`;
 
       if (!fs.existsSync(`${dir}`)) {
         fs.mkdirSync(`${dir}`);
@@ -215,10 +217,6 @@ export class ScanReportsService {
       }
 
       //Created csv File
-      fs.writeFileSync(
-        `${dir}/${currFormatDate}/${currFormatDate}.csv`,
-        CSV_FINAL,
-      );
 
       const scanProducts = scannedData.map((scan) => {
         return {
@@ -237,6 +235,14 @@ export class ScanReportsService {
         fs.mkdirSync(`${dir}/images`);
       }
 
+      if (lastZip && !lastZip.isNewUploaded) {
+        const files = await fs.readdirSync(`${dir}/${currFormatDate}`);
+
+        files.forEach((file) =>
+          fs.unlinkSync(`${dir}/${currFormatDate}/${file}`),
+        );
+      }
+
       const products: Products[] = [];
       scanProducts.forEach((l) => {
         products.push(l.products[0]);
@@ -247,6 +253,10 @@ export class ScanReportsService {
         });
       });
 
+      fs.writeFileSync(
+        `${dir}/${currFormatDate}/${currFormatDate}.csv`,
+        CSV_FINAL,
+      );
       zip.addLocalFolder(`${dir}/${currFormatDate}`);
       zip.writeZip(output);
       // Log Successful Creation of Zip File
