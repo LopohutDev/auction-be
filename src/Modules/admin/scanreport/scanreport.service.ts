@@ -275,6 +275,7 @@ export class ScanReportsService {
             locid: location,
           },
         },
+        scannedBy: user,
       };
 
       if (lastZip && !lastZip.isNewUploaded) {
