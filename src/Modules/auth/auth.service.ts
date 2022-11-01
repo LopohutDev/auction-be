@@ -141,7 +141,7 @@ export class AuthService {
         return {
           error: {
             status: 401,
-            message: "You can's access . please ask your admin",
+            message: 'Invalid login. Please contact admin.',
           },
         };
       } else if (user.isAdmin && isUserExists.role !== Roles.ADMIN) {
