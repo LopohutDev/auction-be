@@ -11,14 +11,14 @@ const writeFile = (path: string, content: string): void => {
 export const createExceptionFile = (content: string): void => {
   const olddir = __dirname.split('/');
   olddir.splice(olddir.length - 4, 4);
-  const dir = `${olddir.join('/')}/src/logs`;
+  const dir = `${olddir.join('/')}/src/logs/`;
   if (!existsSync(dir)) {
     mkdir(dir, (err) => {
       if (err) {
         console.log('Error in creation', err);
       } else {
         writeFile(
-          dir + '/' + new Date(new Date().setHours(0, 0, 0, 0)).toISOString(),
+          dir + new Date(new Date().setHours(0, 0, 0, 0)).toISOString(),
           content,
         );
       }
@@ -31,13 +31,12 @@ export const createExceptionFile = (content: string): void => {
         if (files.length) {
           files.forEach((file) => {
             if (new Date(file) > new Date(new Date().setHours(0, 0, 0, 0))) {
-              unlink(dir + `/{file}`, (err) => {
+              unlink(dir + `${file}`, (err) => {
                 if (err) {
                   console.log('Error in removing file', err);
                 } else {
                   writeFile(
                     dir +
-                      '/' +
                       new Date(new Date().setHours(0, 0, 0, 0)).toISOString(),
                     content,
                   );
@@ -46,11 +45,11 @@ export const createExceptionFile = (content: string): void => {
             } else if (
               new Date(file) === new Date(new Date().setHours(0, 0, 0, 0))
             ) {
-              writeFile(dir + '/' + file, content);
+              writeFile(dir + file, content);
             }
           });
         } else {
-          writeFile(dir + '/' + files, content);
+          writeFile(dir + files, content);
         }
       }
     });

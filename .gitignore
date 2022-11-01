@@ -3,10 +3,7 @@
 /node_modules
 
 # Scrapper
-/src/scrapper
-/src/scrapper/images
-/src/scrapper/zipFiles
-/src/scrapper/*
+scrapper
 
 # Logs
 logs
