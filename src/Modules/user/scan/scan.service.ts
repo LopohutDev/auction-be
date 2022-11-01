@@ -42,7 +42,10 @@ export class ScanService {
       return { error: { status: 404, message: 'Invalid auction' } };
     }
 
-    if (new Date(isAuctionExists.startDate).valueOf() > new Date().valueOf()) {
+    if (
+      new Date(isAuctionExists.startDate).valueOf() > new Date().valueOf() &&
+      !isAuctionExists.startNumber
+    ) {
       return {
         error: {
           status: 500,
@@ -204,7 +207,8 @@ export class ScanService {
       }
 
       if (
-        new Date(isAuctionExists.startDate).valueOf() > new Date().valueOf()
+        new Date(isAuctionExists.startDate).valueOf() > new Date().valueOf() &&
+        !isAuctionExists.startNumber
       ) {
         return {
           error: {
