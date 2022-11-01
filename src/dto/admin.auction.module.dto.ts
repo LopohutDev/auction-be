@@ -12,7 +12,7 @@ export type getAuctionQueryDto = {
 };
 
 export type getRecoverQueryDto = {
-  id: string;
+  auction: string;
 };
 
 export enum auctionStatusDto {

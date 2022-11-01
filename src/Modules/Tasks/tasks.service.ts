@@ -6,9 +6,12 @@ import { Jobs } from 'src/Cache/Jobs';
 import { PrismaService } from 'src/Services/prisma.service';
 import { Jwt } from 'src/tokens/Jwt';
 import { addDays } from 'src/utils/common.utils';
+import { formatDate } from 'src/utils/formatDate.utils';
 import { Download } from 'src/utils/imageDownload.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import setAuction from '../admin/auction /auction.utils';
+import { ScanReportsService } from '../admin/scanreport/scanreport.service';
+import { createExceptionFile } from '../user/scan/exceptionhandling.utils';
 import { getLotNo } from '../user/scan/scrapper.utils';
 
 @Injectable()
@@ -72,53 +75,61 @@ export class TasksService {
       try {
         for await (const que of Jobs.queue) {
           const { data, scanParams, error } = await que.func();
-          const olddir = __dirname.split('/');
-          olddir.splice(olddir.length - 2, 2);
-          const dir = `${olddir.join('/')}/scrapper`;
-
-          if (!fs.existsSync(`${dir}`)) {
-            fs.mkdirSync(`${dir}`);
-          }
-
-          if (!fs.existsSync(`${dir}/images`)) {
-            fs.mkdirSync(`${dir}/images`);
-          }
-
-          const lastScannedItem = await this.prismaService.scans.findMany({
-            orderBy: { id: 'desc' },
-            take: 1,
-          });
-          const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
-          const ScanData = {
-            ScanId: uuid(),
-            tag: scanParams.tag,
-            auctionId: scanParams.auctionId,
-            locid: scanParams.locid,
-            scannedBy: scanParams.userid,
-            scannedName: scanParams.username,
-            tagexpireAt: addDays(30),
-            barcode: scanParams.barcode,
-          };
+          this.logger.error({ error: 'tag error', params: scanParams });
           if (data && scanParams) {
+            const olddir = __dirname.split('/');
+            olddir.splice(olddir.length - 3, 3);
+            const dir = `${olddir.join('/')}/src/scrapper`;
+
+            if (!fs.existsSync(`${dir}`)) {
+              fs.mkdirSync(`${dir}`);
+            }
+
+            if (!fs.existsSync(`${dir}/images`)) {
+              fs.mkdirSync(`${dir}/images`);
+            }
+
+            const lastScannedItem = await this.prismaService.scans.findMany({
+              orderBy: { id: 'desc' },
+              take: 1,
+            });
+            const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
+            const ScanData = {
+              ScanId: uuid(),
+              tag: scanParams.tag,
+              auctionId: scanParams.auctionId,
+              locid: scanParams.locid,
+              scannedBy: scanParams.userid,
+              scannedName: scanParams.username,
+              tagexpireAt: addDays(30),
+              barcode: scanParams.barcode,
+            };
+
             const lastProduct = await this.prismaService.products.findMany({
               orderBy: { id: 'desc' },
               take: 1,
             });
+            const generatedLotNo = lastScannedItem.length
+              ? getLotNo(
+                  lastProduct[0]?.lotNo,
+                  lastScannedItem[0].auctionId !== scanParams.auctionId,
+                )
+              : '20D';
+
+            let lastGeneratedNo = 0;
+
             const imagesPath = data.images.map((img) => {
+              lastGeneratedNo = lastGeneratedNo > 0 ? lastGeneratedNo + 1 : 1;
               const imgFile = Download(
                 img.link,
-                `${dir}/images/${img.id}.jpeg`,
+                `${dir}/images/${generatedLotNo}_${lastGeneratedNo}.jpeg`,
               );
               return imgFile;
             });
+
             const productData = {
               barcode: scanParams.barcode,
-              lotNo: lastScannedItem.length
-                ? getLotNo(
-                    lastProduct[0]?.lotNo,
-                    lastScannedItem[0].auctionId !== scanParams.auctionId,
-                  )
-                : '20D',
+              lotNo: generatedLotNo,
               startingBid: Number(data.price) * 0.5,
               title: scanParams.areaname + lastScannedIndex + data.title,
               images: imagesPath,
@@ -138,6 +149,7 @@ export class TasksService {
               },
               data: {
                 successScanId: ScanData.ScanId,
+                updatedAt: new Date(),
               },
             });
           } else if (error) {
@@ -164,6 +176,7 @@ export class TasksService {
               },
               data: {
                 failedScanId: failedScanData.failedScanId,
+                updatedAt: new Date(),
               },
             });
           }
@@ -174,13 +187,36 @@ export class TasksService {
           });
         }
       } catch (error) {
+        createExceptionFile('Exception Caugth: ' + String(error));
         this.logger.debug({
           module: 'Queue',
-          message: `Facing issue ie: ${error?.message || error}`,
+          message: `Facing issue ie: ${error}`,
         });
       }
     }
   }
+
+  @Cron(CronExpression.EVERY_DAY_AT_7PM)
+  async handleZipGeneration() {
+    const scanReport = new ScanReportsService(this.prismaService);
+    const scans = await this.prismaService.scans.findMany({
+      select: {
+        auctionId: true,
+        locid: true,
+        createdAt: true,
+      },
+    });
+
+    scans.map((scan) => {
+      if (formatDate(scan.createdAt) === formatDate(new Date())) {
+        return scanReport.exportScrapperScans({
+          auction: scan.auctionId,
+          location: scan.locid,
+        });
+      }
+    });
+  }
+
   @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
   async addFutureAuction() {
     let arr = [];
@@ -197,31 +233,24 @@ export class TasksService {
       case 1:
         d = 0;
         break;
-
       case 2:
         d = 2;
         break;
-
       case 3:
         d = 1;
         break;
-
       case 4:
         d = 0;
         break;
-
       case 5:
         d = 3;
         break;
-
       case 6:
         d = 2;
         break;
-
       case 0:
         d = 1;
         break;
-
       default:
         null;
         break;
@@ -231,7 +260,7 @@ export class TasksService {
 
     if (allLocations) {
       allLocations.map((row) => {
-        for (let i = 1, j = 0; i <= futureMonthLast.getDate() + d; i++) {
+        for (let i = 1, j = 0; i < futureMonthLast.getDate() + d; i++) {
           const { newArr, n, m } = setAuction(i, j, row, currDate);
           i = n;
           j = m;

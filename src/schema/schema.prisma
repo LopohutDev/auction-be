@@ -86,6 +86,7 @@ model Products {
   manufacturer    String
   consignor       Int?
   scans           Scans       @relation(fields: [ScanId], references: [ScanId])
+  scrapperZip     ScraperZip[]
   ScanId          String
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @default(now())
@@ -135,6 +136,8 @@ model ScraperZip {
   locations           Location              @relation(fields:[locid], references: [locid])
   locid               String                
   filePath            String
+  products            Products[]
+  scannedBy           String
   lastcsvgenerated    DateTime              @default(now())
   isNewUploaded       Boolean               @default(false)
   createdAt           DateTime              @default(now())
@@ -186,6 +189,7 @@ model FailedScans {
 model Tags{
   id              Int                   @id @default(autoincrement())
   tag             String
+  barcode         String?
   successScan     Scans?                @relation(fields:[successScanId], references: [ScanId])
   successScanId   String?               @unique
   failedScan      FailedScans?          @relation(fields:[failedScanId], references: [failedScanId])
@@ -194,4 +198,6 @@ model Tags{
   auctionId       String  
   auctionStartNo  Int?
   tagexpireAt     DateTime
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @default(now())
 }
