@@ -75,7 +75,6 @@ export class TasksService {
       try {
         for await (const que of Jobs.queue) {
           const { data, scanParams, error } = await que.func();
-          this.logger.error({ error: 'tag error', params: scanParams });
           if (data && scanParams) {
             const olddir = __dirname.split('/');
             olddir.splice(olddir.length - 3, 3);
