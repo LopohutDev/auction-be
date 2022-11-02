@@ -53,50 +53,92 @@ export class ReportsService {
           firstDay = new Date(date.setDate(date.getDate() - date.getDay()));
           break;
         case 'today':
-          firstDay = date;
-          lastDay = date;
+          firstDay = new Date(date.setDate(date.getDate() - 1));
+          lastDay = new Date(date.setDate(date.getDate() + 1));
           break;
         default:
           break;
       }
-      const data = await this.prismaService.location.findFirst({
-        where: {
-          locid: { equals: location },
-        },
-        select: {
-          assigneduser: {
-            select: {
-              firstname: true,
-              lastname: true,
-              email: true,
-              _count: { select: { scanProducts: true, failedScans: true } },
-            },
-            where: {
-              createdAt: {
-                gte: firstDay,
-                lte: lastDay,
-              },
-              account: { equals: AccountEnum.ACCEPTED },
-            },
+      let data;
+      if (range == 'today') {
+        data = await this.prismaService.location.findFirst({
+          where: {
+            locid: { equals: location },
           },
-          Scanned: {
-            where: {
-              createdAt: {
-                gte: firstDay,
-                lte: lastDay,
+          select: {
+            assigneduser: {
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true,
+                _count: { select: { scanProducts: true, failedScans: true } },
+              },
+              where: {
+                createdAt: {
+                  gt: firstDay,
+                  lt: lastDay,
+                },
+                account: { equals: AccountEnum.ACCEPTED },
               },
             },
-          },
-          failedScans: {
-            where: {
-              createdAt: {
-                gte: firstDay,
-                lte: lastDay,
+            Scanned: {
+              where: {
+                createdAt: {
+                  gt: firstDay,
+                  lt: lastDay,
+                },
+              },
+            },
+            failedScans: {
+              where: {
+                createdAt: {
+                  gt: firstDay,
+                  lt: lastDay,
+                },
               },
             },
           },
-        },
-      });
+        });
+      } else {
+        data = await this.prismaService.location.findFirst({
+          where: {
+            locid: { equals: location },
+          },
+          select: {
+            assigneduser: {
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true,
+                _count: { select: { scanProducts: true, failedScans: true } },
+              },
+              where: {
+                createdAt: {
+                  gte: firstDay,
+                  lte: lastDay,
+                },
+                account: { equals: AccountEnum.ACCEPTED },
+              },
+            },
+            Scanned: {
+              where: {
+                createdAt: {
+                  gte: firstDay,
+                  lte: lastDay,
+                },
+              },
+            },
+            failedScans: {
+              where: {
+                createdAt: {
+                  gte: firstDay,
+                  lte: lastDay,
+                },
+              },
+            },
+          },
+        });
+      }
       const allData = await this.prismaService.location.findFirst({
         where: {
           locid: { equals: location },
