@@ -15,7 +15,10 @@ import { paginationDto } from 'src/dto/common.dto';
 import { paginationHelperForAllData } from '../utils';
 import * as AdmZip from 'adm-zip';
 import { addDays, subDays } from 'src/utils/common.utils';
-import { locationScansDto } from 'src/dto/user.scan.module.dto';
+import {
+  locationScansDallasDto,
+  locationScansDto,
+} from 'src/dto/user.scan.module.dto';
 import { Products } from '@prisma/client';
 
 @Injectable()
@@ -149,21 +152,12 @@ export class ScanReportsService {
       }
       const username = [];
       const formattedData: locationScansDto[] = [];
+      const formattedDataDalas: locationScansDallasDto[] = [];
+      let json2csv;
+      let CSV_FINAL;
       scannedData.forEach((scan) => {
         username.push(scan.scannedName);
-        if (
-          scan.locations.city === LOCATION.HOUSTON ||
-          scan.locations.city === LOCATION.DALLAS
-        ) {
-          formattedData.push({
-            lotNo: scan.products[0].lotNo,
-            Quantity: scan.products[0].quantity,
-            Title: `${scan.tags[0].tag} + ${scan.products[0].title}`,
-            Description: scan.products[0].description,
-            Consignor: scan.products[0].consignor,
-            StartBidEach: scan.products[0].startingBid,
-          });
-        } else {
+        if (scan.locations.city.toLowerCase() === LOCATION.SACRAMENTO) {
           formattedData.push({
             lotNo: scan.products[0].lotNo,
             Title: `${scan.tags[0].tag} + ${scan.products[0].title}`,
@@ -174,6 +168,23 @@ export class ScanReportsService {
             NewLot: '',
             Description: scan.products[0].description,
           });
+          json2csv = new Parser({
+            fields: Object.keys(formattedData[0]),
+          });
+          CSV_FINAL = json2csv.parse(formattedData);
+        } else {
+          formattedDataDalas.push({
+            LotNo: scan.products[0].lotNo,
+            Quantity: scan.products[0].quantity,
+            Title: `${scan.tags[0].tag} + ${scan.products[0].title}`,
+            Description1: scan.products[0].description,
+            Consignor: scan.products[0].consignor,
+            StartBidEach: scan.products[0].startingBid,
+          });
+          json2csv = new Parser({
+            fields: Object.keys(formattedDataDalas[0]),
+          });
+          CSV_FINAL = json2csv.parse(formattedDataDalas);
         }
       });
       const unique = username.filter((item, i, ar) => ar.indexOf(item) === i);
@@ -187,8 +198,8 @@ export class ScanReportsService {
 
       // Creation of CSV
       const zip = new AdmZip();
-      const json2csv = new Parser({ fields: Object.keys(formattedData[0]) });
-      const CSV_FINAL = json2csv.parse(formattedData);
+      // const json2csv = new Parser({ fields: Object.keys(formattedData[0]) });
+      // const CSV_FINAL = json2csv.parse(formattedData);
       const lastNumber =
         existingFileNameArr &&
         parseInt(existingFileNameArr[existingFileNameArr.length - 1]);
