@@ -24,34 +24,17 @@ export class UserAuctionService {
         return { error: { status: 422, message: 'Location not found' } };
       }
       if (!isAdmin) {
-        const auctionData = await this.prismaService.location.findMany({
+        const auctiondata = await this.prismaService.auction.findMany({
           where: {
-            locid: location,
-          },
-          select: {
-            Auction: {
-              select: {
-                id: true,
-                auctionType: true,
-                scannedItem: true,
-                startDate: true,
-                startTime: true,
-                endDate: true,
-                endTime: true,
-                startNumber: true,
-                isRecover: true,
-              },
+            startDate: {
+              gte: subDays(3),
             },
+            startNumber: { gte: 0 },
+            locid: location,
           },
         });
 
-        const data = auctionData[0]?.Auction.filter(
-          (row) => row.startNumber && row.scannedItem?.length === 0 && row,
-        );
-
-        // const data = setArrayLowercaseKeys(currData);
-
-        return { success: true, data };
+        return { success: true, data: auctiondata };
       }
       const auctiondata = await this.prismaService.auction.findMany({
         where: {
