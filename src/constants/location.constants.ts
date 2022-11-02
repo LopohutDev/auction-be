@@ -1,4 +1,5 @@
 export const LOCATION = {
-  HOUSTON: 'Houston',
-  DALLAS: 'Dallas',
+  HOUSTON: 'houston',
+  DALLAS: 'dallas',
+  SACRAMENTO: 'sacramento',
 };
