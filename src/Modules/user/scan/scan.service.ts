@@ -41,7 +41,14 @@ export class ScanService {
     if (!isAuctionExists) {
       return { error: { status: 404, message: 'Invalid auction' } };
     }
-
+    if (!isAuctionExists.startNumber) {
+      return {
+        error: {
+          status: 500,
+          message: 'Please add start number or ask to admin',
+        },
+      };
+    }
     if (
       new Date(isAuctionExists.startDate).valueOf() > new Date().valueOf() &&
       !isAuctionExists.startNumber
@@ -76,75 +83,64 @@ export class ScanService {
         params: values,
       });
       if (data) {
-        const fetchStartNo = await this.prismaService.auction.findUnique({
-          where: { id: item.auction },
-          select: {
-            startNumber: true,
-          },
-        });
-        let startNumber = fetchStartNo.startNumber;
-        let tag = item.areaname + fetchStartNo.startNumber + item.itemtype;
-        const checkTag = await this.prismaService.tags.findFirst({
+        let startNumber = isAuctionExists.startNumber;
+        let tag;
+        let num;
+        const checkTag = await this.prismaService.tags.findMany({
           where: {
-            tag: tag,
+            auctionId: item.auction,
             tagexpireAt: {
               gte: new Date(),
             },
           },
-          select: { tag: true, auctionStartNo: true },
+          orderBy: { id: 'desc' },
+          take: 1,
+          select: {
+            auctionStartNo: true,
+          },
         });
-        if (checkTag) {
-          const fetchAuctionSNo = await this.prismaService.tags.findMany({
+        if (checkTag.length >= 1) {
+          startNumber = checkTag[0].auctionStartNo + 1;
+          tag = item.areaname + startNumber + item.itemtype;
+          const fetchAuctionSNo = await this.prismaService.tags.findFirst({
             where: {
-              auctionId: item.auction,
+              tag: tag,
               tagexpireAt: {
                 gte: new Date(),
               },
-            },
-            orderBy: { id: 'desc' },
-            take: 1,
-            select: {
-              auctionStartNo: true,
+              auctionStartNo: startNumber,
+              locid: isAuctionExists.locid,
             },
           });
           if (fetchAuctionSNo) {
-            const checkTagAgian = await this.prismaService.tags.findFirst({
+            const fetchSNo = await this.prismaService.tags.findMany({
               where: {
-                tag: tag,
                 tagexpireAt: {
                   gte: new Date(),
                 },
+                locid: isAuctionExists.locid,
               },
-              select: { tag: true, auctionStartNo: true },
+              orderBy: { auctionStartNo: 'desc' },
+              take: 1,
+              select: {
+                auctionStartNo: true,
+              },
             });
-            if (checkTagAgian) {
-              const fetchSNo = await this.prismaService.tags.findMany({
-                where: {
-                  tagexpireAt: {
-                    gte: new Date(),
-                  },
-                },
-                orderBy: { id: 'desc' },
-                take: 1,
-                select: {
-                  auctionStartNo: true,
-                },
-              });
-              const num = fetchSNo[0].auctionStartNo + 1;
-              tag = item.areaname + num + item.itemtype;
-              startNumber = num;
-            } else {
-              const num = fetchAuctionSNo[0].auctionStartNo + 1;
-              tag = item.areaname + num + item.itemtype;
-              startNumber = num;
-            }
+            this.logger.log('log 3', JSON.stringify(fetchSNo));
+            num = fetchSNo[0].auctionStartNo + 1;
+            tag = item.areaname + num + item.itemtype;
+            startNumber = num;
           }
+        } else {
+          startNumber = isAuctionExists.startNumber;
+          tag = item.areaname + startNumber + item.itemtype;
         }
         await this.prismaService.tags.create({
           data: {
             tag: tag,
             barcode: item.barcode,
             auctionId: item.auction,
+            locid: isAuctionExists.locid,
             tagexpireAt: addDays(30),
             auctionStartNo: startNumber,
           },
@@ -180,6 +176,7 @@ export class ScanService {
       if (err?.response?.status === 404) {
         return { error: { status: 404, message: 'Something went wrong' } };
       }
+      this.logger.log(err);
       return { error: { status: 500, message: 'Some error occured' } };
     }
   }

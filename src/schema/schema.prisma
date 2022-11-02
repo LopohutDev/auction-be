@@ -197,6 +197,7 @@ model Tags{
   auction         Auction              @relation(fields:[auctionId], references: [id])
   auctionId       String  
   auctionStartNo  Int?
+  locid           String?
   tagexpireAt     DateTime
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @default(now())
