@@ -62,3 +62,11 @@ export interface locationScansDto {
   Consignor?: number;
   StartBidEach?: number;
 }
+export interface locationScansDallasDto {
+  LotNo: string;
+  Title: string;
+  Description1: string;
+  Quantity?: number;
+  Consignor?: number;
+  StartBidEach?: number;
+}

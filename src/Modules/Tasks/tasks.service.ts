@@ -129,7 +129,7 @@ export class TasksService {
             const productData = {
               barcode: scanParams.barcode,
               lotNo: generatedLotNo,
-              startingBid: Number(data.price) * 0.5,
+              startingBid: Number(data.price) * 0.05,
               title: scanParams.areaname + lastScannedIndex + data.title,
               images: imagesPath,
               description: data.description,
