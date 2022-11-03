@@ -153,9 +153,7 @@ model Auction {
   locid         String
   tags          Tags[]
   startDate     DateTime
-  startTime     DateTime
   endDate       DateTime
-  endTime       DateTime
   startNumber   Int?
   isRecover     DateTime? 
   srappers      ScraperZip[]

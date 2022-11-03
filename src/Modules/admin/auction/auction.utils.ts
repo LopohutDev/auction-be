@@ -112,18 +112,11 @@ const setAuction = (i: number, j: number, row: rowDto, currDate: Date) => {
 
     newArr = {
       auctionType: 'Auction1',
-      startDate: futureDate.toISOString(),
-      startTime: new Date(futureDate.setHours(8, 0, 0)).toISOString(),
+      startDate: new Date(futureDate.setHours(8, 0, 0)),
+
       endDate: blackFriday
-        ? new Date(addDays(3, futureDate)).toISOString()
-        : new Date(addDays(2, futureDate)).toISOString(),
-      endTime: blackFriday
-        ? new Date(
-            new Date(addDays(3, futureDate)).setHours(19, 0, 0),
-          ).toISOString()
-        : new Date(
-            new Date(addDays(2, futureDate)).setHours(19, 0, 0),
-          ).toISOString(),
+        ? new Date(new Date(addDays(3, futureDate)).setHours(19, 0, 0))
+        : new Date(new Date(addDays(2, futureDate)).setHours(19, 0, 0)),
       locid: row.locid,
     };
   }
@@ -137,12 +130,10 @@ const setAuction = (i: number, j: number, row: rowDto, currDate: Date) => {
     n = n + 3;
     newArr = {
       auctionType: 'Auction2',
-      startDate: futureDate.toISOString(),
-      startTime: new Date(futureDate.setHours(8, 0, 0)).toISOString(),
-      endDate: new Date(addDays(3, futureDate)).toISOString(),
-      endTime: new Date(
-        new Date(addDays(3, futureDate)).setHours(19, 0, 0),
-      ).toISOString(),
+      startDate: new Date(futureDate.setHours(8, 0, 0)),
+
+      endDate: new Date(new Date(addDays(3, futureDate)).setHours(19, 0, 0)),
+
       locid: row.locid,
     };
   }

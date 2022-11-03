@@ -72,7 +72,7 @@ export class InitialAuctionCreation {
           arr = [...arr, newArr];
         }
       });
-
+      this.logger.log('data-------->>>>', JSON.stringify(arr));
       await this.prismaService.auction.createMany({
         data: arr,
       });
