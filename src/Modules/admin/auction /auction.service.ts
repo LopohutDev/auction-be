@@ -21,7 +21,41 @@ export class AuctionService {
       if (error) return { error };
 
       const { id, endDate, endTime, startNumber } = data;
-
+      const location = await this.prismaService.auction.findUnique({
+        where: {
+          id,
+        },
+        select: {
+          locations: {
+            select: {
+              locid: true,
+            },
+          },
+        },
+      });
+      const auctionTags = await this.prismaService.auction.findMany({
+        where: {
+          startNumber: startNumber,
+          locid: location.locations.locid,
+        },
+      });
+      const tags = await this.prismaService.tags.findMany({
+        where: {
+          auctionStartNo: startNumber,
+          locid: location.locations.locid,
+          tagexpireAt: {
+            gt: new Date(),
+          },
+        },
+      });
+      if (auctionTags.length > 0 || tags.length > 0) {
+        return {
+          error: {
+            status: 500,
+            message: `Starting Number is already used on another auction: ${startNumber}`,
+          },
+        };
+      }
       await this.prismaService.auction.update({
         where: {
           id,
