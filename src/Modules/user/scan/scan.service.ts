@@ -99,12 +99,11 @@ export class ScanService {
             auctionStartNo: true,
           },
         });
-        if (checkTag.length >= 1) {
+        if (checkTag.length > 0) {
           startNumber = checkTag[0].auctionStartNo + 1;
           tag = item.areaname + startNumber + item.itemtype;
           const fetchAuctionSNo = await this.prismaService.tags.findFirst({
             where: {
-              tag: tag,
               tagexpireAt: {
                 gte: new Date(),
               },
@@ -126,7 +125,6 @@ export class ScanService {
                 auctionStartNo: true,
               },
             });
-            this.logger.log('log 3', JSON.stringify(fetchSNo));
             num = fetchSNo[0].auctionStartNo + 1;
             tag = item.areaname + num + item.itemtype;
             startNumber = num;
