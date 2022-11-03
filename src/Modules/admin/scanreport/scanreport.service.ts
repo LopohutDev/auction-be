@@ -107,11 +107,11 @@ export class ScanReportsService {
         return { error: { status: 409, message: 'Auction is already passed' } };
       }
 
-      if (AuctionData.startDate > new Date()) {
-        return {
-          error: { status: 409, message: 'Auction is not started yet' },
-        };
-      }
+      // if (AuctionData.startDate > new Date()) {
+      //   return {
+      //     error: { status: 409, message: 'Auction is not started yet' },
+      //   };
+      // }
 
       const scrapperZip = await this.prismaService.scraperZip.findMany({
         where: {
