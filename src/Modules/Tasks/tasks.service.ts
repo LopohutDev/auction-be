@@ -200,7 +200,7 @@ export class TasksService {
     const scanReport = new ScanReportsService(this.prismaService);
     const auctiondata = await this.prismaService.auction.findFirst({
       where: {
-        createdAt: { gte: subDays(3), lt: new Date() },
+        startDate: { gte: subDays(3), lt: new Date() },
         startNumber: { gte: 0 },
       },
       rejectOnNotFound: false,
