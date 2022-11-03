@@ -5,7 +5,7 @@ import { BarcodeData } from 'src/Cache/BarCodes';
 import { Jobs } from 'src/Cache/Jobs';
 import { PrismaService } from 'src/Services/prisma.service';
 import { Jwt } from 'src/tokens/Jwt';
-import { addDays } from 'src/utils/common.utils';
+import { addDays, subDays } from 'src/utils/common.utils';
 import { formatDate } from 'src/utils/formatDate.utils';
 import { Download } from 'src/utils/imageDownload.utils';
 import { uuid } from 'src/utils/uuid.utils';
@@ -198,22 +198,21 @@ export class TasksService {
   @Cron(CronExpression.EVERY_DAY_AT_7PM)
   async handleZipGeneration() {
     const scanReport = new ScanReportsService(this.prismaService);
-    const scans = await this.prismaService.scans.findMany({
-      select: {
-        auctionId: true,
-        locid: true,
-        createdAt: true,
+    const auctiondata = await this.prismaService.auction.findFirst({
+      where: {
+        createdAt: { gte: subDays(3), lt: new Date() },
+        startNumber: { gte: 0 },
       },
+      rejectOnNotFound: false,
     });
 
-    scans.map((scan) => {
-      if (formatDate(scan.createdAt) === formatDate(new Date())) {
-        return scanReport.exportScrapperScans({
-          auction: scan.auctionId,
-          location: scan.locid,
-        });
-      }
-    });
+    this.logger.debug({ message: 'HandleZip now' });
+    if (auctiondata) {
+      return scanReport.exportScrapperScans({
+        auction: auctiondata.id,
+        location: auctiondata.locid,
+      });
+    }
   }
 
   @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
