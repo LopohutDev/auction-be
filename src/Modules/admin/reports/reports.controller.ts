@@ -19,8 +19,17 @@ export class ReportsController {
   @UseGuards(AdminGuard)
   @Get()
   async getcurrentReports(@Query() locinfo: getReportsQueryDto) {
-    const { data, error, user, successScan, failedScan, barcode, latestScan } =
-      await this.reportsService.getReports(locinfo);
+    const {
+      data,
+      error,
+      user,
+      successScan,
+      failedScan,
+      barcode,
+      latestScan,
+      userslist,
+      userScan,
+    } = await this.reportsService.getReports(locinfo);
     if (data) {
       return {
         data,
@@ -29,6 +38,8 @@ export class ReportsController {
         failedScan,
         barcode,
         latestScan,
+        userslist,
+        userScan,
         success: true,
       };
     } else {
