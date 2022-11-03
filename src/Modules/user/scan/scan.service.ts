@@ -171,6 +171,7 @@ export class ScanService {
         };
       }
     } catch (err) {
+      this.logger.log(err);
       if (err?.response?.status === 404) {
         return { error: { status: 404, message: 'Something went wrong' } };
       }
@@ -296,6 +297,13 @@ export class ScanService {
           auctionStartNo: startNumber,
         },
       });
+      const lastInsertId = await this.prismaService.tags.findFirst({
+        orderBy: { id: 'desc' },
+        take: 1,
+        select: {
+          id: true,
+        },
+      });
       // const lastScannedIndex = lastScannedItem[0]?.id + 1 || 1;
       const FailedScanData = {
         failedScanId: uuid(),
@@ -308,22 +316,6 @@ export class ScanService {
         barcode: scaninfo.barcode,
       };
       if (!item.barcode) {
-        await this.prismaService.tags.create({
-          data: {
-            tag: tag,
-            auctionId: item.auction,
-            tagexpireAt: addDays(30),
-            auctionStartNo: startNumber,
-            locid: isAuctionExists.locid,
-          },
-        });
-        const lastInsertId = await this.prismaService.tags.findFirst({
-          orderBy: { id: 'desc' },
-          take: 1,
-          select: {
-            id: true,
-          },
-        });
         await this.prismaService.failedScans.create({
           data: {
             ...FailedScanData,
@@ -346,46 +338,30 @@ export class ScanService {
               'The item reported as a failed scan. The tag number is: ' + tag,
           },
         };
+      } else {
+        await this.prismaService.failedScans.create({
+          data: {
+            ...FailedScanData,
+            failedStatus: 'DONE',
+            rejectedReason: 'Some other issue occur',
+          },
+        });
+        await this.prismaService.tags.update({
+          where: {
+            id: lastInsertId.id,
+          },
+          data: {
+            failedScanId: FailedScanData.failedScanId,
+            updatedAt: new Date(),
+          },
+        });
+        return {
+          data: {
+            message:
+              'The item reported as a failed scan. The tag number is: ' + tag,
+          },
+        };
       }
-      await this.prismaService.tags.create({
-        data: {
-          tag: tag,
-          barcode: FailedScanData.barcode,
-          auctionId: item.auction,
-          tagexpireAt: addDays(30),
-          auctionStartNo: startNumber,
-          locid: isAuctionExists.locid,
-        },
-      });
-      const lastInsertId = await this.prismaService.tags.findFirst({
-        orderBy: { id: 'desc' },
-        take: 1,
-        select: {
-          id: true,
-        },
-      });
-      await this.prismaService.failedScans.create({
-        data: {
-          ...FailedScanData,
-          failedStatus: 'DONE',
-          rejectedReason: 'Some other issue occur',
-        },
-      });
-      await this.prismaService.tags.update({
-        where: {
-          id: lastInsertId.id,
-        },
-        data: {
-          failedScanId: FailedScanData.failedScanId,
-          updatedAt: new Date(),
-        },
-      });
-      return {
-        data: {
-          message:
-            'The item reported as a failed scan. The tag number is: ' + tag,
-        },
-      };
     } catch (error) {
       return { error: { status: 500, message: 'Server error' } };
     }
