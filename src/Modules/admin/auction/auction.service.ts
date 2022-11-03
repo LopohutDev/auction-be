@@ -21,6 +21,7 @@ export class AuctionService {
       if (error) return { error };
 
       const { id, endDate, endTime, startNumber } = data;
+
       const location = await this.prismaService.auction.findUnique({
         where: {
           id,
@@ -56,6 +57,7 @@ export class AuctionService {
           },
         };
       }
+
       await this.prismaService.auction.update({
         where: {
           id,
