@@ -56,7 +56,6 @@ export class ReportsService {
           break;
       }
       let data;
-      let userData;
       if (range == 'today') {
         data = await this.prismaService.location.findFirst({
           where: {
@@ -222,6 +221,7 @@ export class ReportsService {
           },
         },
       });
+
       const failedScans = allData.failedScans;
       const Scanned = allData.Scanned;
       const mergdata = [...Scanned, ...failedScans];

@@ -31,7 +31,7 @@ export const getScrapperData = async (
     if (!storedata.length || (!wallmartProduct && !AmazonProduct)) {
       return {
         scanParams: scaninfo,
-        error: { status: 422, message: 'No store found' },
+        error: { status: 422, message: 'The scrapping was not successful.' },
       };
     }
     if (wallmartProduct) {
@@ -45,7 +45,10 @@ export const getScrapperData = async (
         if (!images || !description || !title || !buybox_winner?.price) {
           return {
             scanParams: scaninfo,
-            error: { status: 422, message: 'No item found' },
+            error: {
+              status: 422,
+              message: 'Could not find the product images or description.',
+            },
           };
         }
         const sendedData = {
@@ -60,7 +63,7 @@ export const getScrapperData = async (
       } else {
         return {
           scanParams: scaninfo,
-          error: { status: 404, message: 'Walmart Data not found' },
+          error: { status: 404, message: 'The scrapping was not successful.' },
         };
       }
     } else if (AmazonProduct) {
@@ -90,7 +93,7 @@ export const getScrapperData = async (
       } else {
         return {
           scanParams: scaninfo,
-          error: { status: 404, message: 'Amazon data not found' },
+          error: { status: 404, message: 'The scrapping was not successful.' },
         };
       }
     }
@@ -113,7 +116,7 @@ export const getScrapperData = async (
     createExceptionFile('Unhandled Exception for barcode' + scaninfo.barcode);
     return {
       scanParams: scaninfo,
-      error: { status: 500, message: 'Some error occured' },
+      error: { status: 500, message: 'Something went wrong' },
     };
   }
 };
