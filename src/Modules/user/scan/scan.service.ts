@@ -320,7 +320,7 @@ export class ScanService {
           data: {
             ...FailedScanData,
             failedStatus: 'DONE',
-            rejectedReason: 'The Program could not read barcode',
+            rejectedReason: 'The barcode scanning was not successful.',
           },
         });
         await this.prismaService.tags.update({
@@ -343,7 +343,7 @@ export class ScanService {
           data: {
             ...FailedScanData,
             failedStatus: 'DONE',
-            rejectedReason: 'Some other issue occur',
+            rejectedReason: 'The barcode scanning was not successful.',
           },
         });
         await this.prismaService.tags.update({

@@ -126,6 +126,8 @@ export class ScanReportsService {
           createdAt: 'asc',
         },
       });
+
+     
       const newUploads = scrapperZip.filter((l) => l.isNewUploaded);
       const lastZip = scrapperZip[scrapperZip.length - 1];
 
@@ -135,7 +137,8 @@ export class ScanReportsService {
           : new Date(new Date().setHours(0, 0, 0, 0)),
         lte: new Date(),
       };
-
+     
+    
       const scannedData = await this.prismaService.scans.findMany({
         where: { createdAt: duration, locid: location, auctionId: auction },
         select: {
@@ -147,6 +150,8 @@ export class ScanReportsService {
         orderBy: { createdAt: 'asc' },
       });
 
+    
+
       if (!scannedData.length) {
         return { error: { status: 404, messsage: 'No Scanned Item Found!' } };
       }
@@ -155,38 +160,49 @@ export class ScanReportsService {
       const formattedDataDalas: locationScansDallasDto[] = [];
       let json2csv;
       let CSV_FINAL;
+    //  return {scannedData:scannedData}
+    try{
       scannedData.forEach((scan) => {
         username.push(scan.scannedName);
-        if (scan.locations.city.toLowerCase() === LOCATION.SACRAMENTO) {
+       
+         if (scan.locations.city.toLowerCase() === LOCATION.SACRAMENTO) {
           formattedData.push({
-            lotNo: scan.products[0].lotNo,
-            Title: `${scan.tags[0].tag} + ${scan.products[0].title}`,
-            Category: scan.products[0].category,
+            lotNo: scan.products[0]?.lotNo,
+            Title: `${scan.tags[0]?.tag} + ${scan.products[0]?.title}`,
+            Category: scan.products[0]?.category,
             Featured: 'N',
-            QuantityAvailable: scan.products[0].quantity,
-            StartingBid: scan.products[0].startingBid,
+            QuantityAvailable: scan.products[0]?.quantity,
+            StartingBid: scan.products[0]?.startingBid,
             NewLot: '',
-            Description: scan.products[0].description,
+            Description: scan.products[0]?.description,
           });
           json2csv = new Parser({
             fields: Object.keys(formattedData[0]),
           });
           CSV_FINAL = json2csv.parse(formattedData);
-        } else {
+        } else { 
           formattedDataDalas.push({
-            LotNo: scan.products[0].lotNo,
-            Quantity: scan.products[0].quantity,
-            Title: `${scan.tags[0].tag} + ${scan.products[0].title}`,
-            Description1: scan.products[0].description,
-            Consignor: scan.products[0].consignor,
-            StartBidEach: scan.products[0].startingBid,
+            LotNo: scan.products[0]?.lotNo,
+            Quantity: scan.products[0]?.quantity,
+            Title: `${scan.tags[0]?.tag} + ${scan.products[0]?.title}`,
+            Description1: scan.products[0]?.description,
+            Consignor: scan.products[0]?.consignor,
+            StartBidEach: scan.products[0]?.startingBid,
           });
           json2csv = new Parser({
             fields: Object.keys(formattedDataDalas[0]),
           });
           CSV_FINAL = json2csv.parse(formattedDataDalas);
-        }
+
+        
+       }
       });
+  //    return { data: formattedDataDalas , error: { status: 200 , message: 'Null' } }
+    } catch (error) {
+      this.logger.error(error?.message || error);
+      return { error: { status: 500, message: error } };
+    }
+     
       const unique = username.filter((item, i, ar) => ar.indexOf(item) === i);
       const user = unique.toString();
       const existingFileNameArr =
@@ -315,7 +331,7 @@ export class ScanReportsService {
       };
     } catch (error) {
       this.logger.error(error?.message || error);
-      return { error: { status: 500, message: 'Server error' } };
+      return { error: { status: 500, message: "server error" } };
     }
   }
 
