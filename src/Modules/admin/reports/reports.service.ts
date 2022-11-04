@@ -52,14 +52,11 @@ export class ReportsService {
           lastDay = new Date(date.setDate(date.getDate() - date.getDay() - 1));
           firstDay = new Date(date.setDate(date.getDate() - date.getDay()));
           break;
-        case 'today':
-          firstDay = new Date(date.setDate(date.getDate() - 1));
-          lastDay = new Date(date.setDate(date.getDate() + 1));
-          break;
         default:
           break;
       }
       let data;
+      let userData;
       if (range == 'today') {
         data = await this.prismaService.location.findFirst({
           where: {
@@ -71,12 +68,10 @@ export class ReportsService {
                 firstname: true,
                 lastname: true,
                 email: true,
-                _count: { select: { scanProducts: true, failedScans: true } },
               },
               where: {
                 createdAt: {
-                  gt: firstDay,
-                  lt: lastDay,
+                  equals: new Date(),
                 },
                 account: { equals: AccountEnum.ACCEPTED },
               },
@@ -84,16 +79,45 @@ export class ReportsService {
             Scanned: {
               where: {
                 createdAt: {
-                  gt: firstDay,
-                  lt: lastDay,
+                  equals: new Date(),
                 },
               },
             },
             failedScans: {
               where: {
                 createdAt: {
-                  gt: firstDay,
-                  lt: lastDay,
+                  equals: new Date(),
+                },
+              },
+            },
+          },
+        });
+        userData = await this.prismaService.location.findFirst({
+          where: {
+            locid: { equals: location },
+          },
+          select: {
+            assigneduser: {
+              where: {
+                account: { equals: AccountEnum.ACCEPTED },
+              },
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true,
+                scanProducts: {
+                  where: {
+                    createdAt: {
+                      equals: new Date(),
+                    },
+                  },
+                },
+                failedScans: {
+                  where: {
+                    createdAt: {
+                      equals: new Date(),
+                    },
+                  },
                 },
               },
             },
@@ -110,7 +134,6 @@ export class ReportsService {
                 firstname: true,
                 lastname: true,
                 email: true,
-                _count: { select: { scanProducts: true, failedScans: true } },
               },
               where: {
                 createdAt: {
@@ -133,6 +156,39 @@ export class ReportsService {
                 createdAt: {
                   gte: firstDay,
                   lte: lastDay,
+                },
+              },
+            },
+          },
+        });
+        userData = await this.prismaService.location.findFirst({
+          where: {
+            locid: { equals: location },
+          },
+          select: {
+            assigneduser: {
+              where: {
+                account: { equals: AccountEnum.ACCEPTED },
+              },
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true,
+                scanProducts: {
+                  where: {
+                    createdAt: {
+                      gte: firstDay,
+                      lte: lastDay,
+                    },
+                  },
+                },
+                failedScans: {
+                  where: {
+                    createdAt: {
+                      gte: firstDay,
+                      lte: lastDay,
+                    },
+                  },
                 },
               },
             },
@@ -178,10 +234,24 @@ export class ReportsService {
       const successScan = data.Scanned.length;
       const failedScan = data.failedScans.length;
       const barcode = successScan + failedScan;
+      const usersList = userData.assigneduser.map((row) => {
+        return {
+          ...row,
+          totalScan: row.scanProducts?.length + row.failedScans?.length,
+        };
+      });
       if (!data) {
         return { error: { status: 404, message: 'No Scans Exists' } };
       }
-      return { data, user, successScan, failedScan, barcode, latestScan };
+      return {
+        data,
+        user,
+        successScan,
+        failedScan,
+        barcode,
+        latestScan,
+        usersList,
+      };
     } catch (error) {
       this.logger.error(error);
       return { error: { status: 500, message: 'Server error' } };
