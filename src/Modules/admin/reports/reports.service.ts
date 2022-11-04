@@ -52,10 +52,6 @@ export class ReportsService {
           lastDay = new Date(date.setDate(date.getDate() - date.getDay() - 1));
           firstDay = new Date(date.setDate(date.getDate() - date.getDay()));
           break;
-        case 'today':
-          firstDay = new Date(date.setDate(date.getDate() - 1));
-          lastDay = new Date(date.setDate(date.getDate() + 1));
-          break;
         default:
           break;
       }
@@ -72,12 +68,10 @@ export class ReportsService {
                 firstname: true,
                 lastname: true,
                 email: true,
-                _count: { select: { scanProducts: true, failedScans: true } },
               },
               where: {
                 createdAt: {
-                  gt: firstDay,
-                  lt: lastDay,
+                  equals: new Date(),
                 },
                 account: { equals: AccountEnum.ACCEPTED },
               },
@@ -85,16 +79,14 @@ export class ReportsService {
             Scanned: {
               where: {
                 createdAt: {
-                  gt: firstDay,
-                  lt: lastDay,
+                  equals: new Date(),
                 },
               },
             },
             failedScans: {
               where: {
                 createdAt: {
-                  gt: firstDay,
-                  lt: lastDay,
+                  equals: new Date(),
                 },
               },
             },
@@ -106,6 +98,9 @@ export class ReportsService {
           },
           select: {
             assigneduser: {
+              where: {
+                account: { equals: AccountEnum.ACCEPTED },
+              },
               select: {
                 firstname: true,
                 lastname: true,
@@ -113,16 +108,14 @@ export class ReportsService {
                 scanProducts: {
                   where: {
                     createdAt: {
-                      gt: firstDay,
-                      lt: lastDay,
+                      equals: new Date(),
                     },
                   },
                 },
                 failedScans: {
                   where: {
                     createdAt: {
-                      gt: firstDay,
-                      lt: lastDay,
+                      equals: new Date(),
                     },
                   },
                 },
@@ -141,7 +134,6 @@ export class ReportsService {
                 firstname: true,
                 lastname: true,
                 email: true,
-                _count: { select: { scanProducts: true, failedScans: true } },
               },
               where: {
                 createdAt: {
@@ -175,6 +167,9 @@ export class ReportsService {
           },
           select: {
             assigneduser: {
+              where: {
+                account: { equals: AccountEnum.ACCEPTED },
+              },
               select: {
                 firstname: true,
                 lastname: true,
@@ -238,8 +233,7 @@ export class ReportsService {
       const successScan = data.Scanned.length;
       const failedScan = data.failedScans.length;
       const barcode = successScan + failedScan;
-      const userslist = userData.assigneduser;
-      const userScan = userData.assigneduser.map((row) => {
+      const usersList = userData.assigneduser.map((row) => {
         return {
           ...row,
           totalScan: row.scanProducts?.length + row.failedScans?.length,
@@ -255,8 +249,7 @@ export class ReportsService {
         failedScan,
         barcode,
         latestScan,
-        userslist,
-        userScan,
+        usersList,
       };
     } catch (error) {
       this.logger.error(error);
