@@ -206,7 +206,7 @@ export class TasksService {
       rejectOnNotFound: false,
     });
 
-    this.logger.debug({ message: 'HandleZip now' });
+   // this.logger.debug({ message: 'HandleZip now' });
     if (auctiondata) {
       return scanReport.exportScrapperScans({
         auction: auctiondata.id,

@@ -60,7 +60,6 @@ export class ReportsService {
           break;
       }
       let data;
-      let userData;
       if (range == 'today') {
         data = await this.prismaService.location.findFirst({
           where: {
@@ -95,36 +94,6 @@ export class ReportsService {
                 createdAt: {
                   gt: firstDay,
                   lt: lastDay,
-                },
-              },
-            },
-          },
-        });
-        userData = await this.prismaService.location.findFirst({
-          where: {
-            locid: { equals: location },
-          },
-          select: {
-            assigneduser: {
-              select: {
-                firstname: true,
-                lastname: true,
-                email: true,
-                scanProducts: {
-                  where: {
-                    createdAt: {
-                      gt: firstDay,
-                      lt: lastDay,
-                    },
-                  },
-                },
-                failedScans: {
-                  where: {
-                    createdAt: {
-                      gt: firstDay,
-                      lt: lastDay,
-                    },
-                  },
                 },
               },
             },
@@ -169,36 +138,6 @@ export class ReportsService {
             },
           },
         });
-        userData = await this.prismaService.location.findFirst({
-          where: {
-            locid: { equals: location },
-          },
-          select: {
-            assigneduser: {
-              select: {
-                firstname: true,
-                lastname: true,
-                email: true,
-                scanProducts: {
-                  where: {
-                    createdAt: {
-                      gte: firstDay,
-                      lte: lastDay,
-                    },
-                  },
-                },
-                failedScans: {
-                  where: {
-                    createdAt: {
-                      gte: firstDay,
-                      lte: lastDay,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        });
       }
       const allData = await this.prismaService.location.findFirst({
         where: {
@@ -227,6 +166,7 @@ export class ReportsService {
           },
         },
       });
+
       const failedScans = allData.failedScans;
       const Scanned = allData.Scanned;
       const mergdata = [...Scanned, ...failedScans];
@@ -238,26 +178,10 @@ export class ReportsService {
       const successScan = data.Scanned.length;
       const failedScan = data.failedScans.length;
       const barcode = successScan + failedScan;
-      const userslist = userData.assigneduser;
-      const userScan = userData.assigneduser.map((row) => {
-        return {
-          ...row,
-          totalScan: row.scanProducts?.length + row.failedScans?.length,
-        };
-      });
       if (!data) {
         return { error: { status: 404, message: 'No Scans Exists' } };
       }
-      return {
-        data,
-        user,
-        successScan,
-        failedScan,
-        barcode,
-        latestScan,
-        userslist,
-        userScan,
-      };
+      return { data, user, successScan, failedScan, barcode, latestScan };
     } catch (error) {
       this.logger.error(error);
       return { error: { status: 500, message: 'Server error' } };
