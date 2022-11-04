@@ -152,8 +152,8 @@ model Auction {
   locations     Location    @relation(fields:[locid], references: [locid], onDelete: Cascade)
   locid         String
   tags          Tags[]
-  startDate     DateTime
-  endDate       DateTime
+  startDate     DateTime    @db.Timestamptz(3)
+  endDate       DateTime    @db.Timestamptz(3)
   startNumber   Int?
   isRecover     DateTime? 
   srappers      ScraperZip[]

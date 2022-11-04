@@ -7,8 +7,8 @@ import {
 } from 'src/dto/admin.auction.module.dto';
 import { successErrorDto } from 'src/dto/common.dto';
 import { PrismaService } from 'src/Services/prisma.service';
-import { timeZone } from 'src/timeZoneConstant';
 import { subDays } from 'src/utils/common.utils';
+import { setTimeZone } from 'src/utils/setTimeZone';
 import { validationAuctionBody } from 'src/validations/admin.auction.validation';
 
 @Injectable()
@@ -67,7 +67,7 @@ export class AuctionService {
           id,
         },
         data: {
-          endDate: new Date(endDateTime),
+          endDate: new Date(Date.parse(endDateTime)).toISOString(),
           // endTime,
           startNumber,
         },
@@ -127,28 +127,49 @@ export class AuctionService {
 
       const data = locationAuctionData[0]?.Auction.map((row) => {
         const endDate = new Date(row.endDate).toISOString().slice(0, 10);
-
+        const startDate_timeZone = setTimeZone({
+          date: row.startDate,
+          options: {
+            timeZone: process.env.TZ,
+          },
+        }).split(',')[0];
+        const startTime_timeZone = setTimeZone({
+          date: row.startDate,
+          options: {
+            timeZone: process.env.TZ,
+            hour12: false,
+          },
+        }).split(',')[1];
+        const endDate_timeZone = setTimeZone({
+          date: row.endDate,
+          options: {
+            timeZone: process.env.TZ,
+          },
+        }).split(',')[0];
+        const endTime_timeZone = setTimeZone({
+          date: row.endDate,
+          options: {
+            timeZone: process.env.TZ,
+            hour12: false,
+          },
+        }).split(',')[1];
         if (currDate > endDate) {
           return {
             ...row,
-            endDate: `${new Date(row.endDate).toLocaleString('en-US', {
-              timeZone: timeZone,
-            })}`.split(',')[0],
-            endTime: `${new Date(row.endDate).toLocaleString('en-US', {
-              timeZone: timeZone,
-            })}`.split(',')[1],
+            startDate: startDate_timeZone,
+            startTime: startTime_timeZone,
+            endDate: endDate_timeZone,
+            endTime: endTime_timeZone,
 
             status: auctionStatusDto.Past,
           };
         } else if (!row.startNumber && row.startNumber !== 0) {
           return {
             ...row,
-            endDate: `${new Date(row.endDate).toLocaleString('en-US', {
-              timeZone: timeZone,
-            })}`.split(',')[0],
-            endTime: `${new Date(row.endDate).toLocaleString('en-US', {
-              timeZone: timeZone,
-            })}`.split(',')[1],
+            startDate: startDate_timeZone,
+            startTime: startTime_timeZone,
+            endDate: endDate_timeZone,
+            endTime: endTime_timeZone,
             status: auctionStatusDto.Future,
           };
         } else if (
@@ -157,12 +178,10 @@ export class AuctionService {
         ) {
           return {
             ...row,
-            endDate: `${new Date(row.endDate).toLocaleString('en-US', {
-              timeZone: timeZone,
-            })}`.split(',')[0],
-            endTime: `${new Date(row.endDate).toLocaleString('en-US', {
-              timeZone: timeZone,
-            })}`.split(',')[1],
+            startDate: startDate_timeZone,
+            startTime: startTime_timeZone,
+            endDate: endDate_timeZone,
+            endTime: endTime_timeZone,
             status: auctionStatusDto.Current,
           };
         }
