@@ -56,6 +56,7 @@ export class ReportsService {
           break;
       }
       let data;
+      let userData;
       if (range == 'today') {
         data = await this.prismaService.location.findFirst({
           where: {
