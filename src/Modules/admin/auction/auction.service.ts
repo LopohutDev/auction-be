@@ -23,8 +23,7 @@ export class AuctionService {
 
       const { id, endDate, endTime, startNumber } = data;
 
-
- 	const endDateTime = `${endDate} ${endTime}`;
+      const endDateTime = `${endDate} ${endTime}`;
       const location = await this.prismaService.auction.findUnique({
         where: {
           id,
@@ -37,30 +36,31 @@ export class AuctionService {
           },
         },
       });
-      const auctionTags = await this.prismaService.auction.findMany({
-        where: {
-          startNumber: startNumber,
-          locid: location.locations.locid,
-        },
-      });
-      const tags = await this.prismaService.tags.findMany({
-        where: {
-          auctionStartNo: startNumber,
-          locid: location.locations.locid,
-          tagexpireAt: {
-            gt: new Date(),
+      if (startNumber) {
+        const auctionTags = await this.prismaService.auction.findMany({
+          where: {
+            startNumber: startNumber,
+            locid: location.locations.locid,
           },
-        },
-      });
-      if (auctionTags.length > 0 || tags.length > 0) {
-        return {
-          error: {
-            status: 500,
-            message: `Starting Number is already used on another auction: ${startNumber}`,
+        });
+        const tags = await this.prismaService.tags.findMany({
+          where: {
+            auctionStartNo: startNumber,
+            locid: location.locations.locid,
+            tagexpireAt: {
+              gt: new Date(),
+            },
           },
-        };
+        });
+        if (auctionTags.length > 0 || tags.length > 0) {
+          return {
+            error: {
+              status: 500,
+              message: `Starting Number is already used on another auction: ${startNumber}`,
+            },
+          };
+        }
       }
-
 
       await this.prismaService.auction.update({
         where: {
@@ -139,7 +139,7 @@ export class AuctionService {
             timeZone: process.env.TZ,
             hour12: false,
           },
-        }).split(',')[1];
+        }).split(' ')[1];
         const endDate_timeZone = setTimeZone({
           date: row.endDate,
           options: {
@@ -152,7 +152,7 @@ export class AuctionService {
             timeZone: process.env.TZ,
             hour12: false,
           },
-        }).split(',')[1];
+        }).split(' ')[1];
         if (currDate > endDate) {
           return {
             ...row,

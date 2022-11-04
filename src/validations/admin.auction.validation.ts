@@ -19,20 +19,6 @@ export const validationAuctionBody = (
     return { error: { status: 422, message: 'endDate is required' } };
   } else if (!endTime) {
     return { error: { status: 422, message: 'endTime is required' } };
-  } /*else if (!isValidDate(endDate)) {
-    return { error: { status: 422, message: 'invalid endDate format' } };
-  } else if (!isValidDate(endTime)) {
-    return { error: { status: 422, message: 'invalid endTime format' } };
-  } else if (
-    new Date(endTime).toISOString().slice(0, 10) <
-    new Date(endDate).toISOString().slice(0, 10)
-  ) {
-    return {
-      error: {
-        status: 422,
-        message: 'endTime must be greater or equal to endDate ',
-      },
-    };
-  }*/
+  }
   return { data: body };
 };

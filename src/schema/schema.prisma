@@ -35,8 +35,8 @@ model Warehouses {
   areaname        String
   locations       Location      @relation(fields: [locid], references: [locid], onDelete: Cascade)
   locid           String        
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @default(now())
+  createdAt       DateTime      @default(now())       @db.Timestamptz(3)
+  updatedAt       DateTime      @default(now())       @db.Timestamptz(3)
 }
 
 model Location {
@@ -51,8 +51,8 @@ model Location {
   failedScans     FailedScans[]
   scapper         ScraperZip[]
   locationItem    locationItemType[]
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @default(now())
+  createdAt       DateTime        @default(now())       @db.Timestamptz(3)
+  updatedAt       DateTime        @default(now())       @db.Timestamptz(3)
 }
 
 model User {
@@ -68,8 +68,8 @@ model User {
   role            Roles         @default(NORMAL)
   scanProducts    Scans[]
   failedScans     FailedScans[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @default(now()) 
+  createdAt       DateTime      @default(now())        @db.Timestamptz(3)
+  updatedAt       DateTime      @default(now())        @db.Timestamptz(3)
 }
 
 model Products {
@@ -89,8 +89,8 @@ model Products {
   scrapperZip     ScraperZip[]
   ScanId          String
   itemType        String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @default(now())
+  createdAt       DateTime    @default(now())         @db.Timestamptz(3)
+  updatedAt       DateTime    @default(now())         @db.Timestamptz(3)
 }
 
 model Scans {
@@ -110,8 +110,8 @@ model Scans {
   scannedUser     User                 @relation(fields:[scannedBy], references: [id])
   scannedBy       String
   scannedName     String
-  tagexpireAt     DateTime             
-  createdAt       DateTime             @default(now())
+  tagexpireAt     DateTime                                       @db.Timestamptz(3)
+  createdAt       DateTime             @default(now())           @db.Timestamptz(3)
 }
 
 model locationItemType {
@@ -120,14 +120,14 @@ model locationItemType {
   locations       Location             @relation(fields:[locid], references: [locid], onDelete: Cascade)
   locid           String
   itemname         String        
-  createdAt       DateTime             @default(now())
+  createdAt       DateTime             @default(now())           @db.Timestamptz(3)
 }
 
 model ItemType {
   id              Int                   @id @default(autoincrement())
   uuid            String                @unique @default(uuid())
   name            String                @unique
-  createdAt       DateTime              @default(now())
+  createdAt       DateTime              @default(now())          @db.Timestamptz(3)
 }
 
 model ScraperZip {
@@ -139,9 +139,9 @@ model ScraperZip {
   filePath            String
   products            Products[]
   scannedBy           String
-  lastcsvgenerated    DateTime              @default(now())
+  lastcsvgenerated    DateTime              @default(now())      @db.Timestamptz(3)
   isNewUploaded       Boolean               @default(false)
-  createdAt           DateTime              @default(now())
+  createdAt           DateTime              @default(now())      @db.Timestamptz(3)
 }
 
 model Auction {
@@ -152,13 +152,13 @@ model Auction {
   locations     Location    @relation(fields:[locid], references: [locid], onDelete: Cascade)
   locid         String
   tags          Tags[]
-  startDate     DateTime    @db.Timestamptz(3)
-  endDate       DateTime    @db.Timestamptz(3)
+  startDate     DateTime                       @db.Timestamptz(3)
+  endDate       DateTime                       @db.Timestamptz(3)
   startNumber   Int?
-  isRecover     DateTime? 
+  isRecover     DateTime?   @db.Timestamptz(3)
   srappers      ScraperZip[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @default(now()) 
+  createdAt     DateTime      @default(now())  @db.Timestamptz(3)
+  updatedAt     DateTime      @default(now())  @db.Timestamptz(3)
 }
 
 enum AuctionType {
@@ -182,8 +182,8 @@ model FailedScans {
   scannedBy       String
   scannedName     String
   markDone        Boolean              @default(false)
-  tagexpireAt     DateTime             
-  createdAt       DateTime             @default(now())
+  tagexpireAt     DateTime                                    @db.Timestamptz(3)
+  createdAt       DateTime             @default(now())        @db.Timestamptz(3)
 }
 model Tags{
   id              Int                   @id @default(autoincrement())
@@ -197,7 +197,7 @@ model Tags{
   auctionId       String  
   auctionStartNo  Int?
   locid           String?
-  tagexpireAt     DateTime
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @default(now())
+  tagexpireAt     DateTime                                    @db.Timestamptz(3)
+  createdAt       DateTime             @default(now())        @db.Timestamptz(3)
+  updatedAt       DateTime             @default(now())        @db.Timestamptz(3)
 }
