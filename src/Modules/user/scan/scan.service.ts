@@ -23,7 +23,7 @@ export class ScanService {
     const islocationExists = await this.prismaService.location.findFirst({
       where: {
         Warehouses: { some: { areaname: item.areaname } },
-        locationItem: { some: { itemname: item.itemtype } },
+        locationItem: { some: { itemtag: item.itemtype } },
       },
     });
     if (!islocationExists) {
@@ -189,7 +189,7 @@ export class ScanService {
       const islocationExists = await this.prismaService.location.findFirst({
         where: {
           Warehouses: { some: { areaname: item.areaname } },
-          locationItem: { some: { itemname: item.itemtype } },
+          locationItem: { some: { itemtag: item.itemtype } },
         },
       });
       if (!islocationExists) {

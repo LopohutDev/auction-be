@@ -88,6 +88,7 @@ model Products {
   scans           Scans       @relation(fields: [ScanId], references: [ScanId])
   scrapperZip     ScraperZip[]
   ScanId          String
+  itemType        String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @default(now())
 }

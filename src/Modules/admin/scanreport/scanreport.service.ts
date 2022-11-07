@@ -107,7 +107,7 @@ export class ScanReportsService {
         return { error: { status: 409, message: 'Auction is already passed' } };
       }
 
-      /* if (AuctionData.startDate > new Date()) {
+       /* if (AuctionData.startDate > new Date()) {
         return {
           error: { status: 409, message: 'Auction is not started yet' },
         };
@@ -193,12 +193,7 @@ export class ScanReportsService {
         //    return { data: formattedDataDalas , error: { status: 200 , message: 'Null' } }
       } catch (error) {
         this.logger.error(error?.message || error);
-        return {
-          error: {
-            status: 500,
-            message: error?.message || error || 'Unreasonable error',
-          },
-        };
+        return { error: { status: 500, message: error } };
       }
 
       const unique = username.filter((item, i, ar) => ar.indexOf(item) === i);
