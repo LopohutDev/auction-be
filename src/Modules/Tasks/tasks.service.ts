@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs';
+import * as rimraf from 'rimraf';
 import { BarcodeData } from 'src/Cache/BarCodes';
 import { Jobs } from 'src/Cache/Jobs';
 import { ITEMTAG } from 'src/constants/location.constants';
@@ -232,7 +233,7 @@ export class TasksService {
     const scanReport = new ScanReportsService(this.prismaService);
     const auctiondata = await this.prismaService.auction.findFirst({
       where: {
-        startDate: { gte: subDays(3) },
+        startDate: { gte: subDays(3), lt: new Date() },
         startNumber: { gte: 0 },
       },
       rejectOnNotFound: false,
@@ -240,21 +241,10 @@ export class TasksService {
 
     this.logger.debug({ message: 'HandleZip now' });
     if (auctiondata) {
-      const { error } = await scanReport.exportScrapperScans({
+      return scanReport.exportScrapperScans({
         auction: auctiondata.id,
         location: auctiondata.locid,
       });
-      if (error) {
-        this.logger.error({ error: 'Error occur', message: error });
-        createExceptionFile(
-          'Module: handleZipper cron failed with: ' + error.message,
-        );
-      }
-    } else {
-      createExceptionFile(
-        'Auction current data not found please cross check startdate : ' +
-          new Date().toLocaleString(),
-      );
     }
   }
 
@@ -323,6 +313,40 @@ export class TasksService {
         },
       },
     });
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_11PM)
+  async deletePastAuctionScanItems() {
+    const pastAuctions = await this.prismaService.auction.findMany({
+      where: {
+        endDate: {
+          lte: new Date(),
+        },
+      },
+      orderBy: {
+        endDate: 'desc',
+      },
+      include: {
+        srappers: true,
+      },
+    });
+    pastAuctions.shift();
+
+    for (const auction of pastAuctions) {
+      for (const scrapperZip of auction.srappers) {
+        const scrapperZipFile = scrapperZip.filePath.split('/');
+        scrapperZipFile.splice(scrapperZipFile.length - 2, 2);
+        const scrapperZipDir = scrapperZipFile.join('/');
+
+        if (fs.existsSync(scrapperZipDir)) {
+          rimraf(scrapperZipDir, (err) => {
+            if (err) {
+              this.logger.error(err);
+            }
+          });
+        }
+      }
+    }
   }
 }
 function orderBy(arg0: { where: { ScanId: {}; }; }, orderBy: any, arg2: { id: string; }, take: any, arg4: number) {
