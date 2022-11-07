@@ -30,7 +30,8 @@ export const createExceptionFile = (content: string): void => {
       } else {
         if (files.length) {
           files.forEach((file) => {
-            if (new Date(file) > new Date(new Date().setHours(0, 0, 0, 0))) {
+            if (new Date(file) < new Date(new Date().setHours(0, 0, 0, 0))) {
+              console.log('its in if');
               unlink(dir + `${file}`, (err) => {
                 if (err) {
                   console.log('Error in removing file', err);
