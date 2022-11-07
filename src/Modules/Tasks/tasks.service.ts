@@ -198,25 +198,30 @@ export class TasksService {
   @Cron(CronExpression.EVERY_DAY_AT_7PM)
   async handleZipGeneration() {
     const scanReport = new ScanReportsService(this.prismaService);
-    const auctiondata = await this.prismaService.auction.findFirst({
+    const day = new Date().getDay();
+    const auctiondata = await this.prismaService.auction.findMany({
       where: {
-        startDate: { gte: subDays(3) },
+        startDate: { gte: day === 1 || day === 4 ? subDays(4) : subDays(3) },
         startNumber: { gte: 0 },
       },
-      rejectOnNotFound: false,
     });
 
     this.logger.debug({ message: 'HandleZip now' });
-    if (auctiondata) {
-      const { error } = await scanReport.exportScrapperScans({
-        auction: auctiondata.id,
-        location: auctiondata.locid,
-      });
-      if (error) {
-        this.logger.error({ error: 'Error occur', message: error });
-        createExceptionFile(
-          'Module: handleZipper cron failed with: ' + error.message,
+    if (auctiondata && auctiondata.length) {
+      for await (const auctions of auctiondata) {
+        const { error } = await scanReport.exportScrapperScans(
+          {
+            auction: auctions.id,
+            location: auctions.locid,
+          },
+          true,
         );
+        if (error) {
+          this.logger.error({ error: 'Error occur', message: error });
+          createExceptionFile(
+            'Module: handleZipper cron failed with: ' + error.message,
+          );
+        }
       }
     } else {
       createExceptionFile(
