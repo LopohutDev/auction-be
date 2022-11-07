@@ -150,9 +150,22 @@ export const getLotNo = (previousLotNo: string, isNew?: boolean): string => {
   ];
   const charindexof = Chars.indexOf(stringlot[0]);
   const numb = Number(NumbLot[0]) + 1;
-  if (isNew) {
+  if (isNew || numb == 151) {
     return 20 + Chars[charindexof + 1];
   }
 
   return numb + Chars[charindexof];
+};
+
+export const getLotNoStoreReturn = (
+  previousLotNo: string,
+  isNew?: boolean,
+): string => {
+  const NumbLot = previousLotNo.match(/\d+/);
+  const numb = Number(NumbLot[0]) + 1;
+  if (isNew) {
+    return '200';
+  }
+
+  return numb.toString();
 };

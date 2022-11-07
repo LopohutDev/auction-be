@@ -3,3 +3,6 @@ export const LOCATION = {
   DALLAS: 'dallas',
   SACRAMENTO: 'sacramento',
 };
+export const ITEMTAG = {
+  STORE_RETUEN: 'store_return',
+};

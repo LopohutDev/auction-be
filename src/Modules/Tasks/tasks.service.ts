@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs';
 import { BarcodeData } from 'src/Cache/BarCodes';
 import { Jobs } from 'src/Cache/Jobs';
+import { ITEMTAG } from 'src/constants/location.constants';
 import { PrismaService } from 'src/Services/prisma.service';
 import { Jwt } from 'src/tokens/Jwt';
 import { addDays, subDays } from 'src/utils/common.utils';
@@ -12,7 +13,7 @@ import { uuid } from 'src/utils/uuid.utils';
 import setAuction from '../admin/auction /auction.utils';
 import { ScanReportsService } from '../admin/scanreport/scanreport.service';
 import { createExceptionFile } from '../user/scan/exceptionhandling.utils';
-import { getLotNo } from '../user/scan/scrapper.utils';
+import { getLotNo, getLotNoStoreReturn } from '../user/scan/scrapper.utils';
 
 @Injectable()
 export class TasksService {
@@ -103,18 +104,48 @@ export class TasksService {
               tagexpireAt: addDays(30),
               barcode: scanParams.barcode,
             };
-
-            const lastProduct = await this.prismaService.products.findMany({
-              orderBy: { id: 'desc' },
-              take: 1,
-            });
-            const generatedLotNo = lastScannedItem.length
-              ? getLotNo(
-                  lastProduct[0]?.lotNo,
-                  lastScannedItem[0].auctionId !== scanParams.auctionId,
-                )
-              : '20D';
-
+            let generatedLotNo;
+            if (
+              scanParams.locationItemId.toLowerCase() === ITEMTAG.STORE_RETUEN
+            ) {
+              const lastProduct = await this.prismaService.products.findMany({
+                where: {
+                  scans: {
+                    auctionId: scanParams.auctionId,
+                  },
+                  itemType: ITEMTAG.STORE_RETUEN,
+                },
+                orderBy: { id: 'desc' },
+                take: 1,
+              });
+              generatedLotNo =
+                lastScannedItem.length > 0 && lastProduct.length > 0
+                  ? getLotNoStoreReturn(
+                      lastProduct[0]?.lotNo,
+                      lastScannedItem[0].auctionId !== scanParams.auctionId,
+                    )
+                  : '200';
+            } else {
+              const lastProduct = await this.prismaService.products.findMany({
+                where: {
+                  scans: {
+                    auctionId: scanParams.auctionId,
+                  },
+                  itemType: {
+                    not: ITEMTAG.STORE_RETUEN,
+                  },
+                },
+                orderBy: { id: 'desc' },
+                take: 1,
+              });
+              generatedLotNo =
+                lastScannedItem.length > 0 && lastProduct.length > 0
+                  ? getLotNo(
+                      lastProduct[0]?.lotNo,
+                      lastScannedItem[0].auctionId !== scanParams.auctionId,
+                    )
+                  : '20D';
+            }
             let lastGeneratedNo = 0;
 
             const imagesPath = data.images.map((img) => {
@@ -135,6 +166,7 @@ export class TasksService {
               description: data.description,
               category: '',
               manufacturer: data.manufacturer,
+              itemType: scanParams.locationItemId.toLowerCase(),
             };
             await this.prismaService.scans.create({
               data: {
@@ -282,3 +314,7 @@ export class TasksService {
     });
   }
 }
+function orderBy(arg0: { where: { ScanId: {}; }; }, orderBy: any, arg2: { id: string; }, take: any, arg4: number) {
+  throw new Error('Function not implemented.');
+}
+
