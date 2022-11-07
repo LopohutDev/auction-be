@@ -195,7 +195,7 @@ export class TasksService {
     }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_DAY_AT_7PM)
   async handleZipGeneration() {
     const scanReport = new ScanReportsService(this.prismaService);
     const auctiondata = await this.prismaService.auction.findFirst({
