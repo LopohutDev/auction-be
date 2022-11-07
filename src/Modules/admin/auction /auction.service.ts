@@ -155,11 +155,11 @@ export class AuctionService {
     if (!auction || !auction.trim().length) {
       return { error: { status: 422, message: 'Auction is required' } };
     }
-
+    const day = new Date().getDay();
     const isAuction = await this.prismaService.auction.findMany({
       where: {
         startDate: {
-          gte: subDays(6),
+          gte: day === 1 || day === 4 ? subDays(7) : subDays(6),
           lt: new Date(),
         },
         startNumber: {

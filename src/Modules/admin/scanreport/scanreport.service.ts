@@ -107,7 +107,7 @@ export class ScanReportsService {
         return { error: { status: 409, message: 'Auction is already passed' } };
       }
 
-      /* if (AuctionData.startDate > new Date()) {
+       /* if (AuctionData.startDate > new Date()) {
         return {
           error: { status: 409, message: 'Auction is not started yet' },
         };
@@ -119,7 +119,6 @@ export class ScanReportsService {
           locid: location,
           createdAt: {
             gte: new Date(new Date().setHours(0, 0, 0, 0)),
-            lte: addDays(1),
           },
         },
         orderBy: {
@@ -149,7 +148,7 @@ export class ScanReportsService {
       });
 
       if (!scannedData.length) {
-        return { error: { status: 404, messsage: 'No Scanned Item Found!' } };
+        return { error: { status: 404, message: 'No Scanned Item Found!' } };
       }
       const username = [];
       const formattedData: locationScansDto[] = [];

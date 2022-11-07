@@ -232,18 +232,29 @@ export class TasksService {
     const scanReport = new ScanReportsService(this.prismaService);
     const auctiondata = await this.prismaService.auction.findFirst({
       where: {
-        startDate: { gte: subDays(3), lt: new Date() },
+        startDate: { gte: subDays(3) },
         startNumber: { gte: 0 },
       },
       rejectOnNotFound: false,
     });
 
-   // this.logger.debug({ message: 'HandleZip now' });
+    this.logger.debug({ message: 'HandleZip now' });
     if (auctiondata) {
-      return scanReport.exportScrapperScans({
+      const { error } = await scanReport.exportScrapperScans({
         auction: auctiondata.id,
         location: auctiondata.locid,
       });
+      if (error) {
+        this.logger.error({ error: 'Error occur', message: error });
+        createExceptionFile(
+          'Module: handleZipper cron failed with: ' + error.message,
+        );
+      }
+    } else {
+      createExceptionFile(
+        'Auction current data not found please cross check startdate : ' +
+          new Date().toLocaleString(),
+      );
     }
   }
 
