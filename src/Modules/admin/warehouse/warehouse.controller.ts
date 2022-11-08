@@ -22,7 +22,7 @@ export class WarehouseController {
     if (success) {
       return {
         success: true,
-        message: 'Successfully created warehouse area.',
+        message: 'Warehouse area created successfully.',
       };
     } else {
       throw new HttpException(error.message, error.status);

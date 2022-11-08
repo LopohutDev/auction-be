@@ -104,7 +104,9 @@ export class ScanReportsService {
       }
 
       if (AuctionData.startDate < subDays(3) && !AuctionData.isRecover) {
-        return { error: { status: 409, message: 'Auction is already passed' } };
+        return {
+          error: { status: 409, message: 'Auction has already passed.' },
+        };
       }
 
       /* if (AuctionData.startDate > new Date()) {

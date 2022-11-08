@@ -31,7 +31,7 @@ export class LocationService {
       );
 
       if (isDuplicateTag) {
-        return { error: { status: 422, message: 'itemTag must be unique' } };
+        return { error: { status: 422, message: 'Item Tag must be unique.' } };
       }
       if (isDuplicateName) {
         return { error: { status: 422, message: 'itemName must be unique' } };
