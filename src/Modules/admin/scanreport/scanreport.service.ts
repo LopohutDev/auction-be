@@ -20,6 +20,7 @@ import {
   locationScansDto,
 } from 'src/dto/user.scan.module.dto';
 import { Products } from '@prisma/client';
+import * as moment from 'moment';
 
 @Injectable()
 export class ScanReportsService {
@@ -123,7 +124,12 @@ export class ScanReportsService {
           auctionId: auction,
           locid: location,
           createdAt: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            // gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            gte: moment
+              .utc(
+                moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }),
+              )
+              .format(),
           },
         },
         orderBy: {
@@ -137,8 +143,12 @@ export class ScanReportsService {
       const duration = {
         gte: newUploads.length
           ? newUploads[newUploads.length - 1].lastcsvgenerated
-          : new Date(new Date().setHours(0, 0, 0, 0)),
-        lte: new Date(),
+          : moment
+              .utc(
+                moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }),
+              )
+              .format(),
+        lte: moment.utc(moment()).format(),
       };
 
       const scannedData = await this.prismaService.scans.findMany({
@@ -298,7 +308,7 @@ export class ScanReportsService {
           })),
         },
         filePath: zipFilePath,
-        lastcsvgenerated: new Date(),
+        lastcsvgenerated: moment.utc(moment()).format(),
         auction: {
           connect: {
             id: auction,
@@ -352,7 +362,7 @@ export class ScanReportsService {
           },
           data: {
             isNewUploaded: true,
-            lastcsvgenerated: new Date(),
+            lastcsvgenerated: moment.utc(moment()).format(),
           },
         });
       }

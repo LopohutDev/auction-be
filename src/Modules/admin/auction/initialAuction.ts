@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { PrismaService } from 'src/Services/prisma.service';
 import setAuction from './auction.utils';
+import * as moment from 'moment';
 
 @Injectable()
 export class InitialAuctionCreation {
@@ -9,14 +11,17 @@ export class InitialAuctionCreation {
 
   async createInitial() {
     let arr = [];
-    const currDate = new Date();
+    // const currDate = new Date();
+    const currDate = moment();
 
-    const currMonthLast = new Date(
-      currDate.getFullYear(),
-      currDate.getMonth() + 1,
-      0,
-    );
-    const currMonthLastDay = currMonthLast.getDay();
+    // const currMonthLast = new Date(
+    //   currDate.getFullYear(),
+    //   currDate.getMonth() + 1,
+    //   0,
+    // );
+    const currMonthLast = moment().endOf('month');
+    // const currMonthLastDay = currMonthLast.getDay();
+    const currMonthLastDay = currMonthLast.day();
     let d = null;
     switch (currMonthLastDay) {
       case 1:
@@ -61,8 +66,8 @@ export class InitialAuctionCreation {
     });
 
     if (noAuction) {
-      const remainingDays = currMonthLast.getDate() + d - currDate.getDate();
-
+      // const remainingDays = currMonthLast.getDate() + d - currDate.getDate();
+      const remainingDays = currMonthLast.date() + d - currDate.date();
       noAuction.map((row) => {
         for (let i = 1, j = 0; i <= remainingDays; i++) {
           const { newArr, n, m } = setAuction(i, j, row, currDate);

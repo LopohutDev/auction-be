@@ -1,3 +1,5 @@
+import * as moment from 'moment';
+
 import { addDays } from 'src/utils/common.utils';
 
 type rowDto = {
@@ -5,14 +7,17 @@ type rowDto = {
 };
 
 const checkBlackFriday = (futureDate: any) => {
-  const month = futureDate.getMonth();
-  const currMonthLast = new Date(
-    futureDate.getFullYear(),
-    futureDate.getMonth() + 1,
-    0,
-  );
+  // const month = futureDate.getMonth();
+  const month = futureDate.month();
+  // const currMonthLast = new Date(
+  //   futureDate.getFullYear(),
+  //   futureDate.getMonth() + 1,
+  //   0,
+  // );
+  const currMonthLast = moment().endOf('month');
 
-  const currMonthLastDay = currMonthLast.getDay();
+  // const currMonthLastDay = currMonthLast.getDay();
+  const currMonthLastDay = currMonthLast.day();
 
   let d = null;
   if (month + 1 == 11) {
@@ -50,18 +55,28 @@ const checkBlackFriday = (futureDate: any) => {
         break;
     }
 
-    const monthLastFriday = currMonthLast.setDate(currMonthLast.getDate() + d);
-    const blackFriday = new Date(monthLastFriday).toLocaleDateString();
-    const endBlackFriday = new Date(
-      addDays(3, futureDate),
-    ).toLocaleDateString();
+    // const monthLastFriday = currMonthLast.setDate(currMonthLast.getDate() + d);
+    const monthLastFriday = currMonthLast
+      // .add(currMonthLast.date() + d, 'days')
+      .set('date', currMonthLast.date() + d)
+      .format();
+    // const blackFriday = new Date(monthLastFriday).toLocaleDateString();
+    const blackFriday = moment(monthLastFriday).format('DD/MM/YYYY');
+    // const endBlackFriday = new Date(
+    //   addDays(3, futureDate),
+    // ).toLocaleDateString();
+    const endBlackFriday = moment(futureDate)
+      .add(3, 'days')
+      .format('DD/MM/YYYY');
 
+    console.log('endBlackFriday------>>>>>', blackFriday, endBlackFriday);
     return blackFriday == endBlackFriday;
   }
 };
 
-const setAuction = (i: number, j: number, row: rowDto, currDate: Date) => {
-  const currDateDay = currDate.getDay();
+const setAuction = (i: number, j: number, row: rowDto, currDate: any) => {
+  // const currDateDay = currDate.getDay();
+  const currDateDay = currDate.day();
   let newArr = {};
   let n = i;
   let m = j;
@@ -102,9 +117,11 @@ const setAuction = (i: number, j: number, row: rowDto, currDate: Date) => {
     }
   }
 
-  const futureDate = new Date(addDays(n));
+  // const futureDate = new Date(addDays(n));
+  const futureDate = moment().add(n, 'days');
 
-  const futureDateDay = futureDate.getDay();
+  // const futureDateDay = futureDate.getDay();
+  const futureDateDay = futureDate.day();
 
   if (futureDateDay === 2 || futureDateDay === 3 || futureDateDay === 4) {
     n = n + 2;
@@ -112,11 +129,29 @@ const setAuction = (i: number, j: number, row: rowDto, currDate: Date) => {
 
     newArr = {
       auctionType: 'Auction1',
-      startDate: new Date(futureDate.setHours(8, 0, 0)),
+      // startDate: new Date(futureDate.setHours(8, 0, 0)),
+      startDate: moment
+        .utc(moment(futureDate).set({ hour: 8, minute: 0, second: 0 }))
+        .format(),
 
+      // endDate: blackFriday
+      //   ? new Date(new Date(addDays(3, futureDate)).setHours(19, 0, 0))
+      //   : new Date(new Date(addDays(2, futureDate)).setHours(19, 0, 0)),
       endDate: blackFriday
-        ? new Date(new Date(addDays(3, futureDate)).setHours(19, 0, 0))
-        : new Date(new Date(addDays(2, futureDate)).setHours(19, 0, 0)),
+        ? moment
+            .utc(
+              moment(futureDate)
+                .add(3, 'days')
+                .set({ hour: 19, minute: 0, second: 0 }),
+            )
+            .format()
+        : moment
+            .utc(
+              moment(futureDate)
+                .add(2, 'days')
+                .set({ hour: 19, minute: 0, second: 0 }),
+            )
+            .format(),
       locid: row.locid,
     };
   }
@@ -130,9 +165,19 @@ const setAuction = (i: number, j: number, row: rowDto, currDate: Date) => {
     n = n + 3;
     newArr = {
       auctionType: 'Auction2',
-      startDate: new Date(futureDate.setHours(8, 0, 0)),
+      // startDate: new Date(futureDate.setHours(8, 0, 0)),
+      startDate: moment
+        .utc(moment(futureDate).set({ hour: 8, minute: 0, second: 0 }))
+        .format(),
 
-      endDate: new Date(new Date(addDays(3, futureDate)).setHours(19, 0, 0)),
+      // endDate: new Date(new Date(addDays(3, futureDate)).setHours(19, 0, 0)),
+      endDate: moment
+        .utc(
+          moment(futureDate)
+            .add(3, 'days')
+            .set({ hour: 19, minute: 0, second: 0 }),
+        )
+        .format(),
 
       locid: row.locid,
     };

@@ -1,3 +1,5 @@
+import * as moment from 'moment';
+
 export const addDays = (days: number, date?: Date): Date => {
   if (date) {
     return new Date(new Date(date).getTime() + days * 24 * 60 * 60 * 1000);
@@ -6,9 +8,9 @@ export const addDays = (days: number, date?: Date): Date => {
   }
 };
 
-export const subDays = (days: number): Date => {
-  const date = new Date();
-  date.setDate(new Date().getDate() - days);
-  date.setHours(0, 0, 0, 0);
-  return date;
+export const subDays = (days: number): any => {
+  const date = moment.utc();
+  date.subtract(days, 'days');
+  date.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
+  return moment(date).format();
 };

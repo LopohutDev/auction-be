@@ -6,6 +6,7 @@ import {
 } from 'src/dto/admin.reports.module.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { paginationHelper } from '../utils';
+import * as moment from 'moment';
 
 @Injectable()
 export class ReportsService {
@@ -71,7 +72,7 @@ export class ReportsService {
               },
               where: {
                 createdAt: {
-                  equals: new Date(),
+                  equals: moment.utc(moment()).format(),
                 },
                 account: { equals: AccountEnum.ACCEPTED },
               },
@@ -79,14 +80,14 @@ export class ReportsService {
             Scanned: {
               where: {
                 createdAt: {
-                  equals: new Date(),
+                  equals: moment.utc(moment()).format(),
                 },
               },
             },
             failedScans: {
               where: {
                 createdAt: {
-                  equals: new Date(),
+                  equals: moment.utc(moment()).format(),
                 },
               },
             },
@@ -108,14 +109,14 @@ export class ReportsService {
                 scanProducts: {
                   where: {
                     createdAt: {
-                      equals: new Date(),
+                      equals: moment.utc(moment()).format(),
                     },
                   },
                 },
                 failedScans: {
                   where: {
                     createdAt: {
-                      equals: new Date(),
+                      equals: moment.utc(moment()).format(),
                     },
                   },
                 },

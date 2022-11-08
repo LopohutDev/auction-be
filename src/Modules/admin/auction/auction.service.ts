@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import * as moment from 'moment';
+
 import {
   auctionBodyDto,
   auctionStatusDto,
@@ -48,7 +50,8 @@ export class AuctionService {
             auctionStartNo: startNumber,
             locid: location.locations.locid,
             tagexpireAt: {
-              gt: new Date(),
+              // gt: new Date(),
+              gt: moment.utc(moment()).format(),
             },
           },
         });
@@ -204,7 +207,7 @@ export class AuctionService {
       where: {
         startDate: {
           gte: day === 1 || day === 4 ? subDays(7) : subDays(6),
-          lt: new Date(),
+          lt: moment.utc(moment()).format(),
         },
         id: auction,
         startNumber: {
