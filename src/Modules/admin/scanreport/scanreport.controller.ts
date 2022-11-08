@@ -91,7 +91,7 @@ export class ScanReportsController {
     if (success) {
       return {
         success: true,
-        message: 'Successfully Mark As Done.',
+        message: 'Marked as Done successfully.',
       };
     } else {
       throw new HttpException(error.message, error.status);

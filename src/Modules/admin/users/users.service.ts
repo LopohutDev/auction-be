@@ -30,7 +30,7 @@ export class AdminUsersService {
           });
           return {
             success: true,
-            message: 'Successfully Verified Account.',
+            message: 'Account verified successfully.',
           };
           break;
         case AccountEnum.REJECTED:
@@ -43,7 +43,7 @@ export class AdminUsersService {
           });
           return {
             success: true,
-            message: 'Successfully rejected Account.',
+            message: 'Account rejected successfully.',
           };
           break;
         case AccountEnum.DELETED:
@@ -55,7 +55,7 @@ export class AdminUsersService {
           });
           return {
             success: true,
-            message: 'Successfully Deleted Account.',
+            message: 'Account deleted successfully.',
           };
         default:
           return {
