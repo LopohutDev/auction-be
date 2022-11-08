@@ -33,7 +33,7 @@ export class AuthController {
     if (success) {
       return {
         success,
-        message: 'Successfully created the user',
+        message: 'User created successfully.',
       };
     } else {
       throw new HttpException(error.message, error.status);
@@ -66,7 +66,7 @@ export class AuthController {
     if (success) {
       return {
         success: true,
-        messasge: 'Successfully removed the user',
+        messasge: 'User removed successfully.',
       };
     } else {
       throw new HttpException(error.message, error.status);
@@ -110,7 +110,7 @@ export class AuthController {
     if (success) {
       return {
         success: true,
-        message: 'Password has successfully changed.',
+        message: 'Password changed successfully.',
       };
     } else {
       throw new HttpException(error.message, error.status);

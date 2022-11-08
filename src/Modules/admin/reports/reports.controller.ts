@@ -27,8 +27,7 @@ export class ReportsController {
       failedScan,
       barcode,
       latestScan,
-    //  userslist,
-    //  userScan,
+      usersList,
     } = await this.reportsService.getReports(locinfo);
     if (data) {
       return {
@@ -38,8 +37,7 @@ export class ReportsController {
         failedScan,
         barcode,
         latestScan,
-    //    userslist,
-   //     userScan,
+        usersList,
         success: true,
       };
     } else {

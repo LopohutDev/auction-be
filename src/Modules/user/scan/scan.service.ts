@@ -23,7 +23,7 @@ export class ScanService {
     const islocationExists = await this.prismaService.location.findFirst({
       where: {
         Warehouses: { some: { areaname: item.areaname } },
-        locationItem: { some: { itemname: item.itemtype } },
+        locationItem: { some: { itemtag: item.itemtype } },
       },
     });
     if (!islocationExists) {
@@ -31,7 +31,9 @@ export class ScanService {
     }
     const { data } = BarcodeData.get(item.barcode);
     if (data) {
-      return { error: { status: 409, message: 'Already scanned product' } };
+      return {
+        error: { status: 409, message: 'The product is scanned already.' },
+      };
     }
     const isAuctionExists = await this.prismaService.auction.findUnique({
       where: { id: item.auction },
@@ -64,7 +66,9 @@ export class ScanService {
     }
 
     if (new Date(isAuctionExists.endDate).valueOf() < new Date().valueOf()) {
-      return { error: { status: 500, message: 'Auction is already finished' } };
+      return {
+        error: { status: 500, message: 'The auction is already completed.' },
+      };
     }
 
     const userdata = await this.prismaService.user.findUnique({
@@ -176,7 +180,7 @@ export class ScanService {
         return { error: { status: 404, message: 'Something went wrong' } };
       }
       this.logger.log(err);
-      return { error: { status: 500, message: 'Some error occured' } };
+      return { error: { status: 500, message: 'Something went wrong' } };
     }
   }
 
@@ -189,7 +193,7 @@ export class ScanService {
       const islocationExists = await this.prismaService.location.findFirst({
         where: {
           Warehouses: { some: { areaname: item.areaname } },
-          locationItem: { some: { itemname: item.itemtype } },
+          locationItem: { some: { itemtag: item.itemtype } },
         },
       });
       if (!islocationExists) {
@@ -226,7 +230,7 @@ export class ScanService {
 
       if (new Date(isAuctionExists.endDate).valueOf() < new Date().valueOf()) {
         return {
-          error: { status: 500, message: 'Auction is already finished' },
+          error: { status: 500, message: 'The auction is already completed.' },
         };
       }
 

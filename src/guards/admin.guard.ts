@@ -15,7 +15,7 @@ export class AdminGuard implements CanActivate {
     const { data, error } = validateToken(authorization);
     if (data) {
       if (data.role !== Roles.ADMIN) {
-        throw new HttpException("You don't have access", 403);
+        throw new HttpException('Invalid login. Please contact admin.', 403);
       } else {
         request.email = data.email;
         request.reId = data.reId;

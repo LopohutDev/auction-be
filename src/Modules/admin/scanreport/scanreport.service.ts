@@ -107,7 +107,9 @@ export class ScanReportsService {
       }
 
       if (AuctionData.startDate < subDays(3) && !AuctionData.isRecover) {
-        return { error: { status: 409, message: 'Auction is already passed' } };
+        return {
+          error: { status: 409, message: 'Auction has already passed.' },
+        };
       }
 
       /* if (AuctionData.startDate > new Date()) {
@@ -162,17 +164,17 @@ export class ScanReportsService {
       try {
         scannedData.forEach((scan) => {
           username.push(scan.scannedName);
-
+          const splitTag = scan.tags[0]?.tag.split(/(\d+)/);
           if (scan.locations.city.toLowerCase() === LOCATION.SACRAMENTO) {
             formattedData.push({
               lotNo: scan.products[0]?.lotNo,
-              Title: `${scan.tags[0]?.tag} + ${scan.products[0]?.title}`,
+              Title: `${splitTag[0]}${splitTag[1]}  ${scan.products[0]?.title}`,
               Category: scan.products[0]?.category,
               Featured: 'N',
               QuantityAvailable: scan.products[0]?.quantity,
               StartingBid: scan.products[0]?.startingBid,
               NewLot: '',
-              Description: scan.products[0]?.description,
+              Description: `${splitTag[2]}--${scan.products[0]?.description}`,
             });
             json2csv = new Parser({
               fields: Object.keys(formattedData[0]),
@@ -182,8 +184,8 @@ export class ScanReportsService {
             formattedDataDalas.push({
               LotNo: scan.products[0]?.lotNo,
               Quantity: scan.products[0]?.quantity,
-              Title: `${scan.tags[0]?.tag} + ${scan.products[0]?.title}`,
-              Description1: scan.products[0]?.description,
+              Title: `${splitTag[0]}${splitTag[1]}  ${scan.products[0]?.title}`,
+              Description1: `${splitTag[2]}--${scan.products[0]?.description}`,
               Consignor: scan.products[0]?.consignor,
               StartBidEach: scan.products[0]?.startingBid,
             });
@@ -196,12 +198,7 @@ export class ScanReportsService {
         //    return { data: formattedDataDalas , error: { status: 200 , message: 'Null' } }
       } catch (error) {
         this.logger.error(error?.message || error);
-        return {
-          error: {
-            status: 500,
-            message: error?.message || error || 'Unreasonable error',
-          },
-        };
+        return { error: { status: 500, message: error } };
       }
 
       const unique = username.filter((item, i, ar) => ar.indexOf(item) === i);
