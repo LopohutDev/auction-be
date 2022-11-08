@@ -90,7 +90,10 @@ export class ScanReportsService {
     }
   }
 
-  async exportScrapperScans(scanReport: getScanReportBodyDto) {
+  async exportScrapperScans(
+    scanReport: getScanReportBodyDto,
+    isNewUploaded?: boolean,
+  ) {
     const { auction, location } = scanReport;
 
     try {
@@ -301,7 +304,7 @@ export class ScanReportsService {
             id: auction,
           },
         },
-        isNewUploaded: false,
+        isNewUploaded: isNewUploaded ? true : false,
         locations: {
           connect: {
             locid: location,
