@@ -1,3 +1,4 @@
+import { ItemName, ItemTag } from 'src/constants/regex.constants';
 import {
   locationBodyDto,
   locationItemTypeDto,
@@ -24,9 +25,17 @@ const isNotValidWarehouse = (warehouses: WarehousesDataDto[]) => {
 
 const isNotValidlocationItemType = (itemType: locationItemTypeDto[]) => {
   for (let i = 0; i < itemType.length; i += 1) {
-    if (!itemType[i].itemtag || !itemType[i]?.itemtag?.trim().length) {
+    if (
+      !itemType[i].itemtag ||
+      !itemType[i]?.itemtag?.trim().length ||
+      !ItemTag.test(itemType[i].itemtag)
+    ) {
       return 'Invalid Item Tag';
-    } else if (!itemType[i].itemname || !itemType[i]?.itemname?.trim().length) {
+    } else if (
+      !itemType[i].itemname ||
+      !itemType[i]?.itemname?.trim().length ||
+      !ItemName.test(itemType[i].itemname)
+    ) {
       return 'Invalid Item Name';
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
