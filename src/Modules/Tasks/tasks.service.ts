@@ -162,7 +162,7 @@ export class TasksService {
               barcode: scanParams.barcode,
               lotNo: generatedLotNo,
               startingBid: Number(data.price) * 0.05,
-              title: scanParams.areaname + lastScannedIndex + data.title,
+              title: data.title,
               images: imagesPath,
               description: data.description,
               category: '',
