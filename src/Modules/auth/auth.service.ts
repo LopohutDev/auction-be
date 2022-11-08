@@ -243,7 +243,7 @@ export class AuthService {
       return {
         error: {
           status: 500,
-          message: 'Some error occured',
+          message: 'Something went wrong',
         },
       };
     }

@@ -57,7 +57,7 @@ export const validateLocationBody = (
   } else if (!address || !address.trim().length) {
     return { error: { status: 422, message: 'Address is required' } };
   } else if (!warehouses || !Array.isArray(warehouses)) {
-    return { error: { status: 422, message: 'Warehouses not valid' } };
+    return { error: { status: 422, message: 'Warehouse not valid' } };
   } else if (!warehouses.length) {
     return {
       error: { status: 422, message: 'Atleast one warehouse required' },
