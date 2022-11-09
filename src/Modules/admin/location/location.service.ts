@@ -10,7 +10,7 @@ import {
   toFindDuplicates,
   validateLocationBody,
 } from 'src/validations/admin.location.validations';
-import { InitialAuctionCreation } from '../auction /initialAuction';
+import { InitialAuctionCreation } from '../auction/initialAuction';
 
 @Injectable()
 export class LocationService {
