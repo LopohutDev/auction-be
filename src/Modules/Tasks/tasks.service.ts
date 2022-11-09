@@ -11,7 +11,7 @@ import { addDays, subDays } from 'src/utils/common.utils';
 import { formatDate } from 'src/utils/formatDate.utils';
 import { Download } from 'src/utils/imageDownload.utils';
 import { uuid } from 'src/utils/uuid.utils';
-import setAuction from '../admin/auction /auction.utils';
+import setAuction from '../admin/auction/auction.utils';
 import { ScanReportsService } from '../admin/scanreport/scanreport.service';
 import { createExceptionFile } from '../user/scan/exceptionhandling.utils';
 import { getLotNo, getLotNoStoreReturn } from '../user/scan/scrapper.utils';
@@ -365,7 +365,12 @@ export class TasksService {
     }
   }
 }
-function orderBy(arg0: { where: { ScanId: {}; }; }, orderBy: any, arg2: { id: string; }, take: any, arg4: number) {
+function orderBy(
+  arg0: { where: { ScanId: {} } },
+  orderBy: any,
+  arg2: { id: string },
+  take: any,
+  arg4: number,
+) {
   throw new Error('Function not implemented.');
 }
-
