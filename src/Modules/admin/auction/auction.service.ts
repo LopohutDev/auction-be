@@ -26,6 +26,7 @@ export class AuctionService {
       const { id, endDate, endTime, startNumber } = data;
 
       const endDateTime = `${endDate} ${endTime}`;
+
       const location = await this.prismaService.auction.findUnique({
         where: {
           id,
@@ -70,7 +71,7 @@ export class AuctionService {
           id,
         },
         data: {
-          endDate: new Date(Date.parse(endDateTime)).toISOString(),
+          endDate: moment.utc(moment(endDateTime)).format(),
           // endTime,
           startNumber,
         },
@@ -130,49 +131,24 @@ export class AuctionService {
 
       const data = locationAuctionData[0]?.Auction.map((row) => {
         const endDate = new Date(row.endDate).toISOString().slice(0, 10);
-        const startDate_timeZone = setTimeZone({
-          date: row.startDate,
-          options: {
-            timeZone: process.env.TZ,
-          },
-        }).split(',')[0];
-        const startTime_timeZone = setTimeZone({
-          date: row.startDate,
-          options: {
-            timeZone: process.env.TZ,
-            hour12: false,
-          },
-        }).split(' ')[1];
-        const endDate_timeZone = setTimeZone({
-          date: row.endDate,
-          options: {
-            timeZone: process.env.TZ,
-          },
-        }).split(',')[0];
-        const endTime_timeZone = setTimeZone({
-          date: row.endDate,
-          options: {
-            timeZone: process.env.TZ,
-            hour12: false,
-          },
-        }).split(' ')[1];
+
         if (currDate > endDate) {
           return {
             ...row,
-            startDate: startDate_timeZone,
-            startTime: startTime_timeZone,
-            endDate: endDate_timeZone,
-            endTime: endTime_timeZone,
+            startDate: moment(row.startDate).format('YYYY-MM-DD'),
+            startTime: moment(row.startDate).format('HH:mm:ss'),
+            endDate: moment(row.endDate).format('YYYY-MM-DD'),
+            endTime: moment(row.endDate).format('HH:mm:ss'),
 
             status: auctionStatusDto.Past,
           };
         } else if (!row.startNumber && row.startNumber !== 0) {
           return {
             ...row,
-            startDate: startDate_timeZone,
-            startTime: startTime_timeZone,
-            endDate: endDate_timeZone,
-            endTime: endTime_timeZone,
+            startDate: moment(row.startDate).format('YYYY-MM-DD'),
+            startTime: moment(row.startDate).format('HH:mm:ss'),
+            endDate: moment(row.endDate).format('YYYY-MM-DD'),
+            endTime: moment(row.endDate).format('HH:mm:ss'),
             status: auctionStatusDto.Future,
           };
         } else if (
@@ -181,10 +157,10 @@ export class AuctionService {
         ) {
           return {
             ...row,
-            startDate: startDate_timeZone,
-            startTime: startTime_timeZone,
-            endDate: endDate_timeZone,
-            endTime: endTime_timeZone,
+            startDate: moment(row.startDate).format('YYYY-MM-DD'),
+            startTime: moment(row.startDate).format('HH:mm:ss'),
+            endDate: moment(row.endDate).format('YYYY-MM-DD'),
+            endTime: moment(row.endDate).format('HH:mm:ss'),
             status: auctionStatusDto.Current,
           };
         }
