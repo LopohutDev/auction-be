@@ -72,7 +72,16 @@ export class ReportsService {
               },
               where: {
                 createdAt: {
-                  equals: moment.utc(moment()).format(),
+                  gte: moment
+                    .utc(
+                      moment().set({
+                        hour: 0,
+                        minute: 0,
+                        second: 0,
+                        millisecond: 0,
+                      }),
+                    )
+                    .format(),
                 },
                 account: { equals: AccountEnum.ACCEPTED },
               },
@@ -80,14 +89,32 @@ export class ReportsService {
             Scanned: {
               where: {
                 createdAt: {
-                  equals: moment.utc(moment()).format(),
+                  gte: moment
+                    .utc(
+                      moment().set({
+                        hour: 0,
+                        minute: 0,
+                        second: 0,
+                        millisecond: 0,
+                      }),
+                    )
+                    .format(),
                 },
               },
             },
             failedScans: {
               where: {
                 createdAt: {
-                  equals: moment.utc(moment()).format(),
+                  gte: moment
+                    .utc(
+                      moment().set({
+                        hour: 0,
+                        minute: 0,
+                        second: 0,
+                        millisecond: 0,
+                      }),
+                    )
+                    .format(),
                 },
               },
             },
@@ -109,14 +136,32 @@ export class ReportsService {
                 scanProducts: {
                   where: {
                     createdAt: {
-                      equals: moment.utc(moment()).format(),
+                      gte: moment
+                        .utc(
+                          moment().set({
+                            hour: 0,
+                            minute: 0,
+                            second: 0,
+                            millisecond: 0,
+                          }),
+                        )
+                        .format(),
                     },
                   },
                 },
                 failedScans: {
                   where: {
                     createdAt: {
-                      equals: moment.utc(moment()).format(),
+                      gte: moment
+                        .utc(
+                          moment().set({
+                            hour: 0,
+                            minute: 0,
+                            second: 0,
+                            millisecond: 0,
+                          }),
+                        )
+                        .format(),
                     },
                   },
                 },
