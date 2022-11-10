@@ -9,11 +9,12 @@ const writeFile = (path: string, content: string): void => {
 };
 
 export const createExceptionFile = (content: string): void => {
-  const olddir = __dirname.split('/');
+  const cd = __dirname.replace(/\\/g, '/');
+  const olddir = cd.split('/');
   olddir.splice(olddir.length - 4, 4);
   const dir = `${olddir.join('/')}/src/logs/`;
   if (!existsSync(dir)) {
-    mkdir(dir, (err) => {
+    mkdir(dir,{recursive: true}, (err) => {
       if (err) {
         console.log('Error in creation', err);
       } else {

@@ -55,7 +55,7 @@ export class ScanReportsService {
       return { data, pageCount };
     } catch (error) {
       this.logger.error(error);
-      return { error: { status: 500, message: 'Server error' } };
+      return { error: { status: 500, message: error } };
     }
   }
   async updateMarkDone(markdoneinfo: updateMarkDoneBodyDto) {
@@ -155,12 +155,15 @@ export class ScanReportsService {
         where: { createdAt: duration, locid: location, auctionId: auction },
         select: {
           locations: { select: { city: true } },
-          tags: { select: { tag: true } },
+          //tags: { select: { tag: true } },
           products: true,
+          tag:true,
           scannedName: true,
         },
         orderBy: { createdAt: 'asc' },
       });
+
+      console.log('scan',scannedData)
 
       if (!scannedData.length) {
         return { error: { status: 404, message: 'No Scanned Item Found!' } };
@@ -174,7 +177,7 @@ export class ScanReportsService {
       try {
         scannedData.forEach((scan) => {
           username.push(scan.scannedName);
-          const splitTag = scan.tags[0]?.tag.split(/(\d+)/);
+          const splitTag = scan.tag.split(/(\d+)/);
           if (scan.locations.city.toLowerCase() === LOCATION.SACRAMENTO) {
             formattedData.push({
               lotNo: scan.products[0]?.lotNo,
@@ -205,6 +208,7 @@ export class ScanReportsService {
             CSV_FINAL = json2csv.parse(formattedDataDalas);
           }
         });
+        console.log('push',formattedDataDalas);
         //    return { data: formattedDataDalas , error: { status: 200 , message: 'Null' } }
       } catch (error) {
         this.logger.error(error?.message || error);
@@ -237,18 +241,21 @@ export class ScanReportsService {
           : 1
       }`;
 
-      const olddir = __dirname.split('/');
+      const cd = __dirname.replace(/\\/g, '/');
+      const olddir = cd.split('/');
       olddir.splice(olddir.length - 4, 4);
       const id =
         AuctionData.id.substring(0, 5) + AuctionData.startDate.getTime();
       const dir = `${olddir.join('/')}/src/scrapper/${id}`;
-
+    
+      console.log(dir)
+    
       if (!fs.existsSync(`${dir}`)) {
-        fs.mkdirSync(`${dir}`);
+        fs.mkdirSync(`${dir}`, { recursive: true });
       }
 
       if (!fs.existsSync(`${dir}/${currFormatDate}`)) {
-        fs.mkdirSync(`${dir}/${currFormatDate}`);
+        fs.mkdirSync(`${dir}/${currFormatDate}`, { recursive: true });
       }
 
       //Created csv File
@@ -263,11 +270,11 @@ export class ScanReportsService {
       const output = `${dir}/zipFiles/${currFormatDate}.zip`;
 
       if (!fs.existsSync(`${dir}/zipFiles`)) {
-        fs.mkdirSync(`${dir}/zipFiles`);
+        fs.mkdirSync(`${dir}/zipFiles`, { recursive: true });
       }
 
       if (!fs.existsSync(`${dir}/images`)) {
-        fs.mkdirSync(`${dir}/images`);
+        fs.mkdirSync(`${dir}/images`, { recursive: true });
       }
 
       if (lastZip && !lastZip.isNewUploaded) {
@@ -369,7 +376,8 @@ export class ScanReportsService {
 
       const zip = new AdmZip(scanReport.filePath);
       const data = zip.toBuffer();
-      const splittedFilePath = scanReport.filePath.split('/');
+      const cd = scanReport.filePath.replace(/\\/g, '/');
+      const splittedFilePath = cd.split('/');
       const fileName = splittedFilePath[splittedFilePath.length - 1].toString();
 
       res.setHeader('Content-disposition', `attachment; filename=${fileName}`);

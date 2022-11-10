@@ -70,7 +70,9 @@ export class TasksService {
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
+ // @Cron(CronExpression.EVERY_10_MINUTES)
   async handlePriorityQueue() {
+   // console.log(moment().valueOf())
     const jobs = Jobs.queue;
     if (!jobs.length) {
       this.logger.debug({ module: 'Queues', message: 'Already cleared' });
@@ -80,16 +82,18 @@ export class TasksService {
         for await (const que of Jobs.queue) {
           const { data, scanParams, error } = await que.func();
           if (data && scanParams) {
-            const olddir = __dirname.split('/');
+
+            const cd = __dirname.replace(/\\/g, '/');
+            const olddir = cd.split('/');
             olddir.splice(olddir.length - 3, 3);
             const dir = `${olddir.join('/')}/src/scrapper`;
 
             if (!fs.existsSync(`${dir}`)) {
-              fs.mkdirSync(`${dir}`);
+              fs.mkdirSync(`${dir}`, { recursive: true });
             }
 
             if (!fs.existsSync(`${dir}/images`)) {
-              fs.mkdirSync(`${dir}/images`);
+              fs.mkdirSync(`${dir}/images`, { recursive: true });
             }
 
             const lastScannedItem = await this.prismaService.scans.findMany({
@@ -152,11 +156,12 @@ export class TasksService {
             }
             let lastGeneratedNo = 0;
 
+            const cut = moment().valueOf();
             const imagesPath = data.images.map((img) => {
               lastGeneratedNo = lastGeneratedNo > 0 ? lastGeneratedNo + 1 : 1;
               const imgFile = Download(
                 img.link,
-                `${dir}/images/${scanParams.locationName}_${generatedLotNo}_${lastGeneratedNo}.jpeg`,
+                `${dir}/images/${scanParams.locationName}_${moment().valueOf()}_${generatedLotNo}_${lastGeneratedNo}.jpeg`,
               );
               return imgFile;
             });
@@ -222,6 +227,7 @@ export class TasksService {
           });
         }
       } catch (error) {
+        console.log(error);
         createExceptionFile('Exception Caugth: ' + String(error));
         this.logger.debug({
           module: 'Queue',
