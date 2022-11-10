@@ -1,4 +1,9 @@
-import { ScanQueryDto, scanValidateDto } from 'src/dto/user.scan.module.dto';
+import {
+  ScanQueryDto,
+  scanValidateDto,
+  usersDataDto,
+  usersReturnValidateDto,
+} from 'src/dto/user.scan.module.dto';
 
 export const validateUserScan = (
   userscaninfo: ScanQueryDto,
@@ -15,4 +20,15 @@ export const validateUserScan = (
     return { error: { status: 422, message: 'Auction is required' } };
   }
   return { item: userscaninfo };
+};
+export const validateUsersBody = (
+  body: usersDataDto,
+): usersReturnValidateDto => {
+  const { email, type } = body;
+  if (!email || !email.trim().length) {
+    return { error: { status: 422, message: 'email is required' } };
+  } else if (!type || !type.trim().length) {
+    return { error: { status: 422, message: 'type is required' } };
+  }
+  return { data: body };
 };
