@@ -156,39 +156,33 @@ export class AuctionService {
       return { error: { status: 422, message: 'Auction is required' } };
     }
     const day = new Date().getDay();
-    const isAuction = await this.prismaService.auction.findMany({
+    const isAuction = await this.prismaService.auction.findFirst({
       where: {
         startDate: {
           gte: day === 1 || day === 4 ? subDays(7) : subDays(6),
           lt: new Date(),
         },
+        id: auction,
         startNumber: {
           gte: 0,
         },
       },
-      orderBy: {
-        startDate: 'asc',
-      },
     });
-    if (!isAuction.length || isAuction[0]?.id !== auction) {
+    if (!isAuction || isAuction?.id !== auction) {
       return { error: { status: 422, message: 'Invalid auction' } };
     }
     try {
-      if (isAuction) {
-        await this.prismaService.auction.update({
-          where: {
-            id: auction,
-          },
-          data: {
-            isRecover: new Date().toISOString(),
-          },
-        });
-        return {
-          success: true,
-        };
-      } else {
-        return { error: { status: 422, message: 'Invalid auction' } };
-      }
+      await this.prismaService.auction.update({
+        where: {
+          id: auction,
+        },
+        data: {
+          isRecover: new Date().toISOString(),
+        },
+      });
+      return {
+        success: true,
+      };
     } catch (error) {
       this.logger.error(error);
       return { error: { status: 500, message: 'Server error' } };

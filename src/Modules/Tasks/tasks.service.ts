@@ -8,7 +8,6 @@ import { ITEMTAG } from 'src/constants/location.constants';
 import { PrismaService } from 'src/Services/prisma.service';
 import { Jwt } from 'src/tokens/Jwt';
 import { addDays, subDays } from 'src/utils/common.utils';
-import { formatDate } from 'src/utils/formatDate.utils';
 import { Download } from 'src/utils/imageDownload.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import setAuction from '../admin/auction/auction.utils';
@@ -153,7 +152,7 @@ export class TasksService {
               lastGeneratedNo = lastGeneratedNo > 0 ? lastGeneratedNo + 1 : 1;
               const imgFile = Download(
                 img.link,
-                `${dir}/images/${generatedLotNo}_${lastGeneratedNo}.jpeg`,
+                `${dir}/images/${scanParams.locationName}_${generatedLotNo}_${lastGeneratedNo}.jpeg`,
               );
               return imgFile;
             });
@@ -364,13 +363,4 @@ export class TasksService {
       }
     }
   }
-}
-function orderBy(
-  arg0: { where: { ScanId: {} } },
-  orderBy: any,
-  arg2: { id: string },
-  take: any,
-  arg4: number,
-) {
-  throw new Error('Function not implemented.');
 }
