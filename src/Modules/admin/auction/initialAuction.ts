@@ -11,16 +11,11 @@ export class InitialAuctionCreation {
 
   async createInitial() {
     let arr = [];
-    // const currDate = new Date();
+
     const currDate = moment();
 
-    // const currMonthLast = new Date(
-    //   currDate.getFullYear(),
-    //   currDate.getMonth() + 1,
-    //   0,
-    // );
     const currMonthLast = moment().endOf('month');
-    // const currMonthLastDay = currMonthLast.getDay();
+
     const currMonthLastDay = currMonthLast.day();
     let d = null;
     switch (currMonthLastDay) {
@@ -66,10 +61,9 @@ export class InitialAuctionCreation {
     });
 
     if (noAuction) {
-      // const remainingDays = currMonthLast.getDate() + d - currDate.getDate();
       const remainingDays = currMonthLast.date() + d - currDate.date();
       noAuction.map((row) => {
-        for (let i = 1, j = 0; i <= remainingDays; i++) {
+        for (let i = 1, j = 0; i < remainingDays; i++) {
           const { newArr, n, m } = setAuction(i, j, row, currDate);
 
           i = n;

@@ -1,14 +1,11 @@
 import * as moment from 'moment';
 
-import { addDays } from 'src/utils/common.utils';
-
 type rowDto = {
   locid: string;
 };
 
 const checkBlackFriday = (futureDate: any) => {
   const month = futureDate.month();
-
   const currMonthLast = moment().endOf('month');
 
   const currMonthLastDay = currMonthLast.day();
@@ -64,9 +61,9 @@ const checkBlackFriday = (futureDate: any) => {
   }
 };
 
-const setAuction = (i: number, j: number, row: rowDto, currDate: any) => {
-  // const currDateDay = currDate.getDay();
-  const currDateDay = currDate.day();
+const setFutureAuction = (i: number, j: number, row: rowDto, currDate: any) => {
+  const currDateDay = moment(currDate).day();
+
   let newArr = {};
   let n = i;
   let m = j;
@@ -107,7 +104,7 @@ const setAuction = (i: number, j: number, row: rowDto, currDate: any) => {
     }
   }
 
-  const futureDate = moment().add(n, 'days');
+  const futureDate = moment(currDate).add(n, 'days');
 
   const futureDateDay = futureDate.day();
 
@@ -169,4 +166,4 @@ const setAuction = (i: number, j: number, row: rowDto, currDate: any) => {
   return { newArr, n, m };
 };
 
-export default setAuction;
+export default setFutureAuction;
