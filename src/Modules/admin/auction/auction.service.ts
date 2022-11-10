@@ -200,7 +200,7 @@ export class AuctionService {
           id: auction,
         },
         data: {
-          isRecover: new Date().toISOString(),
+          isRecover: moment.utc(moment()).format(),
         },
       });
       return {
