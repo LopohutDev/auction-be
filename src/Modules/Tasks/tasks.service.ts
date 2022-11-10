@@ -13,7 +13,10 @@ import { uuid } from 'src/utils/uuid.utils';
 import setAuction from '../admin/auction/auction.utils';
 import { ScanReportsService } from '../admin/scanreport/scanreport.service';
 import { createExceptionFile } from '../user/scan/exceptionhandling.utils';
+
 import { getLotNo, getLotNoStoreReturn } from '../user/scan/scrapper.utils';
+import * as moment from 'moment';
+
 
 @Injectable()
 export class TasksService {
@@ -101,7 +104,8 @@ export class TasksService {
               locid: scanParams.locid,
               scannedBy: scanParams.userid,
               scannedName: scanParams.username,
-              tagexpireAt: addDays(30),
+              //tagexpireAt: addDays(30),
+              tagexpireAt: moment().add(30, 'd').utc().format(),
               barcode: scanParams.barcode,
             };
             let generatedLotNo;
@@ -180,7 +184,7 @@ export class TasksService {
               },
               data: {
                 successScanId: ScanData.ScanId,
-                updatedAt: new Date(),
+                updatedAt: moment.utc(moment()).format(),
               },
             });
           } else if (error) {
@@ -207,7 +211,7 @@ export class TasksService {
               },
               data: {
                 failedScanId: failedScanData.failedScanId,
-                updatedAt: new Date(),
+                updatedAt: moment.utc(moment()).format(),
               },
             });
           }
@@ -324,7 +328,7 @@ export class TasksService {
     await this.prismaService.tags.deleteMany({
       where: {
         tagexpireAt: {
-          lte: new Date(),
+          lte: moment.utc(moment()).format(),
         },
       },
     });

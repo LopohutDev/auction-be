@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import * as moment from 'moment';
+
 import {
   auctionBodyDto,
   auctionStatusDto,
@@ -8,6 +10,7 @@ import {
 import { successErrorDto } from 'src/dto/common.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { subDays } from 'src/utils/common.utils';
+import { setTimeZone } from 'src/utils/setTimeZone';
 import { validationAuctionBody } from 'src/validations/admin.auction.validation';
 
 @Injectable()
@@ -21,6 +24,9 @@ export class AuctionService {
       if (error) return { error };
 
       const { id, endDate, endTime, startNumber } = data;
+
+      const endDateTime = `${endDate} ${endTime}`;
+
       const location = await this.prismaService.auction.findUnique({
         where: {
           id,
@@ -33,36 +39,40 @@ export class AuctionService {
           },
         },
       });
-      const auctionTags = await this.prismaService.auction.findMany({
-        where: {
-          startNumber: startNumber,
-          locid: location.locations.locid,
-        },
-      });
-      const tags = await this.prismaService.tags.findMany({
-        where: {
-          auctionStartNo: startNumber,
-          locid: location.locations.locid,
-          tagexpireAt: {
-            gt: new Date(),
+      if (startNumber) {
+        const auctionTags = await this.prismaService.auction.findMany({
+          where: {
+            startNumber: startNumber,
+            locid: location.locations.locid,
           },
-        },
-      });
-      if (auctionTags.length > 0 || tags.length > 0) {
-        return {
-          error: {
-            status: 500,
-            message: `Starting Number is already used on another auction: ${startNumber}`,
+        });
+        const tags = await this.prismaService.tags.findMany({
+          where: {
+            auctionStartNo: startNumber,
+            locid: location.locations.locid,
+            tagexpireAt: {
+              // gt: new Date(),
+              gt: moment.utc(moment()).format(),
+            },
           },
-        };
+        });
+        if (auctionTags.length > 0 || tags.length > 0) {
+          return {
+            error: {
+              status: 500,
+              message: `Starting Number is already used on another auction: ${startNumber}`,
+            },
+          };
+        }
       }
+
       await this.prismaService.auction.update({
         where: {
           id,
         },
         data: {
-          endDate,
-          endTime,
+          endDate: moment.utc(moment(endDateTime)).format(),
+          // endTime,
           startNumber,
         },
       });
@@ -101,9 +111,9 @@ export class AuctionService {
               id: true,
               auctionType: true,
               startDate: true,
-              startTime: true,
+              // startTime: true,
               endDate: true,
-              endTime: true,
+              // endTime: true,
               startNumber: true,
               isRecover: true,
               _count: {
@@ -125,11 +135,20 @@ export class AuctionService {
         if (currDate > endDate) {
           return {
             ...row,
+            startDate: moment(row.startDate).format('YYYY-MM-DD'),
+            startTime: moment(row.startDate).format('HH:mm:ss'),
+            endDate: moment(row.endDate).format('YYYY-MM-DD'),
+            endTime: moment(row.endDate).format('HH:mm:ss'),
+
             status: auctionStatusDto.Past,
           };
         } else if (!row.startNumber && row.startNumber !== 0) {
           return {
             ...row,
+            startDate: moment(row.startDate).format('YYYY-MM-DD'),
+            startTime: moment(row.startDate).format('HH:mm:ss'),
+            endDate: moment(row.endDate).format('YYYY-MM-DD'),
+            endTime: moment(row.endDate).format('HH:mm:ss'),
             status: auctionStatusDto.Future,
           };
         } else if (
@@ -138,6 +157,10 @@ export class AuctionService {
         ) {
           return {
             ...row,
+            startDate: moment(row.startDate).format('YYYY-MM-DD'),
+            startTime: moment(row.startDate).format('HH:mm:ss'),
+            endDate: moment(row.endDate).format('YYYY-MM-DD'),
+            endTime: moment(row.endDate).format('HH:mm:ss'),
             status: auctionStatusDto.Current,
           };
         }
@@ -160,7 +183,7 @@ export class AuctionService {
       where: {
         startDate: {
           gte: day === 1 || day === 4 ? subDays(7) : subDays(6),
-          lt: new Date(),
+          lt: moment.utc(moment()).format(),
         },
         id: auction,
         startNumber: {
@@ -177,7 +200,7 @@ export class AuctionService {
           id: auction,
         },
         data: {
-          isRecover: new Date().toISOString(),
+          isRecover: moment.utc(moment()).format(),
         },
       });
       return {
