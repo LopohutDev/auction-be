@@ -21,12 +21,21 @@ export class ScanService {
     if (error) {
       return { error };
     }
+    const isAuctionExists = await this.prismaService.auction.findUnique({
+      where: { id: item.auction },
+      rejectOnNotFound: false,
+    });
+
+    if (!isAuctionExists) {
+      return { error: { status: 404, message: 'Invalid auction' } };
+    }
     const islocationExists = await this.prismaService.location.findFirst({
       where: {
-        Warehouses: { some: { areaname: item.areaname } },
-        locationItem: { some: { itemtag: item.itemtype } },
+        Warehouses: { some: { areaname: item.areaname,locid : isAuctionExists.locid }},
+        locationItem: { some: { itemtag: item.itemtype,locid : isAuctionExists.locid } },
       },
     });
+    //console.log('loc',islocationExists)
     if (!islocationExists) {
       return { error: { status: 404, message: 'Invalid Location' } };
     }
@@ -36,14 +45,7 @@ export class ScanService {
         error: { status: 409, message: 'The product is scanned already.' },
       };
     }
-    const isAuctionExists = await this.prismaService.auction.findUnique({
-      where: { id: item.auction },
-      rejectOnNotFound: false,
-    });
-
-    if (!isAuctionExists) {
-      return { error: { status: 404, message: 'Invalid auction' } };
-    }
+  
     if (!isAuctionExists.startNumber) {
       return {
         error: {

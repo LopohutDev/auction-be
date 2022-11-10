@@ -151,6 +151,8 @@ export class ScanReportsService {
         lte: moment.utc(moment()).format(),
       };
 
+      console.log('duration',duration);
+
       const scannedData = await this.prismaService.scans.findMany({
         where: { createdAt: duration, locid: location, auctionId: auction },
         select: {
