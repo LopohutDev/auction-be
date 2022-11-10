@@ -17,7 +17,6 @@ import { createExceptionFile } from '../user/scan/exceptionhandling.utils';
 import { getLotNo, getLotNoStoreReturn } from '../user/scan/scrapper.utils';
 import * as moment from 'moment';
 
-
 @Injectable()
 export class TasksService {
   constructor(private readonly prismaService: PrismaService) {}
@@ -275,59 +274,147 @@ export class TasksService {
 
   @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
   async addFutureAuction() {
-    let arr = [];
-    const currDate = new Date();
-
-    const futureMonthLast = new Date(
-      currDate.getFullYear(),
-      currDate.getMonth() + 1,
-      0,
-    );
-    const futureMonthLastDay = futureMonthLast.getDay();
-    let d = null;
-    switch (futureMonthLastDay) {
-      case 1:
-        d = 0;
-        break;
-      case 2:
-        d = 2;
-        break;
-      case 3:
-        d = 1;
-        break;
-      case 4:
-        d = 0;
-        break;
-      case 5:
-        d = 3;
-        break;
-      case 6:
-        d = 2;
-        break;
-      case 0:
-        d = 1;
-        break;
-      default:
-        null;
-        break;
-    }
-
     const allLocations = await this.prismaService.location.findMany({});
+    const isAuction = [];
+    for (const auction of allLocations) {
+      const isAuctionExist = await this.prismaService.auction.findFirst({
+        where: {
+          locid: auction.locid,
+          createdAt: {
+            gte: moment
+              .utc(
+                moment().set({
+                  hour: 0,
+                  minute: 0,
+                  second: 0,
+                  millisecond: 0,
+                }),
+              )
+              .format(),
+          },
+        },
+      });
 
-    if (allLocations) {
-      allLocations.map((row) => {
-        for (let i = 1, j = 0; i < futureMonthLast.getDate() + d; i++) {
-          const { newArr, n, m } = setAuction(i, j, row, currDate);
-          i = n;
-          j = m;
-          arr = [...arr, newArr];
-        }
+      if (isAuctionExist?.locid)
+        isAuction.push({ locid: isAuctionExist?.locid });
+    }
+    if (isAuction.length === 0) {
+      let arr = [];
+      const currDate = moment();
+
+      const futureMonthLast = moment().endOf('month');
+      const futureMonthLastDay = futureMonthLast.day();
+      let d = null;
+      switch (futureMonthLastDay) {
+        case 1:
+          d = 0;
+          break;
+        case 2:
+          d = 2;
+          break;
+        case 3:
+          d = 1;
+          break;
+        case 4:
+          d = 0;
+          break;
+        case 5:
+          d = 3;
+          break;
+        case 6:
+          d = 2;
+          break;
+        case 0:
+          d = 1;
+          break;
+        default:
+          null;
+          break;
+      }
+
+      const allLocations = await this.prismaService.location.findMany({});
+
+      if (allLocations) {
+        allLocations.map((row) => {
+          for (let i = 1, j = 0; i < futureMonthLast.date() + d; i++) {
+            const { newArr, n, m } = setAuction(i, j, row, currDate);
+            i = n;
+            j = m;
+            arr = [...arr, newArr];
+          }
+        });
+      }
+
+      await this.prismaService.auction.createMany({
+        data: arr,
+      });
+    } else {
+      const filteredArray = allLocations.filter((value) => {
+        return !isAuction.some((row) => {
+          return row.locid === value.locid;
+        });
+      });
+
+      let arr = [];
+      if (filteredArray) {
+        filteredArray.map(async (row) => {
+          const lastAuction = await this.prismaService.auction.findMany({
+            where: {
+              locid: row.locid,
+            },
+            orderBy: { startDate: 'desc' },
+            take: 1,
+          });
+
+          const currDate = moment(lastAuction[0].endDate)
+            .add(1, 'days')
+            .format('YYYY-MM-DD');
+          const futureMonthLast = moment().endOf('month');
+          const futureMonthLastDay = futureMonthLast.day();
+          let d = null;
+          switch (futureMonthLastDay) {
+            case 1:
+              d = 0;
+              break;
+            case 2:
+              d = 2;
+              break;
+            case 3:
+              d = 1;
+              break;
+            case 4:
+              d = 0;
+              break;
+            case 5:
+              d = 3;
+              break;
+            case 6:
+              d = 2;
+              break;
+            case 0:
+              d = 1;
+              break;
+            default:
+              null;
+              break;
+          }
+
+          const dayCount = moment(currDate).format('DD');
+          const remainingDays = futureMonthLast.date() + d - Number(dayCount);
+
+          for (let i = 1, j = 0; i <= remainingDays; i++) {
+            const { newArr, n, m } = setAuction(i, j, row, currDate);
+            i = n;
+            j = m;
+            arr = [...arr, newArr];
+          }
+        });
+      }
+      this.logger.log('arrr------------>>>>', JSON.stringify(arr));
+      await this.prismaService.auction.createMany({
+        data: arr,
       });
     }
-
-    await this.prismaService.auction.createMany({
-      data: arr,
-    });
   }
   @Cron(CronExpression.EVERY_DAY_AT_11PM)
   async deleteExpiredTag() {

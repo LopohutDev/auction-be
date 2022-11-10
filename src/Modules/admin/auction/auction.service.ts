@@ -12,10 +12,14 @@ import { PrismaService } from 'src/Services/prisma.service';
 import { subDays } from 'src/utils/common.utils';
 import { setTimeZone } from 'src/utils/setTimeZone';
 import { validationAuctionBody } from 'src/validations/admin.auction.validation';
+import { futureAuctionCreation } from './startFutureAuction';
 
 @Injectable()
 export class AuctionService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly futureAuctionCreation: futureAuctionCreation,
+  ) {}
   private readonly logger = new Logger(AuctionService.name);
 
   async createAuction(auctionInfo: auctionBodyDto): Promise<successErrorDto> {
@@ -23,7 +27,7 @@ export class AuctionService {
       const { data, error } = validationAuctionBody(auctionInfo);
       if (error) return { error };
 
-      const { id, endDate, endTime, startNumber } = data;
+      const { id, startDate, endDate, endTime, startNumber } = data;
 
       const endDateTime = `${endDate} ${endTime}`;
 
@@ -76,6 +80,28 @@ export class AuctionService {
           startNumber,
         },
       });
+
+      // future auction -------------------------
+
+      const lastAuction = await this.prismaService.auction.findMany({
+        where: {
+          locid: location.locations.locid,
+        },
+        orderBy: { startDate: 'desc' },
+        take: 1,
+      });
+
+      if (
+        moment(lastAuction[0].startDate).format('YYYY-MM-DD') === startDate &&
+        startNumber
+      ) {
+        await this.futureAuctionCreation.addFutureAuction({
+          locid: location.locations.locid,
+          lastAuction: lastAuction[0],
+        });
+      }
+
+      // future auction end --------------------------
 
       return {
         success: true,
