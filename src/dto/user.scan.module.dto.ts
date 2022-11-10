@@ -70,3 +70,10 @@ export interface locationScansDallasDto {
   Consignor?: number;
   StartBidEach?: number;
 }
+export type usersDataDto = {
+  email: string;
+  type: string;
+};
+export interface usersReturnValidateDto extends errorDto {
+  data?: usersDataDto;
+}

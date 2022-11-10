@@ -82,6 +82,9 @@ export class ScanReportsService {
     try {
       const data = await this.prismaService.scraperZip.findMany({
         where: { auctionId: auction, locid: location },
+        orderBy: {
+          lastcsvgenerated: 'desc',
+        },
       });
       return { data };
     } catch (error) {
