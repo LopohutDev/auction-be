@@ -165,6 +165,7 @@ export class ScanService {
           tag: tag,
           autionStartNo: startNumber,
           lastInsertId: lastInsertId.id,
+          locationName: islocationExists.city,
         };
         Jobs.set(() => getScrapperData(data, params));
         return {

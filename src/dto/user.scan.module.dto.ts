@@ -42,6 +42,7 @@ export interface scanItemParamsDto {
   tag: string;
   autionStartNo: number;
   lastInsertId: number;
+  locationName: string;
 }
 
 export interface scrapperReturnDataDto extends errorDto {
