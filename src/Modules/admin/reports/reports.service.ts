@@ -6,6 +6,7 @@ import {
 } from 'src/dto/admin.reports.module.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { paginationHelper } from '../utils';
+import * as moment from 'moment';
 
 @Injectable()
 export class ReportsService {
@@ -71,7 +72,16 @@ export class ReportsService {
               },
               where: {
                 createdAt: {
-                  equals: new Date(),
+                  gte: moment
+                    .utc(
+                      moment().set({
+                        hour: 0,
+                        minute: 0,
+                        second: 0,
+                        millisecond: 0,
+                      }),
+                    )
+                    .format(),
                 },
                 account: { equals: AccountEnum.ACCEPTED },
               },
@@ -79,14 +89,32 @@ export class ReportsService {
             Scanned: {
               where: {
                 createdAt: {
-                  equals: new Date(),
+                  gte: moment
+                    .utc(
+                      moment().set({
+                        hour: 0,
+                        minute: 0,
+                        second: 0,
+                        millisecond: 0,
+                      }),
+                    )
+                    .format(),
                 },
               },
             },
             failedScans: {
               where: {
                 createdAt: {
-                  equals: new Date(),
+                  gte: moment
+                    .utc(
+                      moment().set({
+                        hour: 0,
+                        minute: 0,
+                        second: 0,
+                        millisecond: 0,
+                      }),
+                    )
+                    .format(),
                 },
               },
             },
@@ -108,14 +136,32 @@ export class ReportsService {
                 scanProducts: {
                   where: {
                     createdAt: {
-                      equals: new Date(),
+                      gte: moment
+                        .utc(
+                          moment().set({
+                            hour: 0,
+                            minute: 0,
+                            second: 0,
+                            millisecond: 0,
+                          }),
+                        )
+                        .format(),
                     },
                   },
                 },
                 failedScans: {
                   where: {
                     createdAt: {
-                      equals: new Date(),
+                      gte: moment
+                        .utc(
+                          moment().set({
+                            hour: 0,
+                            minute: 0,
+                            second: 0,
+                            millisecond: 0,
+                          }),
+                        )
+                        .format(),
                     },
                   },
                 },

@@ -9,6 +9,7 @@ import { formatDate } from 'src/utils/formatDate.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import { validateUserScan } from 'src/validations/user.scans.validations';
 import { getScrapperData } from './scrapper.utils';
+import * as moment from 'moment';
 
 @Injectable()
 export class ScanService {
@@ -94,7 +95,7 @@ export class ScanService {
           where: {
             auctionId: item.auction,
             tagexpireAt: {
-              gte: new Date(),
+              gte: moment.utc(moment()).format(),
             },
           },
           orderBy: { id: 'desc' },
@@ -109,7 +110,7 @@ export class ScanService {
           const fetchAuctionSNo = await this.prismaService.tags.findFirst({
             where: {
               tagexpireAt: {
-                gte: new Date(),
+                gte: moment.utc(moment()).format(),
               },
               auctionStartNo: startNumber,
               locid: isAuctionExists.locid,
@@ -119,7 +120,7 @@ export class ScanService {
             const fetchSNo = await this.prismaService.tags.findMany({
               where: {
                 tagexpireAt: {
-                  gte: new Date(),
+                  gte: moment.utc(moment()).format(),
                 },
                 locid: isAuctionExists.locid,
               },
@@ -165,6 +166,7 @@ export class ScanService {
           tag: tag,
           autionStartNo: startNumber,
           lastInsertId: lastInsertId.id,
+          locationName: islocationExists.city,
         };
         Jobs.set(() => getScrapperData(data, params));
         return {
@@ -248,7 +250,7 @@ export class ScanService {
         where: {
           auctionId: item.auction,
           tagexpireAt: {
-            gte: new Date(),
+            gte: moment.utc(moment()).format(),
           },
         },
         orderBy: { id: 'desc' },
@@ -263,7 +265,7 @@ export class ScanService {
         const fetchAuctionSNo = await this.prismaService.tags.findFirst({
           where: {
             tagexpireAt: {
-              gte: new Date(),
+              gte: moment.utc(moment()).format(),
             },
             auctionStartNo: startNumber,
             locid: isAuctionExists.locid,
@@ -273,7 +275,7 @@ export class ScanService {
           const fetchSNo = await this.prismaService.tags.findMany({
             where: {
               tagexpireAt: {
-                gte: new Date(),
+                gte: moment.utc(moment()).format(),
               },
               locid: isAuctionExists.locid,
             },
@@ -333,7 +335,7 @@ export class ScanService {
           },
           data: {
             failedScanId: FailedScanData.failedScanId,
-            updatedAt: new Date(),
+            updatedAt: moment.utc(moment()).format(),
           },
         });
         return {
@@ -356,7 +358,7 @@ export class ScanService {
           },
           data: {
             failedScanId: FailedScanData.failedScanId,
-            updatedAt: new Date(),
+            updatedAt: moment.utc(moment()).format(),
           },
         });
         return {

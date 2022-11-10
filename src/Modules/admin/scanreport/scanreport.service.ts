@@ -20,6 +20,7 @@ import {
   locationScansDto,
 } from 'src/dto/user.scan.module.dto';
 import { Products } from '@prisma/client';
+import * as moment from 'moment';
 
 @Injectable()
 export class ScanReportsService {
@@ -54,7 +55,7 @@ export class ScanReportsService {
       return { data, pageCount };
     } catch (error) {
       this.logger.error(error);
-      return { error: { status: 500, message: 'Server error' } };
+      return { error: { status: 500, message: error } };
     }
   }
   async updateMarkDone(markdoneinfo: updateMarkDoneBodyDto) {
@@ -93,7 +94,10 @@ export class ScanReportsService {
     }
   }
 
-  async exportScrapperScans(scanReport: getScanReportBodyDto) {
+  async exportScrapperScans(
+    scanReport: getScanReportBodyDto,
+    isNewUploaded?: boolean,
+  ) {
     const { auction, location } = scanReport;
 
     try {
@@ -123,7 +127,12 @@ export class ScanReportsService {
           auctionId: auction,
           locid: location,
           createdAt: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            // gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            gte: moment
+              .utc(
+                moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }),
+              )
+              .format(),
           },
         },
         orderBy: {
@@ -137,20 +146,27 @@ export class ScanReportsService {
       const duration = {
         gte: newUploads.length
           ? newUploads[newUploads.length - 1].lastcsvgenerated
-          : new Date(new Date().setHours(0, 0, 0, 0)),
-        lte: new Date(),
+          : moment
+              .utc(
+                moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }),
+              )
+              .format(),
+        lte: moment.utc(moment()).format(),
       };
 
       const scannedData = await this.prismaService.scans.findMany({
         where: { createdAt: duration, locid: location, auctionId: auction },
         select: {
           locations: { select: { city: true } },
-          tags: { select: { tag: true } },
+          //tags: { select: { tag: true } },
           products: true,
+          tag:true,
           scannedName: true,
         },
         orderBy: { createdAt: 'asc' },
       });
+
+      console.log('scan',scannedData)
 
       if (!scannedData.length) {
         return { error: { status: 404, message: 'No Scanned Item Found!' } };
@@ -164,7 +180,7 @@ export class ScanReportsService {
       try {
         scannedData.forEach((scan) => {
           username.push(scan.scannedName);
-          const splitTag = scan.tags[0]?.tag.split(/(\d+)/);
+          const splitTag = scan.tag.split(/(\d+)/);
           if (scan.locations.city.toLowerCase() === LOCATION.SACRAMENTO) {
             formattedData.push({
               lotNo: scan.products[0]?.lotNo,
@@ -195,6 +211,7 @@ export class ScanReportsService {
             CSV_FINAL = json2csv.parse(formattedDataDalas);
           }
         });
+        console.log('push',formattedDataDalas);
         //    return { data: formattedDataDalas , error: { status: 200 , message: 'Null' } }
       } catch (error) {
         this.logger.error(error?.message || error);
@@ -227,18 +244,21 @@ export class ScanReportsService {
           : 1
       }`;
 
-      const olddir = __dirname.split('/');
+      const cd = __dirname.replace(/\\/g, '/');
+      const olddir = cd.split('/');
       olddir.splice(olddir.length - 4, 4);
       const id =
         AuctionData.id.substring(0, 5) + AuctionData.startDate.getTime();
       const dir = `${olddir.join('/')}/src/scrapper/${id}`;
-
+    
+      console.log(dir)
+    
       if (!fs.existsSync(`${dir}`)) {
-        fs.mkdirSync(`${dir}`);
+        fs.mkdirSync(`${dir}`, { recursive: true });
       }
 
       if (!fs.existsSync(`${dir}/${currFormatDate}`)) {
-        fs.mkdirSync(`${dir}/${currFormatDate}`);
+        fs.mkdirSync(`${dir}/${currFormatDate}`, { recursive: true });
       }
 
       //Created csv File
@@ -253,11 +273,11 @@ export class ScanReportsService {
       const output = `${dir}/zipFiles/${currFormatDate}.zip`;
 
       if (!fs.existsSync(`${dir}/zipFiles`)) {
-        fs.mkdirSync(`${dir}/zipFiles`);
+        fs.mkdirSync(`${dir}/zipFiles`, { recursive: true });
       }
 
       if (!fs.existsSync(`${dir}/images`)) {
-        fs.mkdirSync(`${dir}/images`);
+        fs.mkdirSync(`${dir}/images`, { recursive: true });
       }
 
       if (lastZip && !lastZip.isNewUploaded) {
@@ -298,13 +318,13 @@ export class ScanReportsService {
           })),
         },
         filePath: zipFilePath,
-        lastcsvgenerated: new Date(),
+        lastcsvgenerated: moment.utc(moment()).format(),
         auction: {
           connect: {
             id: auction,
           },
         },
-        isNewUploaded: false,
+        isNewUploaded: isNewUploaded ? true : false,
         locations: {
           connect: {
             locid: location,
@@ -352,14 +372,15 @@ export class ScanReportsService {
           },
           data: {
             isNewUploaded: true,
-            lastcsvgenerated: new Date(),
+            lastcsvgenerated: moment.utc(moment()).format(),
           },
         });
       }
 
       const zip = new AdmZip(scanReport.filePath);
       const data = zip.toBuffer();
-      const splittedFilePath = scanReport.filePath.split('/');
+      const cd = scanReport.filePath.replace(/\\/g, '/');
+      const splittedFilePath = cd.split('/');
       const fileName = splittedFilePath[splittedFilePath.length - 1].toString();
 
       res.setHeader('Content-disposition', `attachment; filename=${fileName}`);

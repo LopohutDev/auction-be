@@ -8,13 +8,15 @@ import { ITEMTAG } from 'src/constants/location.constants';
 import { PrismaService } from 'src/Services/prisma.service';
 import { Jwt } from 'src/tokens/Jwt';
 import { addDays, subDays } from 'src/utils/common.utils';
-import { formatDate } from 'src/utils/formatDate.utils';
 import { Download } from 'src/utils/imageDownload.utils';
 import { uuid } from 'src/utils/uuid.utils';
-import setAuction from '../admin/auction /auction.utils';
+import setAuction from '../admin/auction/auction.utils';
 import { ScanReportsService } from '../admin/scanreport/scanreport.service';
 import { createExceptionFile } from '../user/scan/exceptionhandling.utils';
+
 import { getLotNo, getLotNoStoreReturn } from '../user/scan/scrapper.utils';
+import * as moment from 'moment';
+
 
 @Injectable()
 export class TasksService {
@@ -68,7 +70,9 @@ export class TasksService {
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
+ // @Cron(CronExpression.EVERY_10_MINUTES)
   async handlePriorityQueue() {
+   // console.log(moment().valueOf())
     const jobs = Jobs.queue;
     if (!jobs.length) {
       this.logger.debug({ module: 'Queues', message: 'Already cleared' });
@@ -78,16 +82,18 @@ export class TasksService {
         for await (const que of Jobs.queue) {
           const { data, scanParams, error } = await que.func();
           if (data && scanParams) {
-            const olddir = __dirname.split('/');
+
+            const cd = __dirname.replace(/\\/g, '/');
+            const olddir = cd.split('/');
             olddir.splice(olddir.length - 3, 3);
             const dir = `${olddir.join('/')}/src/scrapper`;
 
             if (!fs.existsSync(`${dir}`)) {
-              fs.mkdirSync(`${dir}`);
+              fs.mkdirSync(`${dir}`, { recursive: true });
             }
 
             if (!fs.existsSync(`${dir}/images`)) {
-              fs.mkdirSync(`${dir}/images`);
+              fs.mkdirSync(`${dir}/images`, { recursive: true });
             }
 
             const lastScannedItem = await this.prismaService.scans.findMany({
@@ -102,7 +108,8 @@ export class TasksService {
               locid: scanParams.locid,
               scannedBy: scanParams.userid,
               scannedName: scanParams.username,
-              tagexpireAt: addDays(30),
+              //tagexpireAt: addDays(30),
+              tagexpireAt: moment().add(30, 'd').utc().format(),
               barcode: scanParams.barcode,
             };
             let generatedLotNo;
@@ -149,11 +156,12 @@ export class TasksService {
             }
             let lastGeneratedNo = 0;
 
+            const cut = moment().valueOf();
             const imagesPath = data.images.map((img) => {
               lastGeneratedNo = lastGeneratedNo > 0 ? lastGeneratedNo + 1 : 1;
               const imgFile = Download(
                 img.link,
-                `${dir}/images/${generatedLotNo}_${lastGeneratedNo}.jpeg`,
+                `${dir}/images/${scanParams.locationName}_${moment().valueOf()}_${generatedLotNo}_${lastGeneratedNo}.jpeg`,
               );
               return imgFile;
             });
@@ -181,7 +189,7 @@ export class TasksService {
               },
               data: {
                 successScanId: ScanData.ScanId,
-                updatedAt: new Date(),
+                updatedAt: moment.utc(moment()).format(),
               },
             });
           } else if (error) {
@@ -208,7 +216,7 @@ export class TasksService {
               },
               data: {
                 failedScanId: failedScanData.failedScanId,
-                updatedAt: new Date(),
+                updatedAt: moment.utc(moment()).format(),
               },
             });
           }
@@ -219,6 +227,7 @@ export class TasksService {
           });
         }
       } catch (error) {
+        console.log(error);
         createExceptionFile('Exception Caugth: ' + String(error));
         this.logger.debug({
           module: 'Queue',
@@ -231,20 +240,36 @@ export class TasksService {
   @Cron(CronExpression.EVERY_DAY_AT_7PM)
   async handleZipGeneration() {
     const scanReport = new ScanReportsService(this.prismaService);
-    const auctiondata = await this.prismaService.auction.findFirst({
+    const day = new Date().getDay();
+    const auctiondata = await this.prismaService.auction.findMany({
       where: {
-        startDate: { gte: subDays(3), lt: new Date() },
+        startDate: { gte: day === 1 || day === 4 ? subDays(4) : subDays(3) },
         startNumber: { gte: 0 },
       },
-      rejectOnNotFound: false,
     });
 
     this.logger.debug({ message: 'HandleZip now' });
-    if (auctiondata) {
-      return scanReport.exportScrapperScans({
-        auction: auctiondata.id,
-        location: auctiondata.locid,
-      });
+    if (auctiondata && auctiondata.length) {
+      for await (const auctions of auctiondata) {
+        const { error } = await scanReport.exportScrapperScans(
+          {
+            auction: auctions.id,
+            location: auctions.locid,
+          },
+          true,
+        );
+        if (error) {
+          this.logger.error({ error: 'Error occur', message: error });
+          createExceptionFile(
+            'Module: handleZipper cron failed with: ' + error.message,
+          );
+        }
+      }
+    } else {
+      createExceptionFile(
+        'Auction current data not found please cross check startdate : ' +
+          new Date().toLocaleString(),
+      );
     }
   }
 
@@ -309,7 +334,7 @@ export class TasksService {
     await this.prismaService.tags.deleteMany({
       where: {
         tagexpireAt: {
-          lte: new Date(),
+          lte: moment.utc(moment()).format(),
         },
       },
     });
@@ -349,7 +374,3 @@ export class TasksService {
     }
   }
 }
-function orderBy(arg0: { where: { ScanId: {}; }; }, orderBy: any, arg2: { id: string; }, take: any, arg4: number) {
-  throw new Error('Function not implemented.');
-}
-

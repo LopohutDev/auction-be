@@ -2,8 +2,8 @@ import { errorDto } from './common.dto';
 
 export type auctionBodyDto = {
   id: string;
-  endDate: Date;
-  endTime: Date;
+  endDate: string;
+  endTime: string;
   startNumber: number;
 };
 
