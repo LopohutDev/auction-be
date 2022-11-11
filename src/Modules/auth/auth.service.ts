@@ -34,6 +34,7 @@ import {
   validateLoginUser,
   validateregisterUser,
 } from 'src/validations/auth.validation';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
@@ -281,6 +282,34 @@ export class AuthService {
         error: {
           status: 422,
           message: ' The token has expired. Please try again.',
+        },
+      };
+    }
+  }
+
+  async verifyCaptcha(token: any) {
+    try {
+      const url = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token.token}`;
+
+      const res = await axios.post(url);
+
+      console.log('res--->>>>', res.data);
+
+      if (res.status === 200) {
+        return {
+          success: true,
+          data: res.data,
+        };
+      } else {
+        return {
+          success: false,
+        };
+      }
+    } catch (error) {
+      return {
+        error: {
+          status: 422,
+          message: 'Invalid Captch',
         },
       };
     }
