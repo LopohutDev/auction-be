@@ -48,6 +48,9 @@ export class AuctionService {
           where: {
             startNumber: startNumber,
             locid: location.locations.locid,
+            endDate: {
+              gt: subDays(30),
+            },
           },
         });
         const tags = await this.prismaService.tags.findMany({
