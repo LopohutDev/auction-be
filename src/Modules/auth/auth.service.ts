@@ -295,7 +295,7 @@ export class AuthService {
 
       console.log('res--->>>>', res.data);
 
-      if (res.status === 200) {
+      if (res.data.success) {
         return {
           success: true,
           data: res.data,
