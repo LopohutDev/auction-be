@@ -11,6 +11,7 @@ import { addDays, subDays } from 'src/utils/common.utils';
 import { Download } from 'src/utils/imageDownload.utils';
 import { uuid } from 'src/utils/uuid.utils';
 import setAuction from '../admin/auction/auction.utils';
+import setFutureAuction from '../admin/auction/futureAuctionUtils';
 import { ScanReportsService } from '../admin/scanreport/scanreport.service';
 import { createExceptionFile } from '../user/scan/exceptionhandling.utils';
 
@@ -69,9 +70,9 @@ export class TasksService {
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
- // @Cron(CronExpression.EVERY_10_MINUTES)
+  // @Cron(CronExpression.EVERY_10_MINUTES)
   async handlePriorityQueue() {
-   // console.log(moment().valueOf())
+    // console.log(moment().valueOf())
     const jobs = Jobs.queue;
     if (!jobs.length) {
       this.logger.debug({ module: 'Queues', message: 'Already cleared' });
@@ -81,7 +82,6 @@ export class TasksService {
         for await (const que of Jobs.queue) {
           const { data, scanParams, error } = await que.func();
           if (data && scanParams) {
-
             const cd = __dirname.replace(/\\/g, '/');
             const olddir = cd.split('/');
             olddir.splice(olddir.length - 3, 3);
@@ -160,7 +160,9 @@ export class TasksService {
               lastGeneratedNo = lastGeneratedNo > 0 ? lastGeneratedNo + 1 : 1;
               const imgFile = Download(
                 img.link,
-                `${dir}/images/${scanParams.locationName}_${moment().valueOf()}_${generatedLotNo}_${lastGeneratedNo}.jpeg`,
+                `${dir}/images/${
+                  scanParams.locationName
+                }_${moment().valueOf()}_${generatedLotNo}_${lastGeneratedNo}.jpeg`,
               );
               return imgFile;
             });
@@ -280,7 +282,7 @@ export class TasksService {
       const isAuctionExist = await this.prismaService.auction.findFirst({
         where: {
           locid: auction.locid,
-          createdAt: {
+          startDate: {
             gte: moment
               .utc(
                 moment().set({
@@ -300,54 +302,65 @@ export class TasksService {
     }
     if (isAuction.length === 0) {
       let arr = [];
-      const currDate = moment();
-
-      const futureMonthLast = moment().endOf('month');
-      const futureMonthLastDay = futureMonthLast.day();
-      let d = null;
-      switch (futureMonthLastDay) {
-        case 1:
-          d = 0;
-          break;
-        case 2:
-          d = 2;
-          break;
-        case 3:
-          d = 1;
-          break;
-        case 4:
-          d = 0;
-          break;
-        case 5:
-          d = 3;
-          break;
-        case 6:
-          d = 2;
-          break;
-        case 0:
-          d = 1;
-          break;
-        default:
-          null;
-          break;
-      }
-
-      const allLocations = await this.prismaService.location.findMany({});
-
       if (allLocations) {
-        allLocations.map((row) => {
-          for (let i = 1, j = 0; i < futureMonthLast.date() + d; i++) {
-            const { newArr, n, m } = setAuction(i, j, row, currDate);
+        allLocations.map(async (row) => {
+          const lastAuction = await this.prismaService.auction.findMany({
+            where: {
+              locid: row.locid,
+            },
+            orderBy: { startDate: 'desc' },
+            take: 1,
+          });
+
+          const currDate = moment(lastAuction[0].endDate)
+            .add(1, 'days')
+            .format('YYYY-MM-DD');
+
+          const futureMonthLast = moment().endOf('month');
+          const futureMonthLastDay = futureMonthLast.day();
+          let d = null;
+          switch (futureMonthLastDay) {
+            case 1:
+              d = 0;
+              break;
+            case 2:
+              d = 2;
+              break;
+            case 3:
+              d = 1;
+              break;
+            case 4:
+              d = 0;
+              break;
+            case 5:
+              d = 3;
+              break;
+            case 6:
+              d = 2;
+              break;
+            case 0:
+              d = 1;
+              break;
+            default:
+              null;
+              break;
+          }
+          const dayCount = moment(currDate).format('DD');
+          const remainingDays = futureMonthLast.date() + d - Number(dayCount);
+
+          for (let i = 1, j = 0; i < remainingDays; i++) {
+            const { newArr, n, m } = setFutureAuction(i, j, row, currDate);
             i = n;
             j = m;
             arr = [...arr, newArr];
           }
+
+          await this.prismaService.auction.createMany({
+            data: arr,
+          });
+          arr = [];
         });
       }
-
-      await this.prismaService.auction.createMany({
-        data: arr,
-      });
     } else {
       const filteredArray = allLocations.filter((value) => {
         return !isAuction.some((row) => {
@@ -402,18 +415,19 @@ export class TasksService {
           const dayCount = moment(currDate).format('DD');
           const remainingDays = futureMonthLast.date() + d - Number(dayCount);
 
-          for (let i = 1, j = 0; i <= remainingDays; i++) {
-            const { newArr, n, m } = setAuction(i, j, row, currDate);
+          for (let i = 1, j = 0; i < remainingDays; i++) {
+            const { newArr, n, m } = setFutureAuction(i, j, row, currDate);
             i = n;
             j = m;
             arr = [...arr, newArr];
           }
+
+          await this.prismaService.auction.createMany({
+            data: arr,
+          });
+          arr = [];
         });
       }
-      this.logger.log('arrr------------>>>>', JSON.stringify(arr));
-      await this.prismaService.auction.createMany({
-        data: arr,
-      });
     }
   }
   @Cron(CronExpression.EVERY_DAY_AT_11PM)
