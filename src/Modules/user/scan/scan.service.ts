@@ -13,7 +13,7 @@ import * as moment from 'moment';
 
 @Injectable()
 export class ScanService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) { }
   private readonly logger = new Logger(ScanService.name);
 
   async getScanProduct(scaninfo: ScanQueryDto) {
@@ -31,8 +31,8 @@ export class ScanService {
     }
     const islocationExists = await this.prismaService.location.findFirst({
       where: {
-        Warehouses: { some: { areaname: item.areaname,locid : isAuctionExists.locid }},
-        locationItem: { some: { itemtag: item.itemtype,locid : isAuctionExists.locid } },
+        Warehouses: { some: { areaname: item.areaname, locid: isAuctionExists.locid } },
+        locationItem: { some: { itemtag: item.itemtype, locid: isAuctionExists.locid } },
       },
     });
     //console.log('loc',islocationExists)
@@ -45,7 +45,7 @@ export class ScanService {
         error: { status: 409, message: 'The product is scanned already.' },
       };
     }
-  
+
     if (!isAuctionExists.startNumber) {
       return {
         error: {
@@ -194,15 +194,6 @@ export class ScanService {
       return { error };
     }
     try {
-      const islocationExists = await this.prismaService.location.findFirst({
-        where: {
-          Warehouses: { some: { areaname: item.areaname } },
-          locationItem: { some: { itemtag: item.itemtype } },
-        },
-      });
-      if (!islocationExists) {
-        return { error: { status: 404, message: 'Invalid Location' } };
-      }
       const isAuctionExists = await this.prismaService.auction.findUnique({
         where: { id: item.auction },
         rejectOnNotFound: false,
@@ -210,6 +201,17 @@ export class ScanService {
       if (!isAuctionExists) {
         return { error: { status: 404, message: 'Invalid auction' } };
       }
+      const islocationExists = await this.prismaService.location.findFirst({
+        where: {
+          Warehouses: { some: { areaname: item.areaname, locid: isAuctionExists.locid } },
+          locationItem: { some: { itemtag: item.itemtype, locid: isAuctionExists.locid } },
+        },
+      });
+
+      if (!islocationExists) {
+        return { error: { status: 404, message: 'Invalid Location' } };
+      }
+
       if (!isAuctionExists.startNumber) {
         return {
           error: {
