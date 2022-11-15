@@ -17,6 +17,7 @@ import { createExceptionFile } from '../user/scan/exceptionhandling.utils';
 
 import { getLotNo, getLotNoStoreReturn } from '../user/scan/scrapper.utils';
 import * as moment from 'moment';
+import { count } from 'console';
 
 @Injectable()
 export class TasksService {
@@ -446,7 +447,7 @@ export class TasksService {
     const pastAuctions = await this.prismaService.auction.findMany({
       where: {
         endDate: {
-          lte: new Date(),
+          lte: moment.utc(moment()).format(),
         },
       },
       orderBy: {
@@ -454,6 +455,11 @@ export class TasksService {
       },
       include: {
         srappers: true,
+        scannedItem: {
+          include: {
+            products: true,
+          },
+        },
       },
     });
     pastAuctions.shift();
@@ -470,6 +476,18 @@ export class TasksService {
               this.logger.error(err);
             }
           });
+        }
+      }
+      for (const scans of auction.scannedItem) {
+        for (const products of scans.products) {
+          const images = products.images;
+          for (let i = 0; i < images.length; i++) {
+            fs.unlink(images[i], (err) => {
+              if (err) {
+                this.logger.error(err);
+              }
+            });
+          }
         }
       }
     }
