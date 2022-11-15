@@ -116,4 +116,21 @@ export class AuthController {
       throw new HttpException(error.message, error.status);
     }
   }
+
+  @Post('google/recaptcha/v3')
+  @HttpCode(200)
+  async verifyReCaptcha(@Body() token: any) {
+    const { error, success, data } = await this.authService.verifyCaptcha(
+      token,
+    );
+    if (success) {
+      return {
+        success: true,
+        data,
+        message: 'Captch verified',
+      };
+    } else {
+      throw new HttpException(error.message, error.status);
+    }
+  }
 }
