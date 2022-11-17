@@ -14,7 +14,7 @@ export const createExceptionFile = (content: string): void => {
   olddir.splice(olddir.length - 4, 4);
   const dir = `${olddir.join('/')}/src/logs/`;
   if (!existsSync(dir)) {
-    mkdir(dir,{recursive: true}, (err) => {
+    mkdir(dir, { recursive: true }, (err) => {
       if (err) {
         console.log('Error in creation', err);
       } else {

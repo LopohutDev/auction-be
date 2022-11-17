@@ -8,10 +8,15 @@ export const encrypt = (str: string): string => {
 };
 
 export const decrypt = (str: string): string => {
-  const decryptphase1 = atob(str);
-  const deattachedStr = decryptphase1.slice(0, 2) + decryptphase1.slice(2 + 8);
-  const decrypted = atob(deattachedStr);
-  return decrypted;
+  try {
+    const decryptphase1 = atob(str);
+    const deattachedStr =
+      decryptphase1.slice(0, 2) + decryptphase1.slice(2 + 8);
+    const decrypted = atob(deattachedStr);
+    return decrypted;
+  } catch (error) {
+    return 'Invalid String';
+  }
 };
 
 export const encryptRefreshToken = (token: string) => {
@@ -24,10 +29,14 @@ export const encryptRefreshToken = (token: string) => {
 };
 
 export const decryptRefreshToken = (token: string) => {
-  const splitedToken = atob(token).split('.');
-  if (splitedToken.length < 3) {
-    return { error: 'Token not valid' };
+  try {
+    const splitedToken = atob(token).split('.');
+    if (splitedToken.length < 3) {
+      return { error: 'Token not valid' };
+    }
+    splitedToken[1] = decrypt(splitedToken[1]);
+    return { token: splitedToken.join('.') };
+  } catch (error) {
+    return { error: 'Invalid Token' };
   }
-  splitedToken[1] = decrypt(splitedToken[1]);
-  return { token: splitedToken.join('.') };
 };
