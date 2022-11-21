@@ -167,11 +167,13 @@ export class TasksService {
               );
               return imgFile;
             });
-
             const productData = {
               barcode: scanParams.barcode,
               lotNo: generatedLotNo,
-              startingBid: Number(data.price) * 0.05,
+              startingBid:
+                Math.floor(Number(data.price) * 0.05) <= 0
+                  ? 1
+                  : Math.floor(Number(data.price) * 0.05),
               title: data.title,
               images: imagesPath,
               description: data.description,

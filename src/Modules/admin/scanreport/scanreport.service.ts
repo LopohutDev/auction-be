@@ -154,7 +154,7 @@ export class ScanReportsService {
         lte: moment.utc(moment()).format(),
       };
 
-      console.log('duration',duration);
+      console.log('duration', duration);
 
       const scannedData = await this.prismaService.scans.findMany({
         where: { createdAt: duration, locid: location, auctionId: auction },
@@ -162,13 +162,13 @@ export class ScanReportsService {
           locations: { select: { city: true } },
           //tags: { select: { tag: true } },
           products: true,
-          tag:true,
+          tag: true,
           scannedName: true,
         },
         orderBy: { createdAt: 'asc' },
       });
 
-      console.log('scan',scannedData)
+      console.log('scan', scannedData);
 
       if (!scannedData.length) {
         return { error: { status: 404, message: 'No Scanned Item Found!' } };
@@ -213,7 +213,7 @@ export class ScanReportsService {
             CSV_FINAL = json2csv.parse(formattedDataDalas);
           }
         });
-        console.log('push',formattedDataDalas);
+        console.log('push', formattedDataDalas);
         //    return { data: formattedDataDalas , error: { status: 200 , message: 'Null' } }
       } catch (error) {
         this.logger.error(error?.message || error);
@@ -252,9 +252,9 @@ export class ScanReportsService {
       const id =
         AuctionData.id.substring(0, 5) + AuctionData.startDate.getTime();
       const dir = `${olddir.join('/')}/src/scrapper/${id}`;
-    
-      console.log(dir)
-    
+
+      console.log(dir);
+
       if (!fs.existsSync(`${dir}`)) {
         fs.mkdirSync(`${dir}`, { recursive: true });
       }
@@ -293,10 +293,14 @@ export class ScanReportsService {
       const products: Products[] = [];
       scanProducts.forEach((l) => {
         products.push(l.products[0]);
+        const lotNo = l.products[0].lotNo;
+        let no = 1;
         l.productImg.forEach((image) => {
-          const imageSplit = image.split('/');
-          const imageFileName = imageSplit[imageSplit.length - 1];
+          const imageSplit = image.split('.');
+          const imageFileExe = imageSplit[imageSplit.length - 1];
+          const imageFileName = lotNo + '_' + no + '.' + imageFileExe;
           fs.copyFileSync(image, `${dir}/${currFormatDate}/${imageFileName}`);
+          no++;
         });
       });
 
