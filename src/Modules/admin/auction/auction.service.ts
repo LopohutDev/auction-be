@@ -159,8 +159,7 @@ export class AuctionService {
       const currDate = new Date().toISOString().slice(0, 10);
 
       const data = locationAuctionData[0]?.Auction.map((row) => {
-        const endDate = new Date(row.endDate).toISOString().slice(0, 10);
-
+        const endDate = moment(row.endDate).format('YYYY-MM-DD');
         if (currDate > endDate) {
           return {
             ...row,
