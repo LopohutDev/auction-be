@@ -97,6 +97,9 @@ export class TasksService {
             }
 
             const lastScannedItem = await this.prismaService.scans.findMany({
+              where: {
+                auctionId: scanParams.auctionId,
+              },
               orderBy: { id: 'desc' },
               take: 1,
             });
