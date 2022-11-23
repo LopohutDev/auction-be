@@ -115,7 +115,14 @@ export class ScanReportsService {
           error: { status: 409, message: 'Auction has already passed.' },
         };
       }
-
+      if (moment(AuctionData.endDate).format() < moment(subDays(0)).format()) {
+        return {
+          error: {
+            status: 409,
+            message: 'You can not create zip on recover auction',
+          },
+        };
+      }
       /* if (AuctionData.startDate > new Date()) {
         return {
           error: { status: 409, message: 'Auction is not started yet' },

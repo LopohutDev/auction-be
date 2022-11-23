@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { locationQueryDataDto } from 'src/dto/admin.location.module.dto';
 import { PrismaService } from 'src/Services/prisma.service';
 import { subDays } from 'src/utils/common.utils';
+import * as moment from 'moment';
 
 @Injectable()
 export class UserAuctionService {
@@ -47,12 +48,15 @@ export class UserAuctionService {
       });
       const resultData = [];
       for (let i = 0; i < auctiondata.length; i += 1) {
-        if (auctiondata[i].startDate < subDays(3)) {
+        if (
+          moment(auctiondata[i].startDate).format('YYYY-MM-DD') <
+          moment(subDays(3)).format('YYYY-MM-DD')
+        ) {
           if (auctiondata[i].isRecover) {
-            resultData.push(auctiondata[i]);
+            resultData.push({ ...auctiondata[i], status: 'isRecover' });
           }
         } else {
-          resultData.push(auctiondata[i]);
+          resultData.push({ ...auctiondata[i], status: 'cuurent' });
         }
       }
       return { success: true, data: resultData };
