@@ -7,6 +7,8 @@ export type ScanQueryDto = {
   itemtype: string;
   auction: string;
   email: string;
+  itemname?: string;
+  itemsize?: string;
 };
 
 export interface ScanDataReturnDto extends successErrorDto {
@@ -43,6 +45,8 @@ export interface scanItemParamsDto {
   autionStartNo: number;
   lastInsertId: number;
   locationName: string;
+  itemname?: string;
+  itemsize?: string;
 }
 
 export interface scrapperReturnDataDto extends errorDto {
