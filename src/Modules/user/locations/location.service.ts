@@ -56,4 +56,44 @@ export class UserLocationService {
       return { error: { status: 500, message: 'Server error' } };
     }
   }
+  async getItemsService() {
+    try {
+      const data = await this.prismaService.item.findMany({});
+      if (data) {
+        return { success: true, data };
+      } else {
+        return { error: { status: 500, message: 'Something went wrong' } };
+      }
+      return { success: true, data };
+    } catch (error) {
+      this.logger.debug(error?.message || error);
+      return { error: { status: 500, message: 'Server error' } };
+    }
+  }
+  async getItemsSizeService(param: string) {
+    try {
+      let data;
+      this.logger.log(param);
+      switch (param) {
+        case 'bed':
+        case 'mattress':
+        case 'box_foundation':
+          data = await this.prismaService.size.findMany({});
+          break;
+        case 'rugs':
+          data = await this.prismaService.rugsSize.findMany({});
+          break;
+        default:
+        // code block
+      }
+      if (data) {
+        return { success: true, data };
+      } else {
+        return { error: { status: 500, message: 'Something went wrong' } };
+      }
+    } catch (error) {
+      this.logger.debug(error?.message || error);
+      return { error: { status: 500, message: 'Server error' } };
+    }
+  }
 }

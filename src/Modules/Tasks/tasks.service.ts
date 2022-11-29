@@ -170,6 +170,11 @@ export class TasksService {
               );
               return imgFile;
             });
+            const itemName = await this.prismaService.item.findFirst({
+              where: {
+                value: scanParams.itemname,
+              },
+            });
             const productData = {
               barcode: scanParams.barcode,
               lotNo: generatedLotNo,
@@ -183,6 +188,8 @@ export class TasksService {
               category: '',
               manufacturer: data.manufacturer,
               itemType: scanParams.locationItemId.toLowerCase(),
+              itemName: itemName.name,
+              itemSize: scanParams.itemsize,
             };
             await this.prismaService.scans.create({
               data: {

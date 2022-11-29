@@ -31,3 +31,6 @@ export type usersQueryDataDto = {
 export interface usersReturnValidateDto extends errorDto {
   data?: usersQueryDataDto;
 }
+export interface itemSizeQueryDataDto {
+  item: string;
+}

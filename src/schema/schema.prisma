@@ -89,6 +89,8 @@ model Products {
   scrapperZip     ScraperZip[]
   ScanId          String
   itemType        String?
+  itemName        String?
+  itemSize        String?
   createdAt       DateTime    @default(now())         @db.Timestamptz(3)
   updatedAt       DateTime    @default(now())         @db.Timestamptz(3)
 }
@@ -200,4 +202,20 @@ model Tags{
   tagexpireAt     DateTime                                    @db.Timestamptz(3)
   createdAt       DateTime             @default(now())        @db.Timestamptz(3)
   updatedAt       DateTime             @default(now())        @db.Timestamptz(3)
+}
+model Item {
+  id              Int                   @id @default(autoincrement())
+  name            String                @unique
+  value           String?              
+  createdAt       DateTime              @default(now())          @db.Timestamptz(3)
+}
+model Size {
+  id              Int                   @id @default(autoincrement())
+  name            String                @unique
+  createdAt       DateTime              @default(now())          @db.Timestamptz(3)
+}
+model RugsSize {
+  id              Int                   @id @default(autoincrement())
+  name            String                @unique
+  createdAt       DateTime              @default(now())          @db.Timestamptz(3)
 }

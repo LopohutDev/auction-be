@@ -31,8 +31,12 @@ export class ScanService {
     }
     const islocationExists = await this.prismaService.location.findFirst({
       where: {
-        Warehouses: { some: { areaname: item.areaname, locid: isAuctionExists.locid } },
-        locationItem: { some: { itemtag: item.itemtype, locid: isAuctionExists.locid } },
+        Warehouses: {
+          some: { areaname: item.areaname, locid: isAuctionExists.locid },
+        },
+        locationItem: {
+          some: { itemtag: item.itemtype, locid: isAuctionExists.locid },
+        },
       },
     });
     //console.log('loc',islocationExists)
@@ -169,6 +173,8 @@ export class ScanService {
           autionStartNo: startNumber,
           lastInsertId: lastInsertId.id,
           locationName: islocationExists.city,
+          itemname: item.itemname,
+          itemsize: item.itemsize,
         };
         Jobs.set(() => getScrapperData(data, params));
         return {
