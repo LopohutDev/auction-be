@@ -31,6 +31,7 @@ export interface scrapperDataDto {
   title: string;
   price: string;
   manufacturer: string;
+  dimensions?: string;
 }
 
 export interface scanItemParamsDto {
