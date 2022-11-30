@@ -58,6 +58,7 @@ export const getScrapperData = async (
           title: walmartdata.product.title,
           price: walmartdata.product?.buybox_winner?.price,
           manufacturer: 'Walmart',
+          dimensions: walmartdata.product?.dimensions,
         };
         return { data: sendedData, scanParams: scaninfo };
       } else {
@@ -79,6 +80,7 @@ export const getScrapperData = async (
             error: { status: 422, message: 'No item found' },
           };
         }
+
         const sendedData = {
           productId: uuid(),
           images: amazondata.product?.images,
@@ -88,6 +90,7 @@ export const getScrapperData = async (
           title: amazondata.product?.title,
           price: amazondata.product?.buybox_winner?.price,
           manufacturer: 'Amazon',
+          dimensions: amazondata.product?.dimensions,
         };
         return { data: sendedData, scanParams: scaninfo };
       } else {

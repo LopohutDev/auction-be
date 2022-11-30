@@ -13,7 +13,7 @@ import * as moment from 'moment';
 
 @Injectable()
 export class ScanService {
-  constructor(private readonly prismaService: PrismaService) { }
+  constructor(private readonly prismaService: PrismaService) {}
   private readonly logger = new Logger(ScanService.name);
 
   async getScanProduct(scaninfo: ScanQueryDto) {
@@ -77,7 +77,11 @@ export class ScanService {
         error: { status: 500, message: 'The auction is already completed.' },
       };
     }
-
+    if (item.itemsize != '' && item.itemname === '') {
+      return {
+        error: { status: 500, message: 'Please select itemname' },
+      };
+    }
     const userdata = await this.prismaService.user.findUnique({
       where: { email: scaninfo.email },
     });
@@ -209,8 +213,12 @@ export class ScanService {
       }
       const islocationExists = await this.prismaService.location.findFirst({
         where: {
-          Warehouses: { some: { areaname: item.areaname, locid: isAuctionExists.locid } },
-          locationItem: { some: { itemtag: item.itemtype, locid: isAuctionExists.locid } },
+          Warehouses: {
+            some: { areaname: item.areaname, locid: isAuctionExists.locid },
+          },
+          locationItem: {
+            some: { itemtag: item.itemtype, locid: isAuctionExists.locid },
+          },
         },
       });
 

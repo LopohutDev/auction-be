@@ -170,11 +170,14 @@ export class TasksService {
               );
               return imgFile;
             });
-            const itemName = await this.prismaService.item.findFirst({
-              where: {
-                value: scanParams.itemname,
-              },
-            });
+            let itemName;
+            if (scanParams.itemname && scanParams.itemname != '') {
+              itemName = await this.prismaService.item.findFirst({
+                where: {
+                  value: scanParams.itemname,
+                },
+              });
+            }
             const productData = {
               barcode: scanParams.barcode,
               lotNo: generatedLotNo,
@@ -184,11 +187,11 @@ export class TasksService {
                   : Math.floor(Number(data.price) * 0.05),
               title: data.title,
               images: imagesPath,
-              description: data.description,
+              description: data.description + 'Dimensions: ' + data?.dimensions,
               category: '',
               manufacturer: data.manufacturer,
               itemType: scanParams.locationItemId.toLowerCase(),
-              itemName: itemName.name,
+              itemName: itemName?.name,
               itemSize: scanParams.itemsize,
             };
             await this.prismaService.scans.create({
