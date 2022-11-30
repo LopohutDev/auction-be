@@ -187,11 +187,13 @@ export class TasksService {
                   : Math.floor(Number(data.price) * 0.05),
               title: data.title,
               images: imagesPath,
-              description: data.description + 'Dimensions: ' + data?.dimensions,
+              description: data?.dimensions
+                ? data.description + 'Dimensions: ' + data?.dimensions
+                : data.description,
               category: '',
               manufacturer: data.manufacturer,
               itemType: scanParams.locationItemId.toLowerCase(),
-              itemName: itemName?.name,
+              itemName: itemName?.name ? itemName?.name : '',
               itemSize: scanParams.itemsize,
             };
             await this.prismaService.scans.create({

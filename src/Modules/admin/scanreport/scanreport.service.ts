@@ -185,12 +185,16 @@ export class ScanReportsService {
       const formattedDataDalas: locationScansDallasDto[] = [];
       let json2csv;
       let CSV_FINAL;
+      let description;
       //  return {scannedData:scannedData}
       try {
         scannedData.forEach((scan) => {
           username.push(scan.scannedName);
           const splitTag = scan.tag.split(/(\d+)/);
           if (scan.locations.city.toLowerCase() === LOCATION.SACRAMENTO) {
+            description = scan.products[0]?.itemName
+              ? `${splitTag[2]} -- ${scan.products[0]?.itemName} - ${scan.products[0]?.itemSize} - ${scan.products[0]?.description}`
+              : `${splitTag[2]} -- ${scan.products[0]?.description}`;
             formattedData.push({
               lotNo: scan.products[0]?.lotNo,
               Title: `${splitTag[0]}${splitTag[1]}  ${scan.products[0]?.title} ${scan.products[0]?.itemName} ${scan.products[0]?.itemSize}`,
@@ -199,18 +203,21 @@ export class ScanReportsService {
               QuantityAvailable: scan.products[0]?.quantity,
               StartingBid: scan.products[0]?.startingBid,
               NewLot: '',
-              Description: `${splitTag[2]}--${scan.products[0]?.itemName} - ${scan.products[0]?.itemSize} - ${scan.products[0]?.description}`,
+              Description: description,
             });
             json2csv = new Parser({
               fields: Object.keys(formattedData[0]),
             });
             CSV_FINAL = json2csv.parse(formattedData);
           } else {
+            description = scan.products[0]?.itemName
+              ? `${splitTag[2]} -- ${scan.products[0]?.itemName} - ${scan.products[0]?.itemSize} - ${scan.products[0]?.description}`
+              : `${splitTag[2]} -- ${scan.products[0]?.description}`;
             formattedDataDalas.push({
               LotNo: scan.products[0]?.lotNo,
               Quantity: scan.products[0]?.quantity,
               Title: `${splitTag[0]}${splitTag[1]}  ${scan.products[0]?.title} ${scan.products[0]?.itemName} ${scan.products[0]?.itemSize}`,
-              Description1: `${splitTag[2]}--${scan.products[0]?.itemName} - ${scan.products[0]?.itemSize} - ${scan.products[0]?.description}`,
+              Description1: description,
               Consignor: scan.products[0]?.consignor,
               StartBidEach: scan.products[0]?.startingBid,
             });
